@@ -8,6 +8,7 @@ import type { Theme } from "../types";
 import AppShell from "./AppShell";
 
 const TodayPage = lazy(() => import("../pages/TodayPage"));
+const RoleplayPage = lazy(() => import("../pages/RoleplayPage"));
 const CardsPage = lazy(() => import("../pages/CardsPage"));
 const EnglishPage = lazy(() => import("../pages/EnglishPage"));
 const ReadingPractice = lazy(() => import("../pages/ReadingPractice"));
@@ -117,6 +118,7 @@ export default function App() {
             <Route path="/words" element={<CardsPage mode="word" c={colors} />} />
             <Route path="/phrases" element={<CardsPage mode="phrase" c={colors} />} />
             <Route path="/sentences" element={<CardsPage mode="sentence" c={colors} />} />
+            <Route path="/roleplay" element={<RoleplayPage c={colors} />} />
             <Route path="/practice" element={<EnglishPage c={colors} initialView="practice" />} />
             <Route path="/reading" element={<ReadingPractice c={colors} />} />
             <Route path="/listening" element={<ListeningPractice c={colors} />} />
