@@ -410,7 +410,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                       {item.entryType !== "sentence" && (
                         <div
                           onClick={() => speakVocabText(item.audioText || item.word, speed)}
-                          className="aspect-[4/3] cursor-pointer overflow-hidden border-b flex items-center justify-center"
+                          className="h-32 cursor-pointer overflow-hidden border-b flex items-center justify-center p-1.5"
                           style={{
                             background: "#FFFFFF",
                             borderColor: c.borderSub,
@@ -427,12 +427,12 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                         </div>
                       )}
 
-                      <div className="p-4 md:p-5 space-y-3 flex-1 flex flex-col justify-between">
-                        <div className="space-y-2">
+                      <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                        <div className="space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <h3
-                                className="text-[17px] font-semibold leading-snug break-words"
+                                className="text-[15px] font-semibold leading-snug break-words"
                                 style={{ color: c.fg }}
                                 lang="en"
                               >
@@ -440,7 +440,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                               </h3>
                               {item.pos && (
                                 <span
-                                  className="inline-block mt-0.5 type-caption font-medium"
+                                  className="inline-block text-[11px] font-medium"
                                   style={{ color: c.accent }}
                                 >
                                   {item.pos}
@@ -450,21 +450,21 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                             <button
                               type="button"
                               onClick={() => speakVocabText(item.audioText || item.word, speed)}
-                              className="p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
+                              className="p-1.5 rounded-lg transition-colors shrink-0 cursor-pointer"
                               style={{ background: c.inputBg, color: c.fgDim }}
                               title="朗读"
                             >
-                              <SpeakerIcon />
+                              <SpeakerIcon size={13} />
                             </button>
                           </div>
 
-                          <p className="type-body" style={{ color: c.fgSub }}>
+                          <p className="text-[12.5px] leading-snug" style={{ color: c.fgSub }}>
                             {item.definition}
                           </p>
 
                           {item.entryType === "sentence" ? (
                             <div
-                              className="pt-2.5 border-t space-y-1.5 type-secondary"
+                              className="pt-2 border-t space-y-1 text-[12px]"
                               style={{ borderColor: c.borderSub, color: c.fgDim }}
                               lang="en"
                             >
@@ -475,11 +475,11 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                           ) : (
                             item.sentence && (
                               <div
-                                className="pt-2.5 border-t flex items-start justify-between gap-2"
+                                className="pt-2 border-t flex items-start justify-between gap-1.5"
                                 style={{ borderColor: c.borderSub }}
                               >
                                 <p
-                                  className="type-secondary leading-relaxed"
+                                  className="text-[11.5px] leading-relaxed"
                                   style={{ color: c.fgMuted }}
                                   lang="en"
                                 >
@@ -493,11 +493,11 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                                       speed,
                                     )
                                   }
-                                  className="p-1 rounded-lg opacity-70 hover:opacity-100 shrink-0 cursor-pointer"
+                                  className="p-1 rounded-md opacity-70 hover:opacity-100 shrink-0 cursor-pointer"
                                   style={{ color: c.fgDim }}
                                   title="朗读例句"
                                 >
-                                  <SpeakerIcon size={13} />
+                                  <SpeakerIcon size={12} />
                                 </button>
                               </div>
                             )
@@ -505,13 +505,13 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                         </div>
 
                         <div
-                          className="pt-3 flex items-center justify-between border-t"
+                          className="pt-2 flex items-center justify-between border-t"
                           style={{ borderColor: c.borderSub }}
                         >
                           <button
                             type="button"
                             onClick={() => toggleBookmark(item.id)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium transition-colors cursor-pointer"
                             style={
                               isBookmarked
                                 ? { background: c.warningDim, color: c.warning }
@@ -525,7 +525,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                           <button
                             type="button"
                             onClick={() => toggleMastered(item.id)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium transition-colors cursor-pointer"
                             style={
                               isMastered
                                 ? { background: c.successDim, color: c.success }
@@ -533,7 +533,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                             }
                           >
                             <CheckIcon />
-                            <span>{isMastered ? "已掌握" : "标记掌握"}</span>
+                            <span>{isMastered ? "已掌握" : "掌握"}</span>
                           </button>
                         </div>
                       </div>
