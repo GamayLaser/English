@@ -1,0 +1,648 @@
+﻿@import 'tailwindcss';
+
+/* ── 字体注册 ──────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html:focus-within {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* ── 动画关键帧 ────────────────────────────────────────────────────── */
+@keyframes auto-advance-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes zen-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+@keyframes zen-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 1px rgba(96, 165, 250, 0.3); }
+  50%       { box-shadow: 0 0 16px 3px rgba(96, 165, 250, 0.5); }
+}
+@keyframes zen-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes zen-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.2); }
+  70%  { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+/* ── 新增动效关键帧 ────────────────────────────────────────────────── */
+
+/* 页面切换：轻盈淡入 + 微上移 */
+@keyframes zen-page-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);     }
+}
+
+/* 数字跳动（统计数字变化时） */
+@keyframes zen-count-up {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* 成就解锁 */
+@keyframes zen-achievement {
+  0%   { transform: scale(0.4) rotate(-18deg); opacity: 0; }
+  55%  { transform: scale(1.12) rotate(4deg);  opacity: 1; }
+  75%  { transform: scale(0.95) rotate(-1deg); opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
+}
+
+/* 错误抖动 */
+@keyframes zen-shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-5px); }
+  35%      { transform: translateX(5px); }
+  55%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+  90%      { transform: translateX(-2px); }
+}
+
+/* 粒子撒花（完成练习时） */
+@keyframes zen-particle {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
+}
+
+/* 导航激活竖条滑入 */
+@keyframes zen-bar-in {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* ── 设计 Token（与 App.tsx ThemeColors / zen-* 实用类保持同步） ── */
+@theme inline {
+  /* 字体栈 */
+  --font-sans: 'Geist Variable', ui-sans-serif, -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* ── 深色主题色票 ── */
+  --color-background:     #0B1120;
+  --color-foreground:     #F1F5F9;
+  --color-card:           #162032;
+  --color-card-hover:     #1E293B;
+  --color-card-foreground:#F1F5F9;
+  --color-sidebar:        #0F172A;
+  --color-border:         rgba(255,255,255,0.08);
+  --color-border-sub:     rgba(255,255,255,0.05);
+  --color-muted:          #1c2026;
+  --color-muted-fg:       #6b7280;
+  --color-primary:        #ffffff;
+  --color-primary-fg:     #0B1120;
+  --color-accent:         #60A5FA;
+  --color-accent-hover:   #a5b4fc;
+  --color-input-bg:       #1c2026;
+  --color-input-border:   rgba(255,255,255,0.1);
+
+  /* ── 新增：背景层次（4层纵深） ── */
+  --color-bg-base:        #090b0c;   /* 最深底层 */
+  --color-bg-surface:     #0f1214;   /* 卡片 / 侧边栏 */
+  --color-bg-raised:      #161a1d;   /* 悬浮面板 / 弹窗 */
+  --color-bg-overlay:     #1e2327;   /* 输入框 / hover */
+
+  /* ── 新增：语义色 ── */
+  --color-info:           #3b82f6;
+  --color-info-dim:       rgba(59, 130, 246, 0.12);
+  --color-warning:        #f59e0b;
+  --color-warning-dim:    rgba(245, 158, 11, 0.12);
+  --color-danger:         #ef4444;
+  --color-danger-dim:     rgba(239, 68, 68, 0.12);
+  --color-purple:         #c084fc;
+  --color-purple-dim:     rgba(192, 132, 252, 0.12);
+  --color-accent-deep:    #2563EB;
+  --color-accent-deeper:  #4338ca;
+}
+
+/* ── 全局根元素 ────────────────────────────────────────────────────── */
+html.dark,
+:root:not(.light) {
+  --c-accent: #60A5FA;
+  --c-success: #3ecf8e;
+  --c-warning: #f59e0b;
+  --c-danger: #ef4444;
+  --c-info: #3b82f6;
+  --c-active: rgba(255, 255, 255, 0.07);
+}
+html.light {
+  --c-accent: #2563EB;
+  --c-success: #059669;
+  --c-warning: #b45309;
+  --c-danger: #dc2626;
+  --c-info: #2563eb;
+  --c-active: rgba(15, 23, 42, 0.05);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+body {
+  font-family: var(--font-sans);
+}
+
+/* ── 高定卡片设计实用类（Bevel + 景深阴影） ────────────────────────── */
+.zen-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+html.dark .zen-card,
+:root:not(.light) .zen-card {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.030) 0%,
+    rgba(255, 255, 255, 0.008) 100%
+  ), #162032;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.09),  /* 顶沿高光 */
+    0 1px 2px rgba(0, 0, 0, 0.4),               /* 近阴影 */
+    0 6px 24px -4px rgba(0, 0, 0, 0.55);        /* 远扩散阴影 */
+}
+html.light .zen-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 4px 16px -2px rgba(15, 23, 42, 0.05);
+}
+
+.zen-card-hover {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease;
+}
+html.dark .zen-card-hover:hover,
+:root:not(.light) .zen-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.28);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 12px 32px -4px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(96, 165, 250, 0.10);
+}
+html.light .zen-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow:
+    0 4px 8px -1px rgba(15, 23, 42, 0.05),
+    0 14px 28px -4px #E2E8F0,
+    0 0 0 1px rgba(37, 99, 235, 0.12);
+}
+
+/* ── 3D 微倾卡片 hover（首页模块卡专用） ───────────────────────────── */
+.zen-card-3d {
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+html.dark .zen-card-3d:hover,
+:root:not(.light) .zen-card-3d:hover {
+  transform: perspective(900px) rotateX(1.5deg) translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.30);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 16px 40px -6px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(96, 165, 250, 0.12);
+}
+html.light .zen-card-3d:hover {
+  transform: perspective(900px) rotateX(1.5deg) translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.30);
+  box-shadow:
+    0 4px 10px -1px rgba(15, 23, 42, 0.07),
+    0 18px 36px -6px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(37, 99, 235, 0.14);
+}
+
+/* 内容卡左上角色晕。--card-wash 用 hueDim 或语义浅色，叠在顶沿高光之上。 */
+html.dark .zen-card.zen-card-wash,
+:root:not(.light) .zen-card.zen-card-wash {
+  background:
+    radial-gradient(ellipse 85% 65% at 5% 0%, var(--card-wash) 0%, transparent 80%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.030) 0%, rgba(255, 255, 255, 0.008) 100%),
+    #162032;
+}
+html.light .zen-card.zen-card-wash {
+  background:
+    radial-gradient(ellipse 85% 65% at 5% 0%, var(--card-wash) 0%, transparent 80%),
+    #ffffff;
+}
+
+/* 弹窗只比卡片多一层遮罩阴影 */
+html.dark .zen-card.zen-modal,
+:root:not(.light) .zen-card.zen-modal {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.09),
+    0 24px 60px rgba(0, 0, 0, 0.45);
+}
+html.light .zen-card.zen-modal {
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+/* ── 磨砂玻璃效果（Sidebar / Floating Panels / Headers） ─────────────────────── */
+.zen-glass {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+html.dark .zen-glass,
+:root:not(.light) .zen-glass {
+  background: rgba(13, 15, 18, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.light .zen-glass {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: #E2E8F0;
+}
+
+/* ── 氛围光晕底层（Hero 区域 / 焦点区） ───────────────────────────── */
+html.dark .zen-ambient-glow::before,
+:root:not(.light) .zen-ambient-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 50% at 50% -10%,
+    rgba(96, 165, 250, 0.10) 0%,
+    transparent 70%
+  );
+  z-index: 0;
+}
+html.light .zen-ambient-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 50% at 50% -10%,
+    rgba(37, 99, 235, 0.06) 0%,
+    transparent 70%
+  );
+  z-index: 0;
+}
+
+/* ── 激活态导航项微光药丸 ──────────────────────────────────────────── */
+html.dark .zen-nav-active,
+:root:not(.light) .zen-nav-active {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  color: #ffffff !important;
+}
+html.light .zen-nav-active {
+  background: rgba(37, 99, 235, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18);
+  color: #2563EB !important;
+}
+
+/* ── 激活态导航左侧竖条指示器 ─────────────────────────────────────── */
+.zen-nav-bar {
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #60A5FA;
+  animation: zen-bar-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+html.light .zen-nav-bar {
+  background: #2563EB;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+}
+
+/* ── Tooltip（折叠侧边栏导航项悬停提示） ──────────────────────────── */
+.zen-tooltip-wrap {
+  position: relative;
+}
+.zen-tooltip-wrap .zen-tooltip {
+  pointer-events: none;
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 100;
+}
+html.dark .zen-tooltip-wrap .zen-tooltip,
+:root:not(.light) .zen-tooltip-wrap .zen-tooltip {
+  background: #1e2327;
+  color: #F1F5F9;
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+html.light .zen-tooltip-wrap .zen-tooltip {
+  background: #1e293b;
+  color: #f8fafc;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.2);
+}
+.zen-tooltip-wrap:hover .zen-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ── 等宽数字：用界面字体，只对齐数字宽度 ───────────────────────── */
+.zen-tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 字号规范。新代码只用这些类，规则见 .cursor/rules/typography.mdc ── */
+@layer components {
+  .type-caption {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
+  }
+  .type-secondary {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+  .type-body {
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+  }
+  .type-title {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+  }
+  .type-page {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+  .type-display {
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .type-prose {
+    font-size: 17px;
+    line-height: 32px;
+    font-weight: 400;
+  }
+  .type-english {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    line-height: 36px;
+    font-weight: 400;
+  }
+  .type-prompt {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+  .type-hero {
+    font-size: 40px;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+}
+@media (min-width: 768px) {
+  .type-prompt {
+    font-size: 32px;
+  }
+}
+
+/* ── Spring 过渡曲线 ────────────────────────────────────────────────── */
+.zen-spring {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── 动画实用类 ─────────────────────────────────────────────────────── */
+.zen-pulse       { animation: zen-pulse 2s ease-in-out infinite; }
+.zen-glow        { animation: zen-glow-pulse 2.5s ease-in-out infinite; }
+.zen-slide-up    { animation: zen-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.zen-pop         { animation: zen-pop 0.38s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.zen-page-enter  { animation: zen-page-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.zen-count-up    { animation: zen-count-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.zen-achievement { animation: zen-achievement 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.zen-shake       { animation: zen-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+/* ── 横向滚动渐变蒙版（分类胶囊栏/移动端滑条） ───────────────────── */
+.zen-fade-mask {
+  mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+}
+
+/* ── 隐藏滚动条但保持可滚动 ─────────────────────────────────────────── */
+.zen-no-scrollbar {
+  scrollbar-width: none;
+}
+.zen-no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── 徽章（Badge）通用样式 ─────────────────────────────────────────── */
+.zen-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.zen-badge-green {
+  background: rgba(62, 207, 142, 0.14);
+  color: #3ecf8e;
+  border: 1px solid rgba(62, 207, 142, 0.22);
+}
+.zen-badge-amber {
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+.zen-badge-blue {
+  background: rgba(59, 130, 246, 0.14);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+.zen-badge-purple {
+  background: rgba(168, 85, 247, 0.14);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.22);
+}
+.zen-badge-red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.20);
+}
+.zen-badge-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: #6b7280;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+html.light .zen-badge-muted {
+  background: rgba(15, 23, 42, 0.05);
+  color: #64748b;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+/* ── 日记富文本编辑器样式 ──────────────────────────────────────────── */
+.diary-rich { outline: none; min-height: 200px; }
+.diary-rich:empty::before { content: attr(data-ph); color: #4a4a4a; pointer-events: none; font-style: italic; }
+.diary-rich h1 { font-size: 20px; font-weight: 600; margin: 0.6em 0 0.2em; line-height: 28px; }
+.diary-rich h2 { font-size: 16px; font-weight: 600; margin: 0.5em 0 0.2em; line-height: 24px; }
+.diary-rich h3 { font-size: 14px; font-weight: 600; margin: 0.4em 0 0.15em; line-height: 22px; }
+.diary-rich strong { font-weight: 600; }
+.diary-rich em { font-style: italic; opacity: 0.9; }
+.diary-rich ul { list-style: disc; padding-left: 1.4em; margin: 0.3em 0; }
+.diary-rich ol { list-style: decimal; padding-left: 1.4em; margin: 0.3em 0; }
+.diary-rich blockquote { border-left: 3px solid #60A5FA; padding-left: 14px; opacity: 0.75; margin: 0.3em 0; }
+html.light .diary-rich blockquote { border-left-color: #2563EB; }
+.diary-rich p { margin: 0; }
+.diary-rich div { margin: 0; }
+
+/* ── 知识库卡片网格（限制最多 4 列） ──────────────────────────────── */
+.knowledge-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 1rem;
+}
+@media (min-width: 1600px) {
+  .knowledge-card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── 全平台统一胶囊切换栏（Pill Tabs） ─────────────────────────────── */
+.zen-pill-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.zen-pill-tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #8b949e;
+}
+.zen-pill-tab-item:hover {
+  color: #ffffff;
+}
+.zen-pill-tab-item.active {
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── 全平台统一按钮标准（Button Standards） ───────────────────────── */
+.ui-btn-primary {
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--c-accent) 70%, transparent);
+}
+.ui-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.ui-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.ui-btn-secondary:hover:not(:disabled),
+.ui-btn-danger:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.ui-btn-ghost:hover:not(:disabled) {
+  background: var(--c-active);
+}
+
+
+/* ── AI情报瀑布流（自适应内容高度，杜绝无图卡片下半截留白） ─────── */
+.intel-masonry-grid {
+  column-count: 1;
+  column-gap: 1rem;
+}
+@media (min-width: 640px) {
+  .intel-masonry-grid {
+    column-count: 2;
+  }
+}
+@media (min-width: 1024px) {
+  .intel-masonry-grid {
+    column-count: 3;
+  }
+}
+@media (min-width: 1536px) {
+  .intel-masonry-grid {
+    column-count: 4;
+  }
+}
+.intel-masonry-item {
+  break-inside: avoid-column;
+  page-break-inside: avoid;
+  margin-bottom: 1rem;
+  display: inline-block;
+  width: 100%;
+}
+
+
+/* ── 3D 翻卡 & A4 打印 ─────────────────────────────────────────────────── */
+.flashcard-perspective { perspective: 1200px; }
+.flashcard-inner { transform-style: preserve-3d; }
+.flashcard-inner.is-flipped { transform: rotateY(180deg); }
+.flashcard-face { position: absolute; inset: 0; backface-visibility: hidden; }
+.flashcard-back { transform: rotateY(180deg); }
+.print-only { display: none; }
+
+@media print {
+  html, body, #root { height: auto !important; overflow: visible !important; }
+  .no-print, aside, nav { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; overflow: visible !important; }
+  .print-only { display: block !important; }
+  .print-sheet { page-break-after: always; padding: 8mm; }
+  .print-sheet-header {
+    display: flex; justify-content: space-between; font-size: 10pt;
+    margin-bottom: 4mm; border-bottom: 1px solid #ddd; padding-bottom: 2mm;
+  }
+  .print-grid-card { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+  .print-grid-sentence { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5mm; }
+  .print-cell {
+    border: 1px solid #ccc; border-radius: 4px; padding: 3mm;
+    display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 9pt;
+  }
+  .print-cell-img { width: 100%; height: 28mm; object-fit: contain; margin-bottom: 2mm; }
+  .print-cell-word { font-size: 10pt; font-weight: 700; }
+  .print-cell-def { color: #555; font-size: 8pt; }
+}
+
+

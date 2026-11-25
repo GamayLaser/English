@@ -1,0 +1,1 @@
+export interface ListeningEvaluation { totalScore: number; scores: { completeness: number; spelling: number; grammar: number; mechanics: number }; feedback: string; strengths: string[]; improvements: string[]; transcript: string; comparisons: Array<{ reference: string; learner: string; issues: string[] }>; }

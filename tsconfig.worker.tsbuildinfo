@@ -1,0 +1,1 @@
+{"root":["./worker/env.ts","./worker/index.ts","./worker/db/index.ts","./worker/db/schema.ts","./worker/middleware/auth.ts","./worker/routes/ai.ts","./worker/routes/auth.ts","./worker/routes/records.ts","./worker/services/crypto.ts","./shared/schemas.ts"],"version":"5.9.3"}

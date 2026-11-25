@@ -1,0 +1,7 @@
+# Local Cloudflare Workers secrets (never commit .dev.vars to git)
+SESSION_SECRET=replace-with-at-least-32-characters-random-secret
+DEEPSEEK_API_KEY=
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=
