@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { VocabCategoryMeta, VocabEntry } from "@shared/schemas";
 import { Button, Card, EmptyState, FilterChip, Modal, SearchField } from "../components/ui";
 import { api } from "../lib/api";
@@ -50,30 +50,223 @@ const STATUS_FILTERS = [
 ] as const;
 
 const SPEEDS = [1.0, 1.2, 0.8];
+const PAGE_BATCH_SIZE = 48;
 
-function SpeakerIcon({ size = 15 }: { size?: number }) {
+function SpeakerSvg({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
     </svg>
   );
 }
 
-function StarIcon({ filled }: { filled: boolean }) {
+function BookmarkSvg({ filled }: { filled: boolean }) {
   return (
-    <svg width="14" height="14" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    <svg width="17" height="17" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   );
 }
 
-function CheckIcon() {
+function MasteredSvg() {
   return (
-    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   );
 }
+
+function HighlightedSentence({ sentence, word }: { sentence: string; word: string }) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (!escaped) return <>{sentence}</>;
+  const regex = new RegExp(`(\\b${escaped}\\b)`, "gi");
+  const parts = sentence.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>,
+      )}
+    </>
+  );
+}
+
+const VocabCardItem = memo(function VocabCardItem({
+  item,
+  catName,
+  cdnBaseUrl,
+  speed,
+  isBookmarked,
+  isMastered,
+  onToggleBookmark,
+  onToggleMastered,
+}: {
+  item: VocabEntry;
+  catName: string;
+  cdnBaseUrl: string;
+  speed: number;
+  isBookmarked: boolean;
+  isMastered: boolean;
+  onToggleBookmark: (id: string) => void;
+  onToggleMastered: (id: string) => void;
+}) {
+  return (
+    <article className="vocab-card">
+      <div className="vocab-card-header">
+        <span className="vocab-category-tag" title={catName}>
+          {catName}
+        </span>
+        <div className="vocab-card-actions">
+          <button
+            type="button"
+            className={`vocab-action-btn ${isBookmarked ? "bookmarked" : ""}`}
+            onClick={() => onToggleBookmark(item.id)}
+            title={isBookmarked ? "取消收藏" : "收藏卡片"}
+            aria-label="收藏卡片"
+          >
+            <BookmarkSvg filled={isBookmarked} />
+          </button>
+          <button
+            type="button"
+            className={`vocab-action-btn ${isMastered ? "mastered" : ""}`}
+            onClick={() => onToggleMastered(item.id)}
+            title={isMastered ? "取消掌握" : "标记为已掌握"}
+            aria-label="标记掌握"
+          >
+            <MasteredSvg />
+          </button>
+        </div>
+      </div>
+
+      {item.entryType !== "sentence" && (
+        <div
+          className="vocab-illustration-frame"
+          onClick={() => speakVocabText(item.audioText || item.word, speed)}
+          title="点击图片朗读"
+        >
+          <div className="vocab-img-wrapper">
+            <img
+              src={getCardImageUrl(item, cdnBaseUrl)}
+              alt={item.word}
+              loading="lazy"
+              decoding="async"
+              className="vocab-card-img"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="vocab-card-body">
+        <div className="vocab-word-row">
+          <h3 className="vocab-word-text" lang="en">
+            {item.word}
+          </h3>
+          <button
+            type="button"
+            className="vocab-audio-btn"
+            onClick={() => speakVocabText(item.audioText || item.word, speed)}
+            aria-label="朗读单词"
+            title="朗读单词"
+          >
+            <SpeakerSvg size={16} />
+          </button>
+        </div>
+
+        <div className="vocab-meaning-row">
+          {item.pos && <span className="vocab-pos-tag">{item.pos}</span>}
+          <span className="vocab-meaning-text">{item.definition}</span>
+        </div>
+
+        {item.sentence && (
+          <div className="vocab-example-box">
+            <div className="vocab-example-en" lang="en">
+              <span>
+                <HighlightedSentence sentence={item.sentence} word={item.word} />
+              </span>
+              <button
+                type="button"
+                className="vocab-sentence-audio-btn"
+                onClick={() =>
+                  speakVocabText(item.exampleAudio || item.sentence || item.word, speed)
+                }
+                title="朗读例句"
+                aria-label="朗读例句"
+              >
+                <SpeakerSvg size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+});
+
+const SentenceCardItem = memo(function SentenceCardItem({
+  item,
+  speed,
+  isBookmarked,
+  isMastered,
+  onToggleBookmark,
+  onToggleMastered,
+}: {
+  item: VocabEntry;
+  speed: number;
+  isBookmarked: boolean;
+  isMastered: boolean;
+  onToggleBookmark: (id: string) => void;
+  onToggleMastered: (id: string) => void;
+}) {
+  return (
+    <article className="sentence-card">
+      <div className="sentence-headline">
+        <h3 className="sentence-target" lang="en">
+          {item.word}
+        </h3>
+        <div className="sentence-tools">
+          <button
+            type="button"
+            className="vocab-audio-btn"
+            onClick={() => speakVocabText(item.exampleAudio || item.sentence || item.word, speed)}
+            aria-label="朗读句子"
+            title="朗读句子"
+          >
+            <SpeakerSvg size={15} />
+          </button>
+          <button
+            type="button"
+            className={`vocab-action-btn ${isBookmarked ? "bookmarked" : ""}`}
+            onClick={() => onToggleBookmark(item.id)}
+            title="收藏"
+          >
+            <BookmarkSvg filled={isBookmarked} />
+          </button>
+          <button
+            type="button"
+            className={`vocab-action-btn ${isMastered ? "mastered" : ""}`}
+            onClick={() => onToggleMastered(item.id)}
+            title="标记掌握"
+          >
+            <MasteredSvg />
+          </button>
+        </div>
+      </div>
+      <p className="sentence-definition">{item.definition}</p>
+      <div className="dialogue-box" lang="en">
+        {dialogueLines(item).map((line, i) => {
+          const match = line.match(/^([AB]):\s*(.*)$/);
+          return (
+            <p key={i} className="dialogue-line">
+              {match && <span className="dialogue-speaker">{match[1]}</span>}
+              <span className="dialogue-text">{match ? match[2] : line}</span>
+            </p>
+          );
+        })}
+      </div>
+    </article>
+  );
+});
 
 export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors }) {
   const meta = MODE_META[mode];
@@ -86,6 +279,8 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
   const [searchQuery, setSearchQuery] = useState("");
   const [sentenceTopic, setSentenceTopic] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_BATCH_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const initial = useMemo(() => loadVocabProgress(), []);
   const [speed, setSpeed] = useState<number>(initial.speed);
@@ -106,6 +301,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
     setActiveFilter("all");
     setSearchQuery("");
     setSentenceTopic("");
+    setVisibleLimit(PAGE_BATCH_SIZE);
     if (!categories.length) return;
     if (mode === "sentence") {
       const sentenceCat = categories.find((cat) => cat.group === "sentence");
@@ -135,6 +331,28 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
     };
   }, [categories, currentCategory]);
 
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const cat of categories) map.set(cat.id, cat.nameEn);
+    return map;
+  }, [categories]);
+
+  const visibleCategories = useMemo(() => {
+    return categories.filter((cat) => {
+      if (mode === "sentence" && cat.group !== "sentence") return false;
+      if (mode !== "sentence" && cat.group === "sentence") return false;
+      return true;
+    });
+  }, [categories, mode]);
+
+  const sentenceTopics = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of entries) {
+      if (item.entryType === "sentence" && item.topic) set.add(item.topic);
+    }
+    return [...set];
+  }, [entries]);
+
   const filteredCards = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return entries.filter((item) => {
@@ -155,21 +373,41 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
     });
   }, [entries, mode, sentenceTopic, activeFilter, bookmarked, mastered, searchQuery]);
 
-  const visibleCategories = useMemo(() => {
-    return categories.filter((cat) => {
-      if (mode === "sentence" && cat.group !== "sentence") return false;
-      if (mode !== "sentence" && cat.group === "sentence") return false;
-      return true;
-    });
-  }, [categories, mode]);
+  useEffect(() => {
+    setVisibleLimit(PAGE_BATCH_SIZE);
+  }, [mode, currentCategory, activeFilter, searchQuery, sentenceTopic]);
 
-  const sentenceTopics = useMemo(() => {
-    const set = new Set<string>();
-    for (const item of entries) {
-      if (item.entryType === "sentence" && item.topic) set.add(item.topic);
+  const visibleCards = useMemo(
+    () => filteredCards.slice(0, visibleLimit),
+    [filteredCards, visibleLimit],
+  );
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || visibleLimit >= filteredCards.length) return;
+    const observer = new IntersectionObserver(
+      (obs) => {
+        if (obs[0]?.isIntersecting) {
+          setVisibleLimit((prev) => Math.min(filteredCards.length, prev + PAGE_BATCH_SIZE));
+        }
+      },
+      { rootMargin: "320px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [visibleLimit, filteredCards.length]);
+
+  const sentenceGroups = useMemo(() => {
+    if (mode !== "sentence") return [];
+    const groups = new Map<string, VocabEntry[]>();
+    for (const item of visibleCards) {
+      const topic = item.topic || "Sentences";
+      const arr = groups.get(topic) ?? [];
+      arr.push(item);
+      groups.set(topic, arr);
     }
-    return [...set];
-  }, [entries]);
+    return [...groups.entries()];
+  }, [mode, visibleCards]);
 
   const toggleBookmark = useCallback((id: string) => {
     setBookmarked((prev) => {
@@ -252,7 +490,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
       <div className="no-print space-y-5">
         {/* Top Hero & Controls */}
         <Card c={c} wash={c.accentDim}>
-          <div className="p-5 md:p-6 space-y-5">
+          <div className="p-5 md:p-6 space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="type-caption font-medium" style={{ color: c.accent }}>
@@ -261,7 +499,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                 <h2 className="type-page mt-1" style={{ color: c.fg }}>
                   {meta.title}
                 </h2>
-                <p className="type-secondary mt-1.5" style={{ color: c.fgMuted }}>
+                <p className="type-secondary mt-1" style={{ color: c.fgMuted }}>
                   {meta.subtitle}
                 </p>
               </div>
@@ -326,223 +564,123 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                 )
               )}
             </div>
-
           </div>
         </Card>
 
-        {/* Full-Width Cards Viewport */}
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 px-0.5">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {STATUS_FILTERS.map((chip) => (
-                <FilterChip
-                  key={chip.id}
-                  c={c}
-                  compact
-                  active={activeFilter === chip.id}
-                  onClick={() => setActiveFilter(chip.id)}
-                >
-                  {chip.label}
-                </FilterChip>
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              <p className="type-secondary zen-tnum" style={{ color: c.fgMuted }}>
-                共 {filteredCards.length} 条记录
-              </p>
-              {(searchQuery || activeFilter !== "all" || sentenceTopic) && (
-                <Button
-                  c={c}
-                  variant="ghost"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setActiveFilter("all");
-                    setSentenceTopic("");
-                  }}
-                >
-                  重置筛选
-                </Button>
-              )}
-            </div>
+        {/* Status Filter & Count Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-0.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {STATUS_FILTERS.map((chip) => (
+              <FilterChip
+                key={chip.id}
+                c={c}
+                compact
+                active={activeFilter === chip.id}
+                onClick={() => setActiveFilter(chip.id)}
+              >
+                {chip.label}
+              </FilterChip>
+            ))}
           </div>
+          <div className="flex items-center gap-3">
+            <p className="type-secondary zen-tnum" style={{ color: c.fgMuted }}>
+              共 {filteredCards.length} 条记录
+            </p>
+            {(searchQuery || activeFilter !== "all" || sentenceTopic) && (
+              <Button
+                c={c}
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveFilter("all");
+                  setSentenceTopic("");
+                }}
+              >
+                重置筛选
+              </Button>
+            )}
+          </div>
+        </div>
 
-          {loading ? (
-            <div className="py-20 text-center type-secondary" style={{ color: c.fgMuted }}>
-              正在加载词卡…
-            </div>
-          ) : filteredCards.length === 0 ? (
-            <EmptyState
+        {/* Cards Viewport */}
+        {loading ? (
+          <div className="py-20 text-center type-secondary" style={{ color: c.fgMuted }}>
+            正在加载词卡…
+          </div>
+        ) : filteredCards.length === 0 ? (
+          <EmptyState
+            c={c}
+            title="没有找到匹配的卡片"
+            description="试试调整关键词，或清除当前筛选条件。"
+            action={
+              <Button
+                c={c}
+                variant="secondary"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveFilter("all");
+                  setSentenceTopic("");
+                }}
+              >
+                查看全部
+              </Button>
+            }
+          />
+        ) : mode === "sentence" ? (
+          <div className="sentence-groups">
+            {sentenceGroups.map(([topic, items]) => (
+              <section key={topic}>
+                <h3 className="sentence-group-title">
+                  {topic}
+                  <span>{items.length}</span>
+                </h3>
+                <div className="sentence-list">
+                  {items.map((item) => (
+                    <SentenceCardItem
+                      key={item.id}
+                      item={item}
+                      speed={speed}
+                      isBookmarked={bookmarked.has(item.id)}
+                      isMastered={mastered.has(item.id)}
+                      onToggleBookmark={toggleBookmark}
+                      onToggleMastered={toggleMastered}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className="vocab-cards-grid">
+            {visibleCards.map((item) => (
+              <VocabCardItem
+                key={item.id}
+                item={item}
+                catName={item.topic || categoryNameById.get(item.category) || ""}
+                cdnBaseUrl={cdnBaseUrl}
+                speed={speed}
+                isBookmarked={bookmarked.has(item.id)}
+                isMastered={mastered.has(item.id)}
+                onToggleBookmark={toggleBookmark}
+                onToggleMastered={toggleMastered}
+              />
+            ))}
+          </div>
+        )}
+
+        {visibleLimit < filteredCards.length && (
+          <div ref={loadMoreRef} className="py-6 text-center">
+            <Button
               c={c}
-              title="没有找到匹配的卡片"
-              description="试试调整关键词，或清除当前筛选条件。"
-              action={
-                <Button
-                  c={c}
-                  variant="secondary"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setActiveFilter("all");
-                    setSentenceTopic("");
-                  }}
-                >
-                  查看全部
-                </Button>
-              }
-            />
-          ) : (
-            <div
-              className={
-                mode === "sentence"
-                  ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
-                  : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
+              variant="secondary"
+              onClick={() =>
+                setVisibleLimit((prev) => Math.min(filteredCards.length, prev + PAGE_BATCH_SIZE))
               }
             >
-                {filteredCards.map((item) => {
-                  const isBookmarked = bookmarked.has(item.id);
-                  const isMastered = mastered.has(item.id);
-                  return (
-                    <Card
-                      key={item.id}
-                      c={c}
-                      hover
-                      className="overflow-hidden flex flex-col justify-between"
-                    >
-                      {item.entryType !== "sentence" && (
-                        <div
-                          onClick={() => speakVocabText(item.audioText || item.word, speed)}
-                          className="h-36 cursor-pointer overflow-hidden border-b flex items-center justify-center p-1.5"
-                          style={{
-                            background: "#FFFFFF",
-                            borderColor: c.borderSub,
-                          }}
-                          title="点击图片朗读"
-                        >
-                          <img
-                            src={getCardImageUrl(item, cdnBaseUrl)}
-                            alt={item.word}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
-
-                      <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <h3
-                                className="text-[15px] font-semibold leading-snug break-words"
-                                style={{ color: c.fg }}
-                                lang="en"
-                              >
-                                {item.word}
-                              </h3>
-                              {item.pos && (
-                                <span
-                                  className="inline-block text-[11px] font-medium"
-                                  style={{ color: c.accent }}
-                                >
-                                  {item.pos}
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => speakVocabText(item.audioText || item.word, speed)}
-                              className="p-1.5 rounded-lg transition-colors shrink-0 cursor-pointer"
-                              style={{ background: c.inputBg, color: c.fgDim }}
-                              title="朗读"
-                            >
-                              <SpeakerIcon size={13} />
-                            </button>
-                          </div>
-
-                          <p className="text-[12.5px] leading-snug" style={{ color: c.fgSub }}>
-                            {item.definition}
-                          </p>
-
-                          {item.entryType === "sentence" ? (
-                            <div
-                              className="pt-2 border-t space-y-1 text-[12px]"
-                              style={{ borderColor: c.borderSub, color: c.fgDim }}
-                              lang="en"
-                            >
-                              {dialogueLines(item).map((line, i) => (
-                                <p key={i}>{line}</p>
-                              ))}
-                            </div>
-                          ) : (
-                            item.sentence && (
-                              <div
-                                className="pt-2 border-t flex items-start justify-between gap-1.5"
-                                style={{ borderColor: c.borderSub }}
-                              >
-                                <p
-                                  className="text-[11.5px] leading-relaxed"
-                                  style={{ color: c.fgMuted }}
-                                  lang="en"
-                                >
-                                  {item.sentence}
-                                </p>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    speakVocabText(
-                                      item.exampleAudio || item.sentence || item.word,
-                                      speed,
-                                    )
-                                  }
-                                  className="p-1 rounded-md opacity-70 hover:opacity-100 shrink-0 cursor-pointer"
-                                  style={{ color: c.fgDim }}
-                                  title="朗读例句"
-                                >
-                                  <SpeakerIcon size={12} />
-                                </button>
-                              </div>
-                            )
-                          )}
-                        </div>
-
-                        <div
-                          className="pt-2 flex items-center justify-between border-t"
-                          style={{ borderColor: c.borderSub }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => toggleBookmark(item.id)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium transition-colors cursor-pointer"
-                            style={
-                              isBookmarked
-                                ? { background: c.warningDim, color: c.warning }
-                                : { color: c.fgMuted }
-                            }
-                          >
-                            <StarIcon filled={isBookmarked} />
-                            <span>{isBookmarked ? "已收藏" : "收藏"}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleMastered(item.id)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium transition-colors cursor-pointer"
-                            style={
-                              isMastered
-                                ? { background: c.successDim, color: c.success }
-                                : { color: c.fgMuted }
-                            }
-                          >
-                            <CheckIcon />
-                            <span>{isMastered ? "已掌握" : "掌握"}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-            </div>
-          )}
-        </div>
+              加载更多 ({visibleCards.length} / {filteredCards.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 3D Flashcard Modal */}
@@ -601,7 +739,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                     className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium cursor-pointer"
                     style={{ background: c.accentDim, color: c.accent }}
                   >
-                    <SpeakerIcon size={14} />
+                    <SpeakerSvg size={14} />
                     <span>朗读</span>
                   </button>
                   <p className="type-caption mt-4" style={{ color: c.fgMuted }}>
