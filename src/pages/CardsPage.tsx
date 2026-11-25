@@ -292,6 +292,13 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
   const [isFlipped, setIsFlipped] = useState(false);
   const [shuffledOrder, setShuffledOrder] = useState<VocabEntry[] | null>(null);
 
+  type QuizQuestion = { target: VocabEntry; options: VocabEntry[] };
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizSelectedId, setQuizSelectedId] = useState<string | null>(null);
+  const [quizScore, setQuizScore] = useState(0);
+
   useEffect(() => {
     api.health().then((h) => setCdnBaseUrl(h.cardsCdnUrl || "")).catch(() => undefined);
     loadVocabIndex().then(setCategories).catch(() => undefined);
@@ -476,6 +483,36 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
     setIsFlipped(false);
   };
 
+  const startAudioQuiz = () => {
+    if (filteredCards.length < 4) return;
+    const pool = [...filteredCards];
+    const unmasteredFirst = [
+      ...pool.filter((item) => !mastered.has(item.id)).sort(() => Math.random() - 0.5),
+      ...pool.filter((item) => mastered.has(item.id)).sort(() => Math.random() - 0.5),
+    ].slice(0, 10);
+
+    const built: QuizQuestion[] = unmasteredFirst.map((target) => {
+      const distractors = pool
+        .filter((item) => item.id !== target.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      const options = [target, ...distractors].sort(() => Math.random() - 0.5);
+      return { target, options };
+    });
+
+    setQuizQuestions(built);
+    setQuizIndex(0);
+    setQuizSelectedId(null);
+    setQuizScore(0);
+    setQuizOpen(true);
+    if (built[0]) {
+      speakVocabText(built[0].target.audioText || built[0].target.word, speed);
+    }
+  };
+
+  const activeQuiz = quizQuestions[quizIndex] ?? null;
+  const quizFinished = quizOpen && quizQuestions.length > 0 && quizIndex >= quizQuestions.length;
+
   const printSheets = useMemo(() => {
     const sheets: VocabEntry[][] = [];
     const perSheet = mode === "sentence" ? 8 : 16;
@@ -509,6 +546,14 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                 </Button>
                 <Button c={c} variant="secondary" onClick={cycleSpeed}>
                   语速 {speed.toFixed(1)}x
+                </Button>
+                <Button
+                  c={c}
+                  variant="secondary"
+                  onClick={startAudioQuiz}
+                  disabled={filteredCards.length < 4}
+                >
+                  听音辨词
                 </Button>
                 <Button
                   c={c}
@@ -805,6 +850,148 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Audio Quiz Modal */}
+      <Modal
+        c={c}
+        open={quizOpen}
+        onClose={() => setQuizOpen(false)}
+        label="听音辨词闯关"
+        maxWidthClassName="max-w-lg"
+      >
+        {quizFinished ? (
+          <div className="space-y-5 text-center py-4">
+            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+              QUIZ COMPLETE
+            </p>
+            <h3 className="type-display" style={{ color: c.fg }}>
+              {quizScore} / {quizQuestions.length} 题正确
+            </h3>
+            <p className="type-secondary" style={{ color: c.fgMuted }}>
+              {quizScore >= Math.ceil(quizQuestions.length * 0.8)
+                ? "听音反应很敏捷！可以继续挑战下一组或进入情景句子。"
+                : "多听几遍慢速发音，耳朵会越来越熟悉这些高频表达。"}
+            </p>
+            <div className="flex justify-center gap-3 pt-2">
+              <Button c={c} variant="secondary" onClick={() => setQuizOpen(false)}>
+                返回词卡
+              </Button>
+              <Button c={c} variant="primary" onClick={startAudioQuiz}>
+                再来一轮
+              </Button>
+            </div>
+          </div>
+        ) : activeQuiz ? (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <span className="type-secondary zen-tnum" style={{ color: c.fgMuted }}>
+                第 {quizIndex + 1} / {quizQuestions.length} 题
+              </span>
+              <Button c={c} variant="ghost" onClick={() => setQuizOpen(false)}>
+                退出
+              </Button>
+            </div>
+
+            <div
+              className="rounded-2xl p-6 text-center space-y-3"
+              style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+            >
+              <p className="text-xs font-medium" style={{ color: c.fgMuted }}>
+                听发音，选出正确的中文释义
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  speakVocabText(activeQuiz.target.audioText || activeQuiz.target.word, speed)
+                }
+                className="mx-auto inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-transform hover:scale-105 cursor-pointer"
+                style={{ background: c.accent, color: c.accentFg }}
+              >
+                <SpeakerSvg size={16} />
+                <span>重听发音 ({speed.toFixed(1)}x)</span>
+              </button>
+              {quizSelectedId && (
+                <p className="text-lg font-bold pt-1" style={{ color: c.fg }} lang="en">
+                  {activeQuiz.target.word}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2.5">
+              {activeQuiz.options.map((opt) => {
+                const answered = quizSelectedId !== null;
+                const isCorrect = opt.id === activeQuiz.target.id;
+                const isChosen = opt.id === quizSelectedId;
+                let bg = c.card;
+                let border = c.border;
+                let color = c.fg;
+                if (answered) {
+                  if (isCorrect) {
+                    bg = c.successDim;
+                    border = c.success;
+                    color = c.success;
+                  } else if (isChosen) {
+                    bg = c.dangerDim;
+                    border = c.danger;
+                    color = c.danger;
+                  }
+                }
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    disabled={answered}
+                    onClick={() => {
+                      setQuizSelectedId(opt.id);
+                      if (opt.id === activeQuiz.target.id) {
+                        setQuizScore((s) => s + 1);
+                      }
+                    }}
+                    className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all cursor-pointer disabled:cursor-default"
+                    style={{ background: bg, border: `1px solid ${border}`, color }}
+                  >
+                    <span>{opt.definition}</span>
+                    {answered && (
+                      <span className="text-xs font-semibold shrink-0" lang="en">
+                        {opt.word}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {quizSelectedId && (
+              <div className="flex items-center justify-between pt-1">
+                <Button
+                  c={c}
+                  variant={mastered.has(activeQuiz.target.id) ? "secondary" : "ghost"}
+                  onClick={() => toggleMastered(activeQuiz.target.id)}
+                >
+                  {mastered.has(activeQuiz.target.id) ? "已掌握" : "标记掌握"}
+                </Button>
+                <Button
+                  c={c}
+                  variant="primary"
+                  onClick={() => {
+                    const nextIdx = quizIndex + 1;
+                    setQuizIndex(nextIdx);
+                    setQuizSelectedId(null);
+                    if (quizQuestions[nextIdx]) {
+                      speakVocabText(
+                        quizQuestions[nextIdx].target.audioText || quizQuestions[nextIdx].target.word,
+                        speed,
+                      );
+                    }
+                  }}
+                >
+                  {quizIndex + 1 >= quizQuestions.length ? "查看成绩" : "下一题 →"}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : null}
       </Modal>
 
       {/* A4 Print Sheets */}
