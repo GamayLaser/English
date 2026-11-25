@@ -143,11 +143,11 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button c={c} variant="primary" onClick={() => navigate("/sentences")}>
-              情景句子
+            <Button c={c} variant="primary" onClick={() => navigate("/shows")}>
+              美剧精听
             </Button>
-            <Button c={c} variant="secondary" onClick={() => navigate("/listening")}>
-              听力训练
+            <Button c={c} variant="secondary" onClick={() => navigate("/sentences")}>
+              情景句子
             </Button>
           </div>
         </Card>

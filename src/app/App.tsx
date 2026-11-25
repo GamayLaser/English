@@ -8,6 +8,7 @@ import type { Theme } from "../types";
 import AppShell from "./AppShell";
 
 const TodayPage = lazy(() => import("../pages/TodayPage"));
+const ShowsPage = lazy(() => import("../pages/ShowsPage"));
 const CardsPage = lazy(() => import("../pages/CardsPage"));
 const EnglishPage = lazy(() => import("../pages/EnglishPage"));
 const ReadingPractice = lazy(() => import("../pages/ReadingPractice"));
@@ -114,6 +115,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="/today" replace />} />
             <Route path="/today" element={<TodayPage c={colors} />} />
+            <Route path="/shows" element={<ShowsPage c={colors} />} />
             <Route path="/words" element={<CardsPage mode="word" c={colors} />} />
             <Route path="/phrases" element={<CardsPage mode="phrase" c={colors} />} />
             <Route path="/sentences" element={<CardsPage mode="sentence" c={colors} />} />

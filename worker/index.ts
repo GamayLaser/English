@@ -3,6 +3,7 @@ import type { Env } from "./env";
 import { aiRoutes } from "./routes/ai";
 import { authRoutes } from "./routes/auth";
 import { recordRoutes } from "./routes/records";
+import { videoRoutes } from "./routes/videos";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -32,6 +33,7 @@ app.get("/api/media/cards/:filename", async (c) => {
 app.route("/api/auth", authRoutes);
 app.route("/api", aiRoutes);
 app.route("/api/private-records", recordRoutes);
+app.route("/api/videos", videoRoutes);
 
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
