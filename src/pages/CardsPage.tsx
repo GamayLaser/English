@@ -486,14 +486,14 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
   }, [filteredCards, mode]);
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-5 pb-8 zen-page-enter">
       <div className="no-print space-y-5">
         {/* Top Hero & Controls */}
         <Card c={c} wash={c.accentDim}>
           <div className="p-5 md:p-6 space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="type-caption font-medium" style={{ color: c.accent }}>
+                <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
                   {meta.eyebrow}
                 </p>
                 <h2 className="type-page mt-1" style={{ color: c.fg }}>

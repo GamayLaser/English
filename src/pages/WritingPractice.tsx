@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { EnglishButton, EnglishEmptyState } from "../components/english/EnglishUi";
+import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
 import { loadAiSettings } from "../features/english/aiSettings";
 import type { WritingTopic } from "../features/english/types";
 import { loadWritingTopics } from "../features/writing/writingLibrary";
@@ -64,16 +64,42 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
     if (nextTopicId) setTopicId(nextTopicId);
   }
 
-  return <div className="flex w-full flex-col gap-4 pb-8 pt-5">
+  return <div className="flex w-full flex-col gap-5 pb-8 zen-page-enter">
+    <EnglishPageHeader
+      c={c}
+      eyebrow="WRITING PRACTICE"
+      title="写作训练"
+      description={`至少 ${topic.minWords} 词，建议写到 ${topic.recommendedWords} 词左右；草稿会自动保存到云端。`}
+      aside={
+        <>
+          {topics.length > 1 && (
+            <select
+              value={topic.id}
+              onChange={(e) => setTopicId(e.target.value)}
+              className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
+              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+              aria-label="选择写作题目"
+            >
+              {topics.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.prompt.slice(0, 32)}{item.prompt.length > 32 ? "…" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          <span className="shrink-0 rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: wordCount >= topic.minWords ? c.successDim : c.inputBg, color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount} / {topic.minWords} 词</span>
+        </>
+      }
+    />
     <Card c={c}>
-      <div className="p-6 md:p-8">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between"><div className="max-w-2xl"><p className="text-xs font-semibold tracking-[0.16em]" style={{ color: c.accent }}>WRITING TASK</p><h3 className="mt-2 text-xl font-semibold" style={{ color: c.fg }}>{topic.prompt}</h3><p className="mt-2 text-sm leading-relaxed" style={{ color: c.fgMuted }}>至少 {topic.minWords} 词，建议写到 {topic.recommendedWords} 词左右。</p></div><span className="shrink-0 rounded-xl px-4 py-2 text-sm font-semibold tabular-nums" style={{ background: wordCount >= topic.minWords ? c.successDim : c.inputBg, color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount} / {topic.minWords} 词</span></div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2"><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>需要写到</p><ol className="mt-3 space-y-2 text-sm leading-relaxed" style={{ color: c.fgSub }}>{topic.requiredPoints.map((point, index) => <li key={point}><span className="mr-2 font-semibold" style={{ color: c.accent }}>{index + 1}.</span>{point}</li>)}</ol></section><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>可以参考的词</p><div className="mt-3 flex flex-wrap gap-2">{topic.vocabularyHints.map((word) => <span key={word} className="rounded-lg px-3 py-1.5 text-sm" style={{ background: c.card, color: c.accent }}>{word}</span>)}</div></section></div>
+      <div className="p-5 md:p-8">
+        <div><p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>TOPIC PROMPT</p><h3 className="mt-1.5 text-lg font-semibold leading-snug" style={{ color: c.fg }}>{topic.prompt}</h3></div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2"><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>需要写到</p><ol className="mt-3 space-y-2 text-sm leading-relaxed" style={{ color: c.fgSub }}>{topic.requiredPoints.map((point, index) => <li key={point}><span className="mr-2 font-semibold" style={{ color: c.accent }}>{index + 1}.</span>{point}</li>)}</ol></section><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>可以参考的词</p><div className="mt-3 flex flex-wrap gap-2">{topic.vocabularyHints.map((word) => <span key={word} className="rounded-lg px-3 py-1.5 text-sm font-medium" style={{ background: c.card, color: c.accent, border: `1px solid ${c.borderSub}` }}>{word}</span>)}</div></section></div>
       </div>
     </Card>
     <Card c={c}>
-        <div className="p-6 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>草稿会自动保存到云端。</p></div><span className="text-xs" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
-        <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-indigo-400/50" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
+        <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
+        <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-blue-500/40" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
         {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         <div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void evaluateDraft()}>{busy ? "AI 正在评分…" : "交给 AI 评分与解析"}</EnglishButton></div>
         {progress.evaluation && <WritingEvaluationCard c={c} evaluation={progress.evaluation} onComplete={completeGroup} />}

@@ -134,41 +134,44 @@ export default function ContentLibrary({
   }
 
   return (
-    <Card c={c}>
-      <div
-        className="border-b px-5 py-5 md:px-8"
-        style={{ borderColor: c.border }}
-      >
-        <p
-          className="text-xs font-semibold tracking-[0.16em]"
-          style={{ color: c.accent }}
-        >
-          ENGLISH CONTENT
-        </p>
-        <h2 className="type-page mt-2" style={{ color: c.fg }}>
-          内容库
-        </h2>
-        <p className="mt-2 text-sm" style={{ color: c.fgMuted }}>
-          管理翻译、阅读和听力练习内容。
-        </p>
-        {showTabs && <div className="mt-5">
-          <EnglishFilterTabs
-            tabs={tabs}
-            value={tab}
-            onChange={selectTab}
-            ariaLabel="内容库类型"
-            c={c}
-          />
-        </div>}
-      </div>
-      {tab === "sentences" ? (
-        <SentenceContent c={c} />
-      ) : tab === "articles" ? (
-        <ArticleContent c={c} />
-      ) : (
-        <ListeningContent c={c} />
-      )}
-    </Card>
+    <div className="space-y-5 pb-8 zen-page-enter">
+      <Card c={c} wash={c.accentDim}>
+        <div className="p-5 md:p-6 space-y-4">
+          <div>
+            <p
+              className="type-caption font-semibold tracking-[0.14em] uppercase"
+              style={{ color: c.accent }}
+            >
+              ENGLISH CONTENT
+            </p>
+            <h2 className="type-page mt-1" style={{ color: c.fg }}>
+              内容库
+            </h2>
+            <p className="type-secondary mt-1" style={{ color: c.fgMuted }}>
+              管理翻译、阅读和听力练习内容。
+            </p>
+          </div>
+          {showTabs && (
+            <EnglishFilterTabs
+              tabs={tabs}
+              value={tab}
+              onChange={selectTab}
+              ariaLabel="内容库类型"
+              c={c}
+            />
+          )}
+        </div>
+      </Card>
+      <Card c={c}>
+        {tab === "sentences" ? (
+          <SentenceContent c={c} />
+        ) : tab === "articles" ? (
+          <ArticleContent c={c} />
+        ) : (
+          <ListeningContent c={c} />
+        )}
+      </Card>
+    </div>
   )
 }
 
@@ -224,7 +227,7 @@ function ListeningContent({ c }: { c: ThemeColors }) {
         {items.slice(0, visibleCount).map((x) => (
           <article
             key={x.id}
-            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-indigo-400/60"
+            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-blue-500/40"
             style={cardWashStyle(hueDimOf(c, "teal"))}
           >
             <button type="button" aria-label={`查看${x.title}全文`} onClick={() => setSelected(x)} className="absolute inset-0 rounded-2xl" />
@@ -505,7 +508,7 @@ function ArticleContent({ c }: { c: ThemeColors }) {
         {visible.slice(0, visibleCount).map((article) => (
           <article
             key={article.id}
-            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-indigo-400/60"
+            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-blue-500/40"
             style={cardWashStyle(hueDimOf(c, "teal"))}
           >
             <button type="button" aria-label={`查看${article.title}全文`} onClick={() => setSelected(article)} className="absolute inset-0 rounded-2xl" />

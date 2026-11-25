@@ -12,7 +12,7 @@ import { loadReadingReports } from "../features/reading/readingProgress";
 import { formatWritingReportTitle, loadWritingReports, type WritingReport } from "../features/writing/writingProgress";
 import { formatListeningReportTitle, loadListeningReports } from "../features/listening/listeningProgress";
 import { englishRefreshTargets, type WorkspaceUpdate } from "../features/persistence/workspaceUpdateRouting";
-import { EnglishFilterTabs, EnglishUnderlineTabs } from "../components/english/EnglishUi";
+import { EnglishFilterTabs, EnglishPageHeader, EnglishUnderlineTabs } from "../components/english/EnglishUi";
 import type { ErrorTag, Evaluation, PracticeAttempt, PracticeQuestion, Sentence, WrongBookItem } from "../features/english/types";
 import type { ThemeColors } from "../types";
 
@@ -139,16 +139,30 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
     event.preventDefault();
     onSubmit();
   }
-  return <div className="space-y-4">
-    <Card c={c}><div className="flex items-center gap-3 px-5 py-4"><div className="flex items-baseline gap-2"><span className="type-title" style={{ color: c.fg }}>{String(index + 1).padStart(2, "0")}</span><span className="text-xs" style={{ color: c.fgMuted }}>/ {String(total).padStart(2, "0")}</span></div><div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: c.inputBg }}><div className="h-full rounded-full transition-all duration-300" style={{ width: `${((index + 1) / total) * 100}%`, background: c.accent }} /></div></div></Card>
-    <Card c={c}><div className="flex w-full flex-col gap-6 p-6 md:p-8">
+  return <div className="space-y-5 pb-8 zen-page-enter">
+    <EnglishPageHeader
+      c={c}
+      eyebrow="TRANSLATION PRACTICE"
+      title="句子翻译"
+      description="AI 逐句精批，自动识别薄弱维度并按间隔调度复习。"
+      aside={
+        <div className="flex items-center gap-3 rounded-xl px-3.5 py-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
+          <span className="type-title zen-tnum" style={{ color: c.fg }}>{String(index + 1).padStart(2, "0")}</span>
+          <span className="text-xs zen-tnum" style={{ color: c.fgMuted }}>/ {String(total).padStart(2, "0")}</span>
+          <div className="h-1.5 w-20 overflow-hidden rounded-full" style={{ background: c.card }}>
+            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${((index + 1) / total) * 100}%`, background: c.accent }} />
+          </div>
+        </div>
+      }
+    />
+    <Card c={c}><div className="flex w-full flex-col gap-6 p-5 md:p-8">
       <div className="flex items-center gap-2"><span className="text-xs font-semibold tracking-[0.16em]" style={{ color: c.accent }}>{current.direction === "en2zh" ? "ENGLISH → CHINESE" : "CHINESE → ENGLISH"}</span>{current.kind === "review" && <span className="rounded-md px-2 py-1 text-xs font-medium" style={{ background: `${c.warning}15`, color: c.warning }}>复习题</span>}</div>
       {current.kind === "review" && current.previousIssues.length > 0 && <p className="rounded-xl px-4 py-3 text-sm" style={{ background: `${c.warning}10`, color: c.fgMuted }}>上次薄弱点：{current.previousIssues.map((item) => labels[item.category]).join("、")}</p>}
       <div data-testid="translation-prompt" className={translationPromptClassName} style={cardWashStyle(hueDimOf(c, "teal"))}><div className="absolute left-0 top-0 h-1 w-full" style={{ background: hueOf(c, "teal") }} /><p data-testid="translation-prompt-text" className="mx-auto w-full break-words type-prompt" style={{ color: c.fg }}>{prompt}</p></div>
       {!evaluation ? <>
         <div className={translationAnswerStageClassName} style={{ background: c.inputBg, borderColor: c.inputBorder }}>
           <label htmlFor="translation-answer" className="mb-3 block text-sm font-semibold" style={{ color: c.fg }}>你的译文</label>
-          <textarea id="translation-answer" data-testid="translation-answer" aria-label="你的翻译" rows={2} ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={onAnswerKeyDown} placeholder="在这里输入你的译文…" className="w-full resize-y rounded-xl border bg-transparent px-4 py-3 text-base leading-7 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/10 md:min-h-40" style={{ borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }} />
+          <textarea id="translation-answer" data-testid="translation-answer" aria-label="你的翻译" rows={2} ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={onAnswerKeyDown} placeholder="在这里输入你的译文…" className="w-full resize-y rounded-xl border bg-transparent px-4 py-3 text-base leading-7 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 md:min-h-40" style={{ borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }} />
           <div className="mt-4 flex justify-end"><Button type="button" variant="primary" c={c} aria-label="提交翻译" disabled={busy || !answer.trim()} onClick={onSubmit} className="w-full sm:w-auto">{busy ? "正在提交…" : "提交译文"}</Button></div>
         </div>
         {message && <p className="text-sm" style={{ color: c.danger }}>{message}</p>}
@@ -520,7 +534,16 @@ function Completed({ c, total, accepted, tags, attempts, onRestart, onWrongBook 
 
 function WrongBookDetails({ c }: { c: ThemeColors }) {
   const items: WrongBookItem[] = loadWrongBook().sort((a, b) => b.wrongCount - a.wrongCount || a.lastReviewedAt - b.lastReviewedAt);
-  return <Card c={c}><div className="p-5"><h2 className="text-base font-semibold" style={{ color: c.fg }}>错题本与复习队列</h2><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>下一组会按累计目标约 30% 抽取这些题目；错得更多、复习更久以前的题优先。</p>{items.length === 0 ? <p className="py-10 text-center text-sm" style={{ color: c.fgMuted }}>还没有需要复习的题目。</p> : <div className="mt-4 space-y-3">{items.map((item) => <div key={item.sentence.id} className="rounded-xl p-4" style={{ background: c.inputBg }}><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium" style={{ color: c.fg }}>{item.sentence.en}</p><span className="text-xs" style={{ color: item.lastVerdict === "acceptable" ? c.success : c.danger }}>{item.lastVerdict === "acceptable" ? "最近已通过" : "待加强"}</span></div><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>{item.sentence.zh}</p><p className="mt-3 text-xs" style={{ color: c.fgMuted }}>错误 {item.wrongCount} 次 · 已复习 {item.reviewCount} 次</p>{item.latestAttempt && <><p className="mt-3 text-xs" style={{ color: c.fgSub }}>最近作答：{item.latestAttempt.answer}</p><p className="mt-1 text-xs" style={{ color: c.fgSub }}>反馈：{item.latestAttempt.evaluation.feedback}</p><div className="mt-2 flex flex-wrap gap-2">{item.latestAttempt.evaluation.issues.map((issue, issueIndex) => <span key={issueIndex} className="rounded px-2 py-1 text-xs" style={{ background: "#f8717110", color: c.danger }}>{labels[issue.category]}：{issue.suggestion}</span>)}</div></>}</div>)}</div>}</div></Card>;
+  return <div className="space-y-5 pb-8 zen-page-enter">
+    <EnglishPageHeader
+      c={c}
+      eyebrow="REVIEW QUEUE"
+      title="错题本"
+      description="下一组会按累计目标约 30% 抽取这些题目；错得更多、复习更久以前的题优先。"
+      aside={<span className="rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: c.inputBg, color: c.fgMuted }}>共 {items.length} 题</span>}
+    />
+    <Card c={c}><div className="p-5 md:p-6">{items.length === 0 ? <p className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>还没有需要复习的题目。</p> : <div className="space-y-3">{items.map((item) => <div key={item.sentence.id} className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold" style={{ color: c.fg }}>{item.sentence.en}</p><span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ background: item.lastVerdict === "acceptable" ? c.successDim : c.dangerDim, color: item.lastVerdict === "acceptable" ? c.success : c.danger }}>{item.lastVerdict === "acceptable" ? "最近已通过" : "待加强"}</span></div><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>{item.sentence.zh}</p><p className="mt-3 text-xs zen-tnum" style={{ color: c.fgMuted }}>错误 {item.wrongCount} 次 · 已复习 {item.reviewCount} 次</p>{item.latestAttempt && <><p className="mt-3 text-xs" style={{ color: c.fgSub }}>最近作答：{item.latestAttempt.answer}</p><p className="mt-1 text-xs" style={{ color: c.fgSub }}>反馈：{item.latestAttempt.evaluation.feedback}</p><div className="mt-2 flex flex-wrap gap-2">{item.latestAttempt.evaluation.issues.map((issue, issueIndex) => <span key={issueIndex} className="rounded-md px-2 py-1 text-xs" style={{ background: c.dangerDim, color: c.danger }}>{labels[issue.category]}：{issue.suggestion}</span>)}</div></>}</div>)}</div>}</div></Card>
+  </div>;
 }
 
 const HISTORY_PAGE_SIZE = 5;
@@ -533,7 +556,7 @@ function HistoryPager({ page, total, onChange, c }: { page: number; total: numbe
 }
 
 function HistoryDetailHeader({ title, subtitle, onBack, c }: { title: string; subtitle: string; onBack: () => void; c: ThemeColors }) {
-  return <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-base font-semibold" style={{ color: c.fg }}>{title}</h2><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>{subtitle}</p></div><button type="button" onClick={onBack} className="rounded-lg px-3 py-2 text-sm" style={{ background: c.inputBg, color: c.fg }}>返回列表</button></div>;
+  return <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-base font-semibold" style={{ color: c.fg }}>{title}</h2><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>{subtitle}</p></div><Button type="button" variant="secondary" c={c} onClick={onBack}>返回列表</Button></div>;
 }
 
 function TranslationReportHistory({ c }: { c: ThemeColors }) {
@@ -554,8 +577,15 @@ function TranslationReportDetail({ report, onBack, c }: { report: ReturnType<typ
 function ReportHistory({ c }: { c: ThemeColors }) {
   const [historyTab, setHistoryTab] = useState<"translation" | "reading" | "writing" | "listening">("translation");
   const tabs = [{ id: "translation", label: "翻译报告" }, { id: "reading", label: "阅读记录" }, { id: "writing", label: "写作记录" }, { id: "listening", label: "听力记录" }] as const;
-  return <div className="space-y-4">
-    <EnglishFilterTabs tabs={tabs} value={historyTab} onChange={(value) => setHistoryTab(value as typeof historyTab)} ariaLabel="历史报告类型" c={c} />
+  return <div className="space-y-5 pb-8 zen-page-enter">
+    <EnglishPageHeader
+      c={c}
+      eyebrow="LEARNING REPORTS"
+      title="历史报告"
+      description="按模块归档每次练习的得分、AI 解析与详细记录。"
+    >
+      <EnglishFilterTabs tabs={tabs} value={historyTab} onChange={(value) => setHistoryTab(value as typeof historyTab)} ariaLabel="历史报告类型" c={c} />
+    </EnglishPageHeader>
     {historyTab === "translation" ? <TranslationReportHistory c={c} /> : historyTab === "reading" ? <ReadingReportHistory c={c} /> : historyTab === "writing" ? <WritingReportHistory c={c} /> : <ListeningReportHistory c={c} />}
   </div>;
 }

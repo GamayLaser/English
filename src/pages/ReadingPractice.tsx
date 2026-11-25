@@ -16,7 +16,7 @@ import {
 } from "../features/reading/readingProgress";
 import { getLineSelection } from "../features/reading/readingSelection";
 import { quickTranslate } from "../features/translator/quickTranslate";
-import { EnglishButton, EnglishEmptyState } from "../components/english/EnglishUi";
+import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
 import type { ThemeColors } from "../types";
 import Card from "../components/ui/Card";
 import type { WorkspaceUpdate } from "../features/persistence/workspaceUpdateRouting";
@@ -205,11 +205,48 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
     }
   }
 
-  return <div className="flex w-full flex-col gap-4 pb-8 pt-5">
+  return <div className="flex w-full flex-col gap-5 pb-8 zen-page-enter">
+    <EnglishPageHeader
+      c={c}
+      eyebrow="READING PRACTICE"
+      title={article.title}
+      description="划词即时翻译并添加行间释义，支持全文朗读与 AI 阅读理解出题。"
+      aside={
+        <>
+          {articles.length > 1 && (
+            <select
+              value={article.id}
+              onChange={(e) => setArticleId(e.target.value)}
+              className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
+              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+              aria-label="选择阅读文章"
+            >
+              {articles.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          )}
+          <EnglishButton type="button" variant="secondary" c={c} disabled={audioBusyId === "full-article"} onClick={() => void playArticle()}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {playingParagraphId === "full-article" ? (
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              ) : (
+                <>
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </>
+              )}
+            </svg>
+            {audioBusyId === "full-article" ? "正在准备朗读…" : playingParagraphId === "full-article" ? "停止朗读" : "朗读全文"}
+          </EnglishButton>
+        </>
+      }
+    />
     <Card c={c}>
       <div className="p-5 md:p-8">
         <div className="w-full">
-          <h2 className="type-page mb-6" style={{ color: c.fg }}>{article.title}</h2>
           {paragraphs.map((paragraph, paragraphIndex) => {
             const matchingLineIds = [paragraph.id, ...paragraph.legacyLineIds];
             const notes = progress.annotations.filter((note) => matchingLineIds.includes(note.lineId));
@@ -227,7 +264,6 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
               </p>
             </div>;
           })}
-          <div className="mt-6"><EnglishButton type="button" variant="secondary" c={c} disabled={audioBusyId === "full-article"} onClick={() => void playArticle()}>{audioBusyId === "full-article" ? "正在准备朗读…" : playingParagraphId === "full-article" ? "停止朗读" : "🔊 朗读全文"}</EnglishButton></div>
           {audioMessage && <p className="mt-4 text-sm" style={{ color: c.danger }}>{audioMessage}</p>}
           {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { EnglishButton } from "../components/english/EnglishUi";
+import { EnglishButton, EnglishPageHeader } from "../components/english/EnglishUi";
 import { loadAiSettings } from "../features/english/aiSettings";
 import { startStreamingReadingAudio } from "../features/reading/elevenLabsTts";
 import { evaluateListening } from "../features/listening/listeningEvaluator";
@@ -173,35 +173,60 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
 }
 
   return (
-    <div className="flex flex-col gap-4 pb-8 pt-5">
-      <Card c={c} className="p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <h2 className="type-page truncate" style={{ color: c.fg }}>{article.title}</h2>
+    <div className="flex flex-col gap-5 pb-8 zen-page-enter">
+      <EnglishPageHeader
+        c={c}
+        eyebrow="LISTENING DICTATION"
+        title={article.title}
+        description="听原声逐词默写，输入空格自动跳转下一格，提交后由 AI 逐词比对评分。"
+        aside={
+          <>
             <AudioVisualizerBars active={playing} color={c.accent} />
-          </div>
-          <EnglishButton
-            variant={playing ? "ghost" : "secondary"}
-            c={c}
-            disabled={audioBusy}
-            onClick={() => (playing ? stop() : void play())}
-          >
-            {audioBusy ? "正在准备…" : playing ? "⏹ 停止播放" : ready ? "▶ 播放原声" : "🔊 准备并播放"}
-          </EnglishButton>
-        </div>
-      </Card>
+            {articles.length > 1 && (
+              <select
+                value={article.id}
+                onChange={(e) => setId(e.target.value)}
+                className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[200px]"
+                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                aria-label="选择听力原文"
+              >
+                {articles.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            )}
+            <EnglishButton
+              variant={playing ? "danger" : "primary"}
+              c={c}
+              disabled={audioBusy}
+              onClick={() => (playing ? stop() : void play())}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                {playing ? (
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                ) : (
+                  <polygon points="6 4 20 12 6 20 6 4" />
+                )}
+              </svg>
+              {audioBusy ? "正在准备…" : playing ? "停止播放" : ready ? "播放原声" : "准备并播放"}
+            </EnglishButton>
+          </>
+        }
+      />
 
-      <Card c={c} className="p-6 md:p-8">
+      <Card c={c} className="p-5 md:p-8">
         <div className="flex justify-between gap-5">
           <div>
             <h3 className="font-semibold" style={{ color: c.fg }}>
               你的默写
             </h3>
-            <p className="mt-3 text-sm" style={{ color: c.fgMuted }}>
+            <p className="mt-1.5 text-sm" style={{ color: c.fgMuted }}>
               每个下划线填写一个单词；输入空格会自动跳到下一格。
             </p>
           </div>
-          <span className="pt-1 text-sm" style={{ color: c.fgMuted }}>
+          <span className="shrink-0 self-start rounded-xl px-3 py-1.5 text-[13px] font-semibold tabular-nums" style={{ background: c.inputBg, color: c.fgMuted }}>
             {countDictationWords(progress.draft)} / {count} 词
           </span>
         </div>

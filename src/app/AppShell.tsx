@@ -137,9 +137,13 @@ export default function AppShell({ theme, colors, onToggleTheme }: AppShellProps
             </button>
           </div>
 
-          <nav className="flex md:flex-col gap-4 overflow-x-auto pb-1 md:pb-0">
-            {NAV_GROUPS.map((group) => (
-              <div key={group.title} className="flex md:flex-col gap-1 shrink-0">
+          <nav className="flex md:flex-col gap-4 md:gap-5 overflow-x-auto pb-1 md:pb-0">
+            {NAV_GROUPS.map((group, idx) => (
+              <div
+                key={group.title}
+                className={`flex md:flex-col gap-1 shrink-0 ${idx > 0 ? "md:pt-4 md:border-t" : ""}`}
+                style={idx > 0 ? { borderColor: colors.borderSub } : undefined}
+              >
                 <p
                   className="hidden md:block px-2.5 pb-1 text-[11px] font-medium tracking-wider uppercase"
                   style={{ color: colors.fgMuted }}
