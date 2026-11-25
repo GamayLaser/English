@@ -143,8 +143,8 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button c={c} variant="primary" onClick={() => navigate("/roleplay")}>
-              AI 情景对话
+            <Button c={c} variant="primary" onClick={() => navigate("/sentences")}>
+              情景句子
             </Button>
             <Button c={c} variant="secondary" onClick={() => navigate("/listening")}>
               听力训练
