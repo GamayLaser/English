@@ -393,8 +393,8 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
             <div
               className={
                 mode === "sentence"
-                  ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3.5"
-                  : "grid grid-cols-[repeat(auto-fill,minmax(205px,1fr))] gap-3.5"
+                  ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
+                  : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
               }
             >
                 {filteredCards.map((item) => {
@@ -410,7 +410,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                       {item.entryType !== "sentence" && (
                         <div
                           onClick={() => speakVocabText(item.audioText || item.word, speed)}
-                          className="h-32 cursor-pointer overflow-hidden border-b flex items-center justify-center p-1.5"
+                          className="h-36 cursor-pointer overflow-hidden border-b flex items-center justify-center p-1.5"
                           style={{
                             background: "#FFFFFF",
                             borderColor: c.borderSub,
