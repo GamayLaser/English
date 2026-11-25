@@ -1,6 +1,8 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router";
 import type { UserProfile } from "@shared/schemas";
+import { loadWrongBook } from "../features/english/storage";
+import { loadVocabProgress } from "../features/vocab/vocabStore";
 import type { Theme, ThemeColors } from "../types";
 
 type NavItem = { to: string; label: string; icon: ReactNode };
@@ -100,7 +102,25 @@ type AppShellProps = {
   onToggleTheme: () => void;
 };
 
+function readLearningStats() {
+  const vocab = loadVocabProgress();
+  const wrongPending = loadWrongBook().filter((item) => item.lastVerdict !== "acceptable").length;
+  return {
+    mastered: vocab.mastered.size,
+    bookmarked: vocab.bookmarked.size,
+    wrongPending,
+  };
+}
+
 export default function AppShell({ theme, colors, user, onLogout, onToggleTheme }: AppShellProps) {
+  const [stats, setStats] = useState(readLearningStats);
+
+  useEffect(() => {
+    const refresh = () => setStats(readLearningStats());
+    refresh();
+    window.addEventListener("workspace:stats-updated", refresh);
+    return () => window.removeEventListener("workspace:stats-updated", refresh);
+  }, [user?.id]);
   return (
     <div
       className="h-screen w-screen overflow-hidden flex flex-col md:flex-row"
@@ -168,7 +188,15 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
                       <>
                         {isActive && <span className="hidden md:block zen-nav-bar" />}
                         <span className="shrink-0 opacity-90">{item.icon}</span>
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {item.to === "/wrongbook" && stats.wrongPending > 0 && (
+                          <span
+                            className="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold zen-tnum leading-none"
+                            style={{ background: colors.dangerDim, color: colors.danger }}
+                          >
+                            {stats.wrongPending}
+                          </span>
+                        )}
                       </>
                     )}
                   </NavLink>
@@ -178,42 +206,63 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
           </nav>
         </div>
 
-        <div
-          className="hidden md:flex flex-col gap-2.5 px-2.5 pt-3.5 border-t text-[11px]"
-          style={{ borderColor: colors.borderSub, color: colors.fgMuted }}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-medium" style={{ color: colors.fgSub }}>
-              {user ? user.username : "本地访客"}
-            </span>
-            {user ? (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="text-[11px] font-medium hover:underline cursor-pointer"
-                style={{ color: colors.fgMuted }}
-              >
-                退出
-              </button>
-            ) : (
-              <NavLink
-                to="/login"
-                className="text-[11px] font-semibold hover:underline"
-                style={{ color: colors.accent }}
-              >
-                登录同步
-              </NavLink>
-            )}
+        <div className="hidden md:flex flex-col gap-3">
+          <div
+            className="rounded-xl px-3 py-2.5 flex items-center justify-between text-[11px]"
+            style={{ background: colors.inputBg, border: `1px solid ${colors.borderSub}` }}
+          >
+            <div className="flex flex-col">
+              <span style={{ color: colors.fgMuted }}>已掌握词卡</span>
+              <span className="text-[13px] font-semibold zen-tnum mt-0.5" style={{ color: colors.fg }}>
+                {stats.mastered}
+              </span>
+            </div>
+            <div className="h-6 w-px" style={{ background: colors.borderSub }} />
+            <div className="flex flex-col text-right">
+              <span style={{ color: colors.fgMuted }}>已收藏</span>
+              <span className="text-[13px] font-semibold zen-tnum mt-0.5" style={{ color: colors.accent }}>
+                {stats.bookmarked}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span>Cloudflare D1</span>
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ background: colors.success }}
-              />
-              已连接
-            </span>
+
+          <div
+            className="flex flex-col gap-2 px-2.5 pt-3 border-t text-[11px]"
+            style={{ borderColor: colors.borderSub, color: colors.fgMuted }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate font-medium" style={{ color: colors.fgSub }}>
+                {user ? user.username : "本地访客"}
+              </span>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="text-[11px] font-medium hover:underline cursor-pointer"
+                  style={{ color: colors.fgMuted }}
+                >
+                  退出
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="text-[11px] font-semibold hover:underline"
+                  style={{ color: colors.accent }}
+                >
+                  登录同步
+                </NavLink>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Cloudflare D1</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: colors.success }}
+                />
+                已连接
+              </span>
+            </div>
           </div>
         </div>
       </aside>

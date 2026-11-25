@@ -19,7 +19,12 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export function loadWrongBook() { return read<WrongBookItem[]>(WRONG_BOOK_KEY, []); }
-export function saveWrongBook(items: WrongBookItem[]) { workspaceStorage.setItem(WRONG_BOOK_KEY, JSON.stringify(items)); }
+export function saveWrongBook(items: WrongBookItem[]) {
+  workspaceStorage.setItem(WRONG_BOOK_KEY, JSON.stringify(items));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("workspace:stats-updated"));
+  }
+}
 export function loadReports() { return read<PracticeReport[]>(REPORTS_KEY, []); }
 export function saveReports(items: PracticeReport[]) { workspaceStorage.setItem(REPORTS_KEY, JSON.stringify(items.slice(0, 30))); }
 export function loadSchedulerHistory() { return read<SchedulerHistory>(HISTORY_KEY, { groupsCreated: 0, reviewsAssigned: 0 }); }

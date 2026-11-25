@@ -108,12 +108,20 @@ export function loadVocabProgress() {
   };
 }
 
+function notifyStatsUpdated(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("workspace:stats-updated"));
+  }
+}
+
 export function saveVocabBookmarks(ids: Set<string>): void {
   workspaceStorage.setItem(BOOKMARK_KEY, JSON.stringify([...ids]));
+  notifyStatsUpdated();
 }
 
 export function saveVocabMastered(ids: Set<string>): void {
   workspaceStorage.setItem(MASTERED_KEY, JSON.stringify([...ids]));
+  notifyStatsUpdated();
 }
 
 export function saveVocabSpeed(speed: number): void {
