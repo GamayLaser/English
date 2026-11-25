@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { NavLink, Outlet } from "react-router";
+import type { UserProfile } from "@shared/schemas";
 import type { Theme, ThemeColors } from "../types";
 
 type NavItem = { to: string; label: string; icon: ReactNode };
@@ -94,10 +95,12 @@ const NAV_GROUPS: Array<{ title: string; items: NavItem[] }> = [
 type AppShellProps = {
   theme: Theme;
   colors: ThemeColors;
+  user?: UserProfile | null;
+  onLogout?: () => void;
   onToggleTheme: () => void;
 };
 
-export default function AppShell({ theme, colors, onToggleTheme }: AppShellProps) {
+export default function AppShell({ theme, colors, user, onLogout, onToggleTheme }: AppShellProps) {
   return (
     <div
       className="h-screen w-screen overflow-hidden flex flex-col md:flex-row"
@@ -176,17 +179,42 @@ export default function AppShell({ theme, colors, onToggleTheme }: AppShellProps
         </div>
 
         <div
-          className="hidden md:flex items-center justify-between px-2.5 pt-3 border-t text-[11px]"
+          className="hidden md:flex flex-col gap-2.5 px-2.5 pt-3.5 border-t text-[11px]"
           style={{ borderColor: colors.borderSub, color: colors.fgMuted }}
         >
-          <span>Cloudflare D1</span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: colors.success }}
-            />
-            已连接
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate font-medium" style={{ color: colors.fgSub }}>
+              {user ? user.username : "本地访客"}
+            </span>
+            {user ? (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="text-[11px] font-medium hover:underline cursor-pointer"
+                style={{ color: colors.fgMuted }}
+              >
+                退出
+              </button>
+            ) : (
+              <NavLink
+                to="/login"
+                className="text-[11px] font-semibold hover:underline"
+                style={{ color: colors.accent }}
+              >
+                登录同步
+              </NavLink>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Cloudflare D1</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: colors.success }}
+              />
+              已连接
+            </span>
+          </div>
         </div>
       </aside>
 

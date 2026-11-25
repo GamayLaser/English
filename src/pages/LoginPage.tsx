@@ -2,10 +2,15 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import type { UserProfile } from "@shared/schemas";
 import { api } from "../lib/api";
+import type { ThemeColors } from "../types";
+import { Button, Card } from "../components/ui";
+import { uiFieldClassName, uiFieldStyle } from "../components/ui/styles";
 
 export default function LoginPage({
+  c,
   onAuthenticated,
 }: {
+  c: ThemeColors;
   onAuthenticated: (user: UserProfile) => void;
 }) {
   const navigate = useNavigate();
@@ -25,7 +30,7 @@ export default function LoginPage({
           ? await api.auth.login(username, password)
           : await api.auth.register(username, password);
       onAuthenticated(res.user);
-      navigate("/cards", { replace: true });
+      navigate("/words", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "操作失败");
     } finally {
@@ -34,53 +39,96 @@ export default function LoginPage({
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-sm"
-      >
-        <div>
-          <h2 className="text-xl font-bold">{mode === "login" ? "登录 English Studio" : "注册账号"}</h2>
-          <p className="text-xs text-slate-500 mt-1">登录后可跨设备同步词卡进度、错题本与 AI 练习记录</p>
-        </div>
-        {error && <p className="text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-lg">{error}</p>}
-        <div className="space-y-1">
-          <label className="text-xs font-medium">用户名</label>
-          <input
-            type="text"
-            required
-            minLength={3}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium">密码（至少 8 位）</label>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-lg bg-indigo-600 text-white py-2.5 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
-        >
-          {busy ? "处理中…" : mode === "login" ? "登录" : "注册并登录"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "login" ? "register" : "login")}
-          className="w-full text-xs text-slate-500 hover:text-indigo-600 cursor-pointer"
-        >
-          {mode === "login" ? "没有账号？点击注册" : "已有账号？返回登录"}
-        </button>
-      </form>
+    <div
+      className="min-h-screen grid place-items-center p-6 zen-page-enter"
+      style={{ background: c.bg, color: c.fg }}
+    >
+      <Card c={c} wash={c.accentDim} className="w-full max-w-sm">
+        <form onSubmit={handleSubmit} className="p-6 md:p-7 space-y-5">
+          <div>
+            <p
+              className="type-caption font-semibold tracking-[0.14em] uppercase"
+              style={{ color: c.accent }}
+            >
+              ENGLISH STUDIO
+            </p>
+            <h2 className="type-page mt-1" style={{ color: c.fg }}>
+              {mode === "login" ? "登录账号" : "注册账号"}
+            </h2>
+            <p className="type-secondary mt-1" style={{ color: c.fgMuted }}>
+              登录后可跨设备同步词卡进度、错题本与 AI 练习记录。
+            </p>
+          </div>
+
+          {error && (
+            <p
+              className="rounded-xl px-3.5 py-2.5 text-xs leading-relaxed"
+              style={{ background: c.dangerDim, color: c.danger }}
+            >
+              {error}
+            </p>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium" style={{ color: c.fgSub }}>
+              用户名
+            </label>
+            <input
+              type="text"
+              required
+              minLength={3}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="至少 3 个字符"
+              className={uiFieldClassName()}
+              style={uiFieldStyle(c)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium" style={{ color: c.fgSub }}>
+              密码（至少 8 位）
+            </label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="请输入密码"
+              className={uiFieldClassName()}
+              style={uiFieldStyle(c)}
+            />
+          </div>
+
+          <div className="space-y-2.5 pt-1">
+            <Button type="submit" variant="primary" c={c} disabled={busy} className="w-full">
+              {busy ? "处理中…" : mode === "login" ? "登录" : "注册并登录"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              c={c}
+              onClick={() => {
+                setError("");
+                setMode(mode === "login" ? "register" : "login");
+              }}
+              className="w-full"
+            >
+              {mode === "login" ? "没有账号？点击注册" : "已有账号？返回登录"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              c={c}
+              onClick={() => navigate("/words")}
+              className="w-full"
+            >
+              返回学习工作台
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

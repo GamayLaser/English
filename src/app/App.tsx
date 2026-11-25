@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import type { UserProfile } from "@shared/schemas";
 import { activatePrivateWorkspaceStorage } from "../features/persistence/privateWorkspaceStore";
+import { api } from "../lib/api";
 import { buildTheme } from "../theme/palette";
 import type { Theme } from "../types";
 import AppShell from "./AppShell";
@@ -11,6 +13,7 @@ const ReadingPractice = lazy(() => import("../pages/ReadingPractice"));
 const ListeningPractice = lazy(() => import("../pages/ListeningPractice"));
 const WritingPractice = lazy(() => import("../pages/WritingPractice"));
 const ContentLibrary = lazy(() => import("../pages/ContentLibrary"));
+const LoginPage = lazy(() => import("../pages/LoginPage"));
 const FloatingTranslator = lazy(() => import("../components/FloatingTranslator"));
 
 function PageLoader() {
@@ -19,6 +22,7 @@ function PageLoader() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem("workspace:theme-v1");
@@ -40,15 +44,42 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    activatePrivateWorkspaceStorage("dev-user")
-      .catch((err) => console.warn("Cloudflare D1 workspace init warning:", err))
-      .finally(() => {
-        if (active) setReady(true);
-      });
+    (async () => {
+      let namespace = "dev-user";
+      try {
+        const res = await api.auth.me();
+        if (active && res.user) {
+          setUser(res.user);
+          namespace = res.user.id;
+        }
+      } catch {
+        // Fallback to local dev workspace when unauthenticated
+      }
+      await activatePrivateWorkspaceStorage(namespace).catch((err) =>
+        console.warn("Cloudflare D1 workspace init warning:", err),
+      );
+    })().finally(() => {
+      if (active) setReady(true);
+    });
     return () => {
       active = false;
     };
   }, []);
+
+  async function handleAuthenticated(nextUser: UserProfile) {
+    setUser(nextUser);
+    await activatePrivateWorkspaceStorage(nextUser.id).catch((err) =>
+      console.warn("Cloudflare D1 workspace switch warning:", err),
+    );
+  }
+
+  async function handleLogout() {
+    try {
+      await api.auth.logout();
+    } catch {}
+    setUser(null);
+    await activatePrivateWorkspaceStorage("dev-user").catch(() => {});
+  }
 
   if (!ready) {
     return (
@@ -66,10 +97,16 @@ export default function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route
+            path="/login"
+            element={<LoginPage c={colors} onAuthenticated={(u) => void handleAuthenticated(u)} />}
+          />
+          <Route
             element={
               <AppShell
                 theme={theme}
                 colors={colors}
+                user={user}
+                onLogout={() => void handleLogout()}
                 onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
               />
             }
