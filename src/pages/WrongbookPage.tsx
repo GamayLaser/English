@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
 import { ERROR_LABELS } from "../components/english/RadarScoreCard";
 import { Button, Card } from "../components/ui";
-import { loadWrongBook } from "../features/english/storage";
+import { loadWrongBook, removeWrongBookItem } from "../features/english/storage";
 import type { WrongBookItem } from "../features/english/types";
 import { speakVocabText } from "../features/vocab/vocabStore";
 import type { ThemeColors } from "../types";
@@ -16,11 +16,16 @@ export default function WrongbookPage({
   onStartPractice?: () => void;
 }) {
   const navigate = useNavigate();
-  const items: WrongBookItem[] = loadWrongBook().sort(
-    (a, b) => b.wrongCount - a.wrongCount || a.lastReviewedAt - b.lastReviewedAt,
+  const [rawItems, setRawItems] = useState<WrongBookItem[]>(() => loadWrongBook());
+  const items: WrongBookItem[] = [...rawItems].sort(
+    (a, b) => b.wrongCount - a.wrongCount || (a.lastReviewedAt || 0) - (b.lastReviewedAt || 0),
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const goPractice = onStartPractice ?? (() => navigate("/practice"));
+
+  function handleRemove(sentenceId: string) {
+    setRawItems(removeWrongBookItem(sentenceId));
+  }
 
   return (
     <div className="container-focus space-y-5 pb-8 zen-page-enter">
@@ -86,8 +91,25 @@ export default function WrongbookPage({
                     >
                       错 {item.wrongCount} 次 · 复习 {item.reviewCount} 次
                     </span>
-                    <Button type="button" variant="secondary" c={c} onClick={goPractice}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      c={c}
+                      onClick={() =>
+                        onStartPractice
+                          ? onStartPractice()
+                          : navigate(`/practice?wrongId=${encodeURIComponent(item.sentence.id)}`)
+                      }
+                    >
                       强化
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      c={c}
+                      onClick={() => handleRemove(item.sentence.id)}
+                    >
+                      移出
                     </Button>
                   </div>
                 </div>

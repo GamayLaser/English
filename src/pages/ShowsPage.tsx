@@ -243,6 +243,9 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   }
 
   async function deleteCloudVideo(item: CloudVideoItem) {
+    if (typeof window !== "undefined" && !window.confirm(`确定要从云端永久删除「${item.title}」吗？此操作不可撤销。`)) {
+      return;
+    }
     try {
       const res = await fetch(`/api/videos/${encodeURIComponent(item.videoKey)}`, {
         method: "DELETE",

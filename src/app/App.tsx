@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import type { UserProfile } from "@shared/schemas";
 import { activatePrivateWorkspaceStorage } from "../features/persistence/privateWorkspaceStore";
 import { api } from "../lib/api";
@@ -99,41 +99,76 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route
-            path="/login"
-            element={<LoginPage c={colors} onAuthenticated={(u) => void handleAuthenticated(u)} />}
-          />
-          <Route
-            element={
-              <AppShell
-                theme={theme}
-                colors={colors}
-                user={user}
-                onLogout={() => void handleLogout()}
-                onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-              />
-            }
-          >
-            <Route index element={<Navigate to="/today" replace />} />
-            <Route path="/today" element={<TodayPage c={colors} />} />
-            <Route path="/shows" element={<ShowsPage c={colors} />} />
-            <Route path="/words" element={<CardsPage mode="word" c={colors} />} />
-            <Route path="/phrases" element={<CardsPage mode="phrase" c={colors} />} />
-            <Route path="/sentences" element={<CardsPage mode="sentence" c={colors} />} />
-            <Route path="/practice" element={<TranslationPage c={colors} />} />
-            <Route path="/reading" element={<ReadingPractice c={colors} />} />
-            <Route path="/listening" element={<ListeningPractice c={colors} />} />
-            <Route path="/writing" element={<WritingPractice c={colors} />} />
-            <Route path="/wrongbook" element={<WrongbookPage c={colors} />} />
-            <Route path="/reports" element={<ReportsPage c={colors} />} />
-            <Route path="/library" element={<ContentLibrary c={colors} />} />
-            <Route path="*" element={<Navigate to="/words" replace />} />
-          </Route>
-        </Routes>
-        <FloatingTranslator c={colors} />
-      </Suspense>
+      <AppRouter
+        theme={theme}
+        colors={colors}
+        user={user}
+        onAuthenticated={handleAuthenticated}
+        onLogout={handleLogout}
+        onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+      />
     </BrowserRouter>
+  );
+}
+
+function AppRouter({
+  theme,
+  colors,
+  user,
+  onAuthenticated,
+  onLogout,
+  onToggleTheme,
+}: {
+  theme: Theme;
+  colors: ReturnType<typeof buildTheme>;
+  user: UserProfile | null;
+  onAuthenticated: (u: UserProfile) => Promise<void>;
+  onLogout: () => Promise<void>;
+  onToggleTheme: () => void;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  async function handleLogoutAndRedirect() {
+    await onLogout();
+    navigate("/login", { replace: true });
+  }
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route
+          path="/login"
+          element={<LoginPage c={colors} onAuthenticated={(u) => void onAuthenticated(u)} />}
+        />
+        <Route
+          element={
+            <AppShell
+              theme={theme}
+              colors={colors}
+              user={user}
+              onLogout={() => void handleLogoutAndRedirect()}
+              onToggleTheme={onToggleTheme}
+            />
+          }
+        >
+          <Route index element={<Navigate to="/today" replace />} />
+          <Route path="/today" element={<TodayPage c={colors} />} />
+          <Route path="/shows" element={<ShowsPage c={colors} />} />
+          <Route path="/words" element={<CardsPage mode="word" c={colors} />} />
+          <Route path="/phrases" element={<CardsPage mode="phrase" c={colors} />} />
+          <Route path="/sentences" element={<CardsPage mode="sentence" c={colors} />} />
+          <Route path="/practice" element={<TranslationPage c={colors} />} />
+          <Route path="/reading" element={<ReadingPractice c={colors} />} />
+          <Route path="/listening" element={<ListeningPractice c={colors} />} />
+          <Route path="/writing" element={<WritingPractice c={colors} />} />
+          <Route path="/wrongbook" element={<WrongbookPage c={colors} />} />
+          <Route path="/reports" element={<ReportsPage c={colors} />} />
+          <Route path="/library" element={<ContentLibrary c={colors} />} />
+          <Route path="*" element={<Navigate to="/today" replace />} />
+        </Route>
+      </Routes>
+      {location.pathname !== "/login" && <FloatingTranslator c={colors} />}
+    </Suspense>
   );
 }

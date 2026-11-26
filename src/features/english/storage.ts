@@ -52,6 +52,12 @@ export function upsertWrongBookItem(attempt: PracticeAttempt) {
   return updated;
 }
 
+export function removeWrongBookItem(sentenceId: string) {
+  const updated = loadWrongBook().filter((item) => item.sentence.id !== sentenceId);
+  saveWrongBook(updated);
+  return updated;
+}
+
 function isTranslationPracticeSession(value: unknown): value is TranslationPracticeSession {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const session = value as Partial<TranslationPracticeSession>;

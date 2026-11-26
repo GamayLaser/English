@@ -31,6 +31,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
   const [message, setMessage] = useState("");
   const [topicModalOpen, setTopicModalOpen] = useState(false);
   const [chunkMode, setChunkMode] = useState(false);
+  const draftInputRef = useRef<HTMLTextAreaElement>(null);
   const lastWorkspaceRevision = useRef(0);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
 
   if (!topic) return <EnglishEmptyState c={c} title="还没有写作题目" description="写作题目准备好后，就能开始练习。" />;
   const wordCount = countEnglishWords(progress.draft);
+  const effectiveMinWords = chunkMode ? 60 : topic.minWords;
   const targetChunks = useMemo(
     () =>
       loadUserChunks()
@@ -59,6 +61,28 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
   function updateDraft(draft: string) {
     setProgress(saveWritingDraft(topic.id, draft));
     setMessage("");
+  }
+
+  function insertChunkAtCursor(text: string) {
+    const el = draftInputRef.current;
+    const current = progress.draft;
+    if (!el) {
+      updateDraft(current ? `${current} ${text}` : text);
+      return;
+    }
+    const start = el.selectionStart ?? current.length;
+    const end = el.selectionEnd ?? current.length;
+    const before = current.slice(0, start);
+    const after = current.slice(end);
+    const prefix = before.length > 0 && !/\s$/.test(before) ? " " : "";
+    const suffix = after.length > 0 && !/^\s/.test(after) ? " " : "";
+    const nextDraft = `${before}${prefix}${text}${suffix}${after}`;
+    updateDraft(nextDraft);
+    const nextCaret = start + prefix.length + text.length;
+    window.requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(nextCaret, nextCaret);
+    });
   }
 
   async function evaluateDraft() {
@@ -104,7 +128,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
               切换题目 ({topics.findIndex((t) => t.id === topic.id) + 1}/{topics.length})
             </EnglishButton>
           )}
-          <span className="shrink-0 rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: wordCount >= topic.minWords ? c.successDim : c.inputBg, color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount} / {topic.minWords} 词</span>
+          <span className="shrink-0 rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: wordCount >= effectiveMinWords ? c.successDim : c.inputBg, color: wordCount >= effectiveMinWords ? c.success : c.fgMuted }}>{wordCount} / {effectiveMinWords} 词</span>
         </>
       }
     />
@@ -124,7 +148,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
       </div>
     </Card>
     <Card c={c}>
-      <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
+      <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= effectiveMinWords ? c.success : c.fgMuted }}>{wordCount >= effectiveMinWords ? "已达到最低词数" : `还差 ${effectiveMinWords - wordCount} 词`}</span></div>
         {targetChunks.length > 0 && (
           <div className="mt-4 rounded-xl p-3.5 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
             <p className="text-xs font-semibold" style={{ color: c.fgMuted }}>
@@ -137,7 +161,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
                   <button
                     key={ch.id}
                     type="button"
-                    onClick={() => updateDraft(progress.draft ? `${progress.draft} ${ch.en}` : ch.en)}
+                    onClick={() => insertChunkAtCursor(ch.en)}
                     className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
                     style={{
                       background: used ? c.successDim : c.card,
@@ -153,7 +177,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
             </div>
           </div>
         )}
-        <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-[var(--accent-primary)]/35" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
+        <textarea ref={draftInputRef} value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-[var(--accent-primary)]/35" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
         {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         <div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void evaluateDraft()}>{busy ? "AI 正在评分…" : "交给 AI 评分与解析"}</EnglishButton></div>
         {progress.evaluation && <WritingEvaluationCard c={c} draft={progress.draft} evaluation={progress.evaluation} onComplete={completeGroup} />}

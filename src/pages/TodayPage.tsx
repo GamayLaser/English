@@ -67,6 +67,7 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
   const [reviewQueue, setReviewQueue] = useState<UserChunk[]>([]);
   const [reviewIdx, setReviewIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [showAllChunks, setShowAllChunks] = useState(false);
 
   useEffect(() => {
     const refresh = () => setTick((t) => t + 1);
@@ -288,8 +289,9 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
               还没有收藏语块。去「阅读训练（连载小说）」划词、或在「美剧精听」点台词旁的「收藏」，就会统一汇总到这里复习。
             </p>
           ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {chunks.slice(0, 9).map((chunk) => (
+            <div className="mt-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {chunks.slice(0, showAllChunks ? chunks.length : 9).map((chunk) => (
                 <div
                   key={chunk.id}
                   className="rounded-xl p-4 flex flex-col justify-between gap-3"
@@ -344,6 +346,14 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
                   </div>
                 </div>
               ))}
+              </div>
+              {chunks.length > 9 && (
+                <div className="flex justify-center pt-1">
+                  <Button c={c} variant="ghost" onClick={() => setShowAllChunks((v) => !v)}>
+                    {showAllChunks ? "收起部分语块" : `展开全部 ${chunks.length} 条语块`}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

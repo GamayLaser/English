@@ -16,7 +16,12 @@ export interface SchedulerInput {
 }
 
 function shuffled<T>(items: T[]) {
-  return [...items].sort(() => Math.random() - 0.5);
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 function targetReviewsAfterGroup(groupsCreated: number) {
@@ -39,7 +44,7 @@ export function createPracticeSet({
 }: SchedulerInput): PracticeQuestion[] {
   const now = Date.now();
   const libraryIds = new Set(library.map((sentence) => sentence.id));
-  const reviewCandidates = wrongBook.filter((item) => libraryIds.has(item.sentence.id));
+  const reviewCandidates = wrongBook.filter((item) => item.lastVerdict !== "acceptable" && libraryIds.has(item.sentence.id));
   const reviewCount = Math.max(
     0,
     Math.min(MAX_REVIEWS_PER_GROUP, targetReviewsAfterGroup(groupsCreated) - reviewsAssigned, reviewCandidates.length),
@@ -59,13 +64,13 @@ export function createPracticeSet({
     .slice(0, PRACTICE_GROUP_SIZE - reviews.length)
     .map((sentence) => ({ sentence, kind: "fresh" as const, previousIssues: [] }));
 
-  return shuffled([...reviews, ...fresh]).map((item, index, items) => {
+  return shuffled([...reviews, ...fresh]).map((item, index) => {
     const direction =
       directionMode === "zh2en"
         ? ("zh2en" as const)
         : directionMode === "en2zh"
           ? ("en2zh" as const)
-          : index < Math.ceil(items.length / 2)
+          : index % 2 === 0
             ? ("zh2en" as const)
             : ("en2zh" as const);
     return { ...item, direction };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { AutoAdvance, DiffFeedbackCard, PracticeCompletedCard } from "../components/english/DiffFeedbackCard";
 import { EnglishPageHeader, EnglishSegmentedTabs } from "../components/english/EnglishUi";
 import { ERROR_LABELS } from "../components/english/RadarScoreCard";
@@ -72,6 +72,8 @@ function loadOrCreateSession(): TranslationPracticeSession {
 
 export default function TranslationPage({ c }: { c: ThemeColors }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const wrongIdParam = searchParams.get("wrongId");
   const [practice, setPractice] = useState<TranslationPracticeSession>(loadOrCreateSession);
   const { questions, index, answer, evaluation, attempts } = practice;
   const [busy, setBusy] = useState(false);
@@ -83,6 +85,42 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
   const answerInputRef = useRef<HTMLTextAreaElement>(null);
   const micRef = useRef<{ stop: () => void } | null>(null);
   const current = questions[index];
+
+  function stopMic() {
+    if (micRef.current) {
+      try {
+        micRef.current.stop();
+      } catch {}
+      micRef.current = null;
+    }
+    setMicActive(false);
+  }
+
+  useEffect(() => () => stopMic(), []);
+
+  useEffect(() => {
+    if (!wrongIdParam) return;
+    const wrongItem = loadWrongBook().find((item) => item.sentence.id === wrongIdParam);
+    if (wrongItem) {
+      const targetQuestion: PracticeQuestion = {
+        sentence: wrongItem.sentence,
+        kind: "review",
+        direction: "zh2en",
+        previousIssues: wrongItem.latestAttempt?.evaluation.issues ?? [],
+      };
+      const base = createGroup("zh2en", "smart").filter((q) => q.sentence.id !== wrongIdParam);
+      replacePractice({
+        questions: [targetQuestion, ...base],
+        index: 0,
+        answer: "",
+        attempts: [],
+        evaluation: null,
+      });
+      setFinished(false);
+      setMessage("");
+    }
+    setSearchParams({}, { replace: true });
+  }, [wrongIdParam]);
 
   const hasSpeech =
     typeof window !== "undefined" &&
@@ -103,11 +141,13 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
   );
 
   async function submit() {
+    if (!current) return;
     const settings = loadAiSettings();
     if (!answer.trim()) {
       setMessage("请输入翻译后再提交。");
       return;
     }
+    stopMic();
     setBusy(true);
     setMessage("");
     try {
@@ -115,7 +155,10 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
       const attempt = { question: current, answer, evaluation: result, completedAt: Date.now() };
       replacePractice({ ...practice, attempts: [...attempts, attempt], evaluation: result });
       recordSentenceAttempt(current.sentence.id, result.score, attempt.completedAt);
-      if (result.verdict === "needs_improvement" || current.kind === "review") upsertWrongBookItem(attempt);
+      const isChunkItem = current.sentence.id.startsWith("chunk:");
+      if (result.verdict === "needs_improvement" || (current.kind === "review" && !isChunkItem)) {
+        upsertWrongBookItem(attempt);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "模型请求失败，请重试。");
     } finally {
@@ -124,6 +167,7 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
   }
 
   function next() {
+    stopMic();
     if (index === questions.length - 1) {
       saveReports([{ date: new Date().toLocaleDateString("zh-CN"), attempts, createdAt: Date.now() }, ...loadReports()]);
       clearTranslationPracticeSession();
@@ -135,6 +179,7 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
   }
 
   function restart(nextDir = directionMode, nextSource = sourceFilter) {
+    stopMic();
     replacePractice(createSession(nextDir, nextSource));
     setFinished(false);
     setMessage("");

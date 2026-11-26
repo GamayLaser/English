@@ -2,6 +2,12 @@ import { workspaceStorage } from "../persistence/privateWorkspaceStore";
 
 export type ChunkSource = "reading" | "novel" | "shows" | "show" | "card" | "translator";
 
+const MAX_USER_CHUNKS = 1000;
+
+function normalizeSource(source: ChunkSource): ChunkSource {
+  return source === "show" ? "shows" : source;
+}
+
 export type UserChunk = {
   id: string;
   en: string;
@@ -31,14 +37,16 @@ export function loadUserChunks(): UserChunk[] {
     const raw = workspaceStorage.getItem(CHUNKS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as UserChunk[]) : [];
+    return Array.isArray(parsed)
+      ? (parsed as UserChunk[]).map((c) => ({ ...c, source: normalizeSource(c.source) }))
+      : [];
   } catch {
     return [];
   }
 }
 
 export function saveUserChunks(chunks: UserChunk[]): void {
-  workspaceStorage.setItem(CHUNKS_KEY, JSON.stringify(chunks.slice(0, 500)));
+  workspaceStorage.setItem(CHUNKS_KEY, JSON.stringify(chunks.slice(0, MAX_USER_CHUNKS)));
   notifyUpdated();
 }
 
@@ -63,7 +71,7 @@ export function addUserChunk(input: {
     en,
     zh: zh || prev?.zh || "",
     context: input.context?.trim() || prev?.context,
-    source: input.source,
+    source: normalizeSource(input.source),
     sourceRef: input.sourceRef || prev?.sourceRef,
     createdAt: prev?.createdAt ?? now,
     mastered: prev?.mastered ?? false,

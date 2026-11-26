@@ -19,6 +19,27 @@ import type { WorkspaceUpdate } from "../features/persistence/workspaceUpdateRou
 export const countDictationWords = (value: string) =>
   value.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)?.length ?? 0;
 
+function AudioVisualizerBars({ active, color }: { active: boolean; color: string }) {
+  const barHeights = [40, 75, 55, 90, 60, 85, 45, 95, 65, 80, 50, 70];
+  return (
+    <div className="flex items-center gap-1 h-7 px-2 shrink-0" aria-hidden="true">
+      {barHeights.map((h, i) => (
+        <span
+          key={i}
+          className="w-1 rounded-full transition-all duration-300"
+          style={{
+            background: color,
+            height: active ? `${h}%` : "18%",
+            animation: active ? `pulse ${(i % 4) * 0.18 + 0.5}s ease-in-out infinite alternate` : "none",
+            animationDelay: `${i * 0.06}s`,
+            opacity: active ? 0.9 : 0.28,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function ListeningPractice({ c, workspaceUpdate = null }: { c: ThemeColors; workspaceUpdate?: WorkspaceUpdate | null }) {
   const [articles, setArticles] = useState(loadListeningLibrary);
   const [id, setId] = useState(() => {
@@ -100,6 +121,7 @@ export default function ListeningPractice({ c, workspaceUpdate = null }: { c: Th
   async function play() {
     if (player.current) {
       try {
+        player.current.onended = () => setPlaying(false);
         await player.current.play();
         setPlaying(true);
       } catch (error) {
@@ -158,27 +180,6 @@ export default function ListeningPractice({ c, workspaceUpdate = null }: { c: Th
       setBusy(false);
     }
   }
-
-function AudioVisualizerBars({ active, color }: { active: boolean; color: string }) {
-  const barHeights = [40, 75, 55, 90, 60, 85, 45, 95, 65, 80, 50, 70];
-  return (
-    <div className="flex items-center gap-1 h-7 px-2 shrink-0" aria-hidden="true">
-      {barHeights.map((h, i) => (
-        <span
-          key={i}
-          className="w-1 rounded-full transition-all duration-300"
-          style={{
-            background: color,
-            height: active ? `${h}%` : "18%",
-            animation: active ? `pulse ${(i % 4) * 0.18 + 0.5}s ease-in-out infinite alternate` : "none",
-            animationDelay: `${i * 0.06}s`,
-            opacity: active ? 0.9 : 0.28,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
   return (
     <div className="container-focus flex flex-col gap-5 pb-8 zen-page-enter">
@@ -390,6 +391,7 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
                     completedAt: Date.now(),
                   }).nextArticleId;
                   if (nextArticleId) setId(nextArticleId);
+                  else setMessage("🎉 全部听力原文已完成！");
                 }}
               >
                 完成本组并进入下一组
