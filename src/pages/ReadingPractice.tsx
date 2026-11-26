@@ -253,7 +253,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
                 <span key={`${segment.text}-${index}`} data-reading-segment data-reading-start={startIndex}>
                   {showVocabHints && vocabMatcher
                     ? tokenizeVocabMatches(segment.text, vocabMatcher).map((tok, tokIdx) =>
-                        tok.entry ? (
+                        tok.entry && !vocabMastered.has(tok.entry.id) ? (
                           <span
                             key={`${tokIdx}-${tok.text}`}
                             className="novel-vocab-hit"
