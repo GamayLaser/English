@@ -142,7 +142,7 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
           <NavLink to="/today" className="flex items-center gap-2.5 shrink-0">
             <BrandLogo size={28} />
             <span
-              className="text-[18px] font-semibold tracking-tight hidden sm:inline"
+              className="text-[19px] font-semibold tracking-tight leading-none -translate-y-[1px] hidden sm:inline"
               style={{ fontFamily: "var(--font-serif)", color: "var(--text-primary)" }}
             >
               Cadence
