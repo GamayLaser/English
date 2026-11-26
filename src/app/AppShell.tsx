@@ -101,7 +101,7 @@ const NAV_GROUPS: Array<{ title: string; items: NavItem[] }> = [
     title: "AI 训练",
     items: [
       { to: "/practice", label: "句子翻译", icon: ICONS.practice },
-      { to: "/reading", label: "阅读训练", icon: ICONS.reading },
+      { to: "/reading", label: "连载小说", icon: ICONS.reading },
       { to: "/listening", label: "听力训练", icon: ICONS.listening },
       { to: "/writing", label: "写作训练", icon: ICONS.writing },
       { to: "/wrongbook", label: "错题本", icon: ICONS.wrongbook },

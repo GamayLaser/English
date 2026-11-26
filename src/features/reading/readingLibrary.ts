@@ -1,16 +1,10 @@
 import { workspaceStorage } from "../persistence/privateWorkspaceStore";
-import { GREETINGS_READING } from "../english/greetingsCourseContent";
 
 import type { ImportReadingResult, ReadingArticle } from "../english/types";
 
 const libraryKey = "english:reading-library-v2";
 
-export const DEFAULT_ELEMENTARY_ARTICLES: ReadingArticle[] = GREETINGS_READING.map(([title, content], index) => ({
-  id: `greetings-reading-${index + 1}`,
-  title,
-  content,
-  source: "built-in",
-}));
+export const DEFAULT_ELEMENTARY_ARTICLES: ReadingArticle[] = [];
 
 export function normalizeReadingText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -20,9 +14,9 @@ export function loadReadingLibrary() {
   try {
     const saved = JSON.parse(workspaceStorage.getItem(libraryKey) ?? "") as unknown;
     if (Array.isArray(saved) && saved.every(isReadingArticle)) {
-      const upgraded = upgradeBuiltInArticles(saved);
-      if (JSON.stringify(upgraded) !== JSON.stringify(saved)) saveReadingLibrary(upgraded);
-      return upgraded;
+      const cleaned = saved.filter((item) => item.source === "imported");
+      if (cleaned.length !== saved.length) saveReadingLibrary(cleaned);
+      return cleaned;
     }
   } catch { /* seed below */ }
   return DEFAULT_ELEMENTARY_ARTICLES;
