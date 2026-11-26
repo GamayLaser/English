@@ -47,6 +47,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   const [loading, setLoading] = useState(true);
 
   const [fontIdx, setFontIdx] = useState(1);
+  const [spreadMode, setSpreadMode] = useState<"spread" | "single">("spread");
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showRetell, setShowRetell] = useState(false);
 
@@ -134,6 +135,24 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const paragraphs = useMemo(() => createReadingParagraphs(chapter?.story ?? ""), [chapter?.story]);
 
+  const [leftParagraphs, rightParagraphs] = useMemo(() => {
+    if (paragraphs.length <= 1) return [paragraphs, []];
+    const weights = paragraphs.map((p) => Math.max(40, p.text.length));
+    const total = weights.reduce((a, b) => a + b, 0);
+    const half = total / 2;
+    let acc = 0;
+    let splitIdx = 1;
+    for (let i = 0; i < weights.length - 1; i++) {
+      acc += weights[i];
+      if (acc >= half) {
+        splitIdx = i + 1;
+        break;
+      }
+      splitIdx = i + 1;
+    }
+    return [paragraphs.slice(0, splitIdx), paragraphs.slice(splitIdx)];
+  }, [paragraphs]);
+
   if (loading) {
     return <div className="py-20 text-center text-sm" style={{ color: c.fgMuted }}>正在打开小说目录…</div>;
   }
@@ -144,6 +163,74 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const activeVolume = novelIndex?.volumes.find((v) => v.id === activeMeta.volumeId) ?? novelIndex?.volumes[0];
   const fontStyle = FONT_SIZES[fontIdx];
+  const isSpread = spreadMode === "spread" && rightParagraphs.length > 0;
+
+  function renderParagraphList(list: typeof paragraphs) {
+    return list.map((paragraph) => {
+      const matchingLineIds = [paragraph.id, ...paragraph.legacyLineIds];
+      const notes = progress.annotations.filter((note) => matchingLineIds.includes(note.lineId));
+      const segments = buildAnnotatedSegments(paragraph.text, notes);
+      let sourceCursor = 0;
+
+      return (
+        <div
+          key={paragraph.id}
+          data-reading-line={paragraph.id}
+          onMouseUp={(event) => {
+            if (!(event.target instanceof HTMLElement && event.target.closest("button"))) {
+              void captureSelection(paragraph.id, paragraph.text);
+            }
+          }}
+          className="select-text"
+        >
+          <p
+            style={{
+              color: c.fg,
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontSize: `${fontStyle.size}px`,
+              lineHeight: fontStyle.lineHeight,
+            }}
+          >
+            {segments.map((segment, index) => {
+              const startIndex = paragraph.text.indexOf(segment.text, sourceCursor);
+              sourceCursor = startIndex + segment.text.length;
+              return segment.translation ? (
+                <span
+                  key={`${segment.text}-${index}`}
+                  data-reading-segment
+                  data-reading-start={startIndex}
+                  className="relative mx-0.5 inline-block align-baseline leading-none"
+                >
+                  <span data-reading-original className="underline decoration-dotted underline-offset-4" style={{ textDecorationColor: c.accent }}>
+                    {segment.text}
+                  </span>
+                  <span
+                    className="group absolute left-1/2 top-[calc(100%+0.15rem)] inline-flex -translate-x-1/2 items-center whitespace-nowrap font-sans text-xs font-medium leading-none"
+                    style={{ color: c.accent }}
+                  >
+                    <span>{segment.translation}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeNote(matchingLineIds, segment.text, startIndex)}
+                      className="ml-1 grid size-3.5 place-items-center rounded-full text-[10px] opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                      style={{ background: c.card, border: `1px solid ${c.accent}`, color: c.accent }}
+                      aria-label={`删除 ${segment.text} 的释义`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                </span>
+              ) : (
+                <span key={`${segment.text}-${index}`} data-reading-segment data-reading-start={startIndex}>
+                  {segment.text}
+                </span>
+              );
+            })}
+          </p>
+        </div>
+      );
+    });
+  }
 
   function stepChapter(delta: -1 | 1) {
     const next = allChapters[currentIdx + delta];
@@ -299,7 +386,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 pb-12 zen-page-enter">
+    <div className={`mx-auto space-y-5 pb-12 zen-page-enter transition-all ${isSpread ? "max-w-6xl" : "max-w-3xl"}`}>
       {/* Slim Reader Top Bar */}
       <div
         className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl px-4 py-3 zen-card"
@@ -345,6 +432,15 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
         <div className="flex items-center gap-1.5">
           <button
             type="button"
+            onClick={() => setSpreadMode((m) => (m === "spread" ? "single" : "spread"))}
+            className="hidden lg:inline-flex items-center min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
+            style={{ background: c.inputBg, color: c.fgSub }}
+            title="切换单页 / 宽屏双页"
+          >
+            {spreadMode === "spread" ? "双页" : "单页"}
+          </button>
+          <button
+            type="button"
             onClick={() => setFontIdx((i) => (i + 1) % FONT_SIZES.length)}
             className="min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
             style={{ background: c.inputBg, color: c.fgSub }}
@@ -382,72 +478,19 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
             </p>
           </header>
 
-          <div className="space-y-5">
-            {paragraphs.map((paragraph) => {
-              const matchingLineIds = [paragraph.id, ...paragraph.legacyLineIds];
-              const notes = progress.annotations.filter((note) => matchingLineIds.includes(note.lineId));
-              const segments = buildAnnotatedSegments(paragraph.text, notes);
-              let sourceCursor = 0;
-
-              return (
-                <div
-                  key={paragraph.id}
-                  data-reading-line={paragraph.id}
-                  onMouseUp={(event) => {
-                    if (!(event.target instanceof HTMLElement && event.target.closest("button"))) {
-                      void captureSelection(paragraph.id, paragraph.text);
-                    }
-                  }}
-                  className="select-text"
-                >
-                  <p
-                    style={{
-                      color: c.fg,
-                      fontFamily: 'Georgia, "Times New Roman", serif',
-                      fontSize: `${fontStyle.size}px`,
-                      lineHeight: fontStyle.lineHeight,
-                    }}
-                  >
-                    {segments.map((segment, index) => {
-                      const startIndex = paragraph.text.indexOf(segment.text, sourceCursor);
-                      sourceCursor = startIndex + segment.text.length;
-                      return segment.translation ? (
-                        <span
-                          key={`${segment.text}-${index}`}
-                          data-reading-segment
-                          data-reading-start={startIndex}
-                          className="relative mx-0.5 inline-block align-baseline leading-none"
-                        >
-                          <span data-reading-original className="underline decoration-dotted underline-offset-4" style={{ textDecorationColor: c.accent }}>
-                            {segment.text}
-                          </span>
-                          <span
-                            className="group absolute left-1/2 top-[calc(100%+0.15rem)] inline-flex -translate-x-1/2 items-center whitespace-nowrap font-sans text-xs font-medium leading-none"
-                            style={{ color: c.accent }}
-                          >
-                            <span>{segment.translation}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeNote(matchingLineIds, segment.text, startIndex)}
-                              className="ml-1 grid size-3.5 place-items-center rounded-full text-[10px] opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
-                              style={{ background: c.card, border: `1px solid ${c.accent}`, color: c.accent }}
-                              aria-label={`删除 ${segment.text} 的释义`}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        </span>
-                      ) : (
-                        <span key={`${segment.text}-${index}`} data-reading-segment data-reading-start={startIndex}>
-                          {segment.text}
-                        </span>
-                      );
-                    })}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          {isSpread ? (
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 relative">
+              <div
+                aria-hidden="true"
+                className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
+                style={{ background: `linear-gradient(to bottom, transparent, ${c.border}, transparent)` }}
+              />
+              <div className="space-y-5">{renderParagraphList(leftParagraphs)}</div>
+              <div className="space-y-5">{renderParagraphList(rightParagraphs)}</div>
+            </div>
+          ) : (
+            <div className="space-y-5">{renderParagraphList(paragraphs)}</div>
+          )}
 
           {audioMessage && <p className="mt-6 text-sm" style={{ color: c.danger }}>{audioMessage}</p>}
           {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
