@@ -344,12 +344,20 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
     return map;
   }, [categories]);
 
+  const PRIORITY_CATEGORY_RE = /(verb|communication|everyday|scene|work|business|travel|idea|phrasal|social|meal|shopping)/i;
+
   const visibleCategories = useMemo(() => {
-    return categories.filter((cat) => {
-      if (mode === "sentence" && cat.group !== "sentence") return false;
-      if (mode !== "sentence" && cat.group === "sentence") return false;
-      return true;
-    });
+    return categories
+      .filter((cat) => {
+        if (mode === "sentence" && cat.group !== "sentence") return false;
+        if (mode !== "sentence" && cat.group === "sentence") return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const aPrio = PRIORITY_CATEGORY_RE.test(a.id) || PRIORITY_CATEGORY_RE.test(a.nameEn) ? 0 : 1;
+        const bPrio = PRIORITY_CATEGORY_RE.test(b.id) || PRIORITY_CATEGORY_RE.test(b.nameEn) ? 0 : 1;
+        return aPrio - bPrio;
+      });
   }, [categories, mode]);
 
   const sentenceTopics = useMemo(() => {

@@ -15,6 +15,13 @@ type CloudVideoItem = {
   uploadedAt: string;
 };
 
+type LocalShowItem = {
+  id: string;
+  title: string;
+  videoFile: File;
+  subtitleFile: File | null;
+};
+
 type SubtitleMode = "bilingual" | "en" | "hidden";
 
 const SPEEDS = [0.75, 0.85, 1.0, 1.15];
@@ -42,6 +49,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [recording, setRecording] = useState(false);
   const [myRecordingUrl, setMyRecordingUrl] = useState<string | null>(null);
   const [savedCueIds, setSavedCueIds] = useState<Set<string>>(() => new Set());
+  const [localShows, setLocalShows] = useState<LocalShowItem[]>([]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const activeLineRef = useRef<HTMLButtonElement | null>(null);
@@ -50,6 +58,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const recordAudioRef = useRef<HTMLAudioElement | null>(null);
   const localVideoInputRef = useRef<HTMLInputElement | null>(null);
   const localSubInputRef = useRef<HTMLInputElement | null>(null);
+  const localFolderInputRef = useRef<HTMLInputElement | null>(null);
   const cloudUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchCloudVideos = useCallback(async () => {
@@ -244,6 +253,53 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setStatusMessage("");
   }
 
+  async function handleLocalFolder(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!files.length) return;
+
+    const videoMap = new Map<string, File>();
+    const subMap = new Map<string, File>();
+    for (const file of files) {
+      const lower = file.name.toLowerCase();
+      const stem = file.name.replace(/\.[^.]+$/, "");
+      if (/\.(mp4|webm|m4v|mov)$/.test(lower)) videoMap.set(stem, file);
+      else if (/\.(srt|vtt)$/.test(lower)) subMap.set(stem, file);
+    }
+
+    const items: LocalShowItem[] = [...videoMap.entries()]
+      .map(([stem, videoFile]) => ({
+        id: stem,
+        title: stem.replace(/[_-]+/g, " "),
+        videoFile,
+        subtitleFile: subMap.get(stem) ?? null,
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true }));
+
+    setLocalShows(items);
+    setStatusMessage(
+      items.length
+        ? `已扫描本地文件夹：共匹配 ${items.length} 个视频（其中 ${items.filter((i) => i.subtitleFile).length} 个已自动配对字幕）。`
+        : "该文件夹下未找到 .mp4/.webm/.m4v/.mov 视频文件。",
+    );
+  }
+
+  async function selectLocalShow(item: LocalShowItem) {
+    if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
+    const url = URL.createObjectURL(item.videoFile);
+    localUrlRef.current = url;
+    setVideoSrc(url);
+    setActiveTitle(item.title);
+    setLockedCue(null);
+    setCurrentTime(0);
+    if (item.subtitleFile) {
+      const text = await item.subtitleFile.text();
+      setCues(parseSubtitles(text));
+    } else {
+      setCues([]);
+    }
+  }
+
   async function handleLocalSubtitle(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -278,6 +334,15 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
               className="hidden"
             />
             <input
+              ref={localFolderInputRef}
+              type="file"
+              // @ts-expect-error non-standard folder picker attribute supported in Chromium/WebKit
+              webkitdirectory=""
+              multiple
+              onChange={(e) => void handleLocalFolder(e)}
+              className="hidden"
+            />
+            <input
               ref={cloudUploadInputRef}
               type="file"
               multiple
@@ -285,6 +350,9 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
               onChange={(e) => void handleCloudUpload(e)}
               className="hidden"
             />
+            <Button c={c} variant="secondary" onClick={() => localFolderInputRef.current?.click()}>
+              扫描本地文件夹
+            </Button>
             <Button c={c} variant="secondary" onClick={() => localVideoInputRef.current?.click()}>
               本地选视频
             </Button>
@@ -515,6 +583,43 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
           </div>
         </Card>
       </div>
+
+      {/* Local Folder Scanned Library */}
+      {localShows.length > 0 && (
+        <Card c={c}>
+          <div className="p-5 md:p-6 space-y-4">
+            <div>
+              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+                LOCAL FOLDER LIBRARY
+              </p>
+              <h3 className="type-title mt-1" style={{ color: c.fg }}>
+                本地美剧片库 ({localShows.length})
+              </h3>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {localShows.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl p-4 flex flex-col justify-between gap-3"
+                  style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+                >
+                  <div>
+                    <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
+                      {formatBytes(item.videoFile.size)} · {item.subtitleFile ? "已配对字幕" : "无同名字幕"}
+                    </p>
+                  </div>
+                  <Button c={c} variant="primary" onClick={() => void selectLocalShow(item)}>
+                    播放精听
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Cloudflare R2 Cloud Library */}
       <Card c={c}>

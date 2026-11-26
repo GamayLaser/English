@@ -1,5 +1,6 @@
 import { hueDimOf, hueOf } from "../theme/palette";
 import { Button, Card, SearchField, cardWashStyle } from "../components/ui";
+import { loadUserChunks } from "../features/chunks/chunksStore";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { loadAiSettings } from "../features/english/aiSettings";
 import { evaluateTranslation } from "../features/english/deepseekEvaluator";
@@ -29,7 +30,20 @@ const isView = (value: string): value is View => ["practice", "reading", "writin
 
 function createGroup() {
   const history = loadSchedulerHistory();
-  const questions = createPracticeSet({ library: loadSentenceLibrary(), wrongBook: loadWrongBook(), ...history });
+  const baseQuestions = createPracticeSet({ library: loadSentenceLibrary(), wrongBook: loadWrongBook(), ...history });
+  const chunkQuestions: PracticeQuestion[] = loadUserChunks()
+    .filter((ch) => !ch.mastered && ch.en.trim() && ch.zh.trim())
+    .slice(0, 3)
+    .map((ch) => ({
+      sentence: { id: `chunk:${ch.id}`, en: ch.en, zh: ch.zh, source: "imported" },
+      direction: "zh2en" as const,
+      kind: "review" as const,
+      previousIssues: [],
+    }));
+  const questions =
+    chunkQuestions.length > 0
+      ? [...chunkQuestions, ...baseQuestions.slice(0, Math.max(1, baseQuestions.length - chunkQuestions.length))]
+      : baseQuestions;
   saveSchedulerHistory({ groupsCreated: history.groupsCreated + 1, reviewsAssigned: history.reviewsAssigned + questions.filter((item) => item.kind === "review").length });
   return questions;
 }

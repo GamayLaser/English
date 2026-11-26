@@ -25,6 +25,7 @@ import {
 } from "../features/reading/readingProgress";
 import { getLineSelection } from "../features/reading/readingSelection";
 import { quickTranslate } from "../features/translator/quickTranslate";
+import { evaluateReadingSummary, type ReadingSummaryEvaluation } from "../features/reading/summaryEvaluator";
 import { EnglishButton, EnglishEmptyState, EnglishFilterTabs, EnglishPageHeader } from "../components/english/EnglishUi";
 import type { ThemeColors } from "../types";
 import Card from "../components/ui/Card";
@@ -80,7 +81,7 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
       .then((data) => {
         if (active) setNovelChapter(data);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       active = false;
     };
@@ -109,6 +110,12 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
   const [quizResult, setQuizResult] = useState<ReadingQuizResult | null>(null);
   const [quizBusy, setQuizBusy] = useState(false);
   const [quizMessage, setQuizMessage] = useState("");
+  const [summaryText, setSummaryText] = useState("");
+  const [summaryResult, setSummaryResult] = useState<ReadingSummaryEvaluation | null>(null);
+  const [summaryBusy, setSummaryBusy] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
+  const [summaryMic, setSummaryMic] = useState(false);
+  const summaryMicRef = useRef<{ stop: () => void } | null>(null);
   const [audioBusyId, setAudioBusyId] = useState<string | null>(null);
   const [playingParagraphId, setPlayingParagraphId] = useState<string | null>(null);
   const [audioMessage, setAudioMessage] = useState("");
@@ -143,6 +150,7 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
     setChunkSaved(false);
     setMessage("");
     setQuiz(null); setQuizAnswers({}); setQuizResult(null); setQuizMessage("");
+    setSummaryText(""); setSummaryResult(null); setSummaryError("");
   }, [article?.id, sourceMode]);
 
   useEffect(() => () => {
@@ -250,6 +258,57 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
     try { setQuizResult(await evaluateReadingQuiz({ settings, quiz, answers: quizAnswers })); }
     catch (error) { setQuizMessage(error instanceof Error ? error.message : "判卷失败，请重试。"); }
     finally { setQuizBusy(false); }
+  }
+
+  function toggleSummaryVoice() {
+    if (summaryMic) {
+      summaryMicRef.current?.stop();
+      setSummaryMic(false);
+      return;
+    }
+    const w = window as unknown as Record<string, unknown>;
+    const Ctor = (w.SpeechRecognition || w.webkitSpeechRecognition) as (new () => {
+      lang: string;
+      interimResults: boolean;
+      onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+      start: () => void;
+      stop: () => void;
+    }) | undefined;
+    if (!Ctor) {
+      setSummaryError("当前浏览器不支持语音识别，请直接打字复述。");
+      return;
+    }
+    const rec = new Ctor();
+    rec.lang = "en-US";
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const text = e.results?.[0]?.[0]?.transcript?.trim();
+      if (text) setSummaryText((prev) => (prev ? `${prev} ${text}` : text));
+    };
+    rec.onerror = () => setSummaryMic(false);
+    rec.onend = () => setSummaryMic(false);
+    summaryMicRef.current = rec;
+    setSummaryMic(true);
+    rec.start();
+  }
+
+  async function submitSummary() {
+    if (!article || !summaryText.trim()) {
+      setSummaryError("请先用英文说出或写下 1~3 句大意。");
+      return;
+    }
+    const settings = loadAiSettings();
+    setSummaryBusy(true);
+    setSummaryError("");
+    try {
+      setSummaryResult(await evaluateReadingSummary({ settings, article, summary: summaryText }));
+    } catch (error) {
+      setSummaryError(error instanceof Error ? error.message : "复述评分失败，请重试。");
+    } finally {
+      setSummaryBusy(false);
+    }
   }
 
   async function playArticle() {
@@ -444,6 +503,48 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
         </div>
       </Card>
     )}
+
+    <Card c={c}>
+      <div className="p-6 md:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold" style={{ color: c.fg }}>章末口头复述（用 2~3 句英文讲清大意）</h3>
+            <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>不看原文试着自己组织语言复述，锻炼“读完就能说出来”的能力</p>
+          </div>
+          <EnglishButton variant={summaryMic ? "danger" : "secondary"} c={c} onClick={toggleSummaryVoice}>
+            {summaryMic ? "停止录音" : "语音复述输入"}
+          </EnglishButton>
+        </div>
+        <textarea
+          value={summaryText}
+          onChange={(e) => setSummaryText(e.target.value)}
+          rows={3}
+          placeholder="例如：Ronan's dad sold his red bike because the family needed money for a new home..."
+          className="mt-4 w-full resize-y rounded-xl border px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/40"
+          style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+        />
+        {summaryError && <p className="mt-2 text-xs" style={{ color: c.danger }}>{summaryError}</p>}
+        <div className="mt-3 flex justify-end">
+          <EnglishButton variant="primary" c={c} disabled={summaryBusy || !summaryText.trim()} onClick={() => void submitSummary()}>
+            {summaryBusy ? "AI 正在点评…" : "提交复述点评"}
+          </EnglishButton>
+        </div>
+        {summaryResult && (
+          <div className="mt-4 rounded-xl p-4 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold" style={{ color: c.fg }}>复述点评</span>
+              <span className="type-title" style={{ color: c.accent }}>{summaryResult.score} 分</span>
+            </div>
+            <p className="text-sm leading-relaxed" style={{ color: c.fgSub }}>{summaryResult.feedback}</p>
+            {summaryResult.improvements.length > 0 && (
+              <ul className="text-xs space-y-1 pt-1" style={{ color: c.fgMuted }}>
+                {summaryResult.improvements.map((tip) => <li key={tip}>· {tip}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
 
     <Card c={c}>
       <div className="p-6 md:p-8">

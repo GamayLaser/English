@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
+import { loadUserChunks } from "../features/chunks/chunksStore";
 import { loadAiSettings } from "../features/english/aiSettings";
 import type { WritingTopic } from "../features/english/types";
 import { loadWritingTopics } from "../features/writing/writingLibrary";
@@ -37,6 +38,13 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
 
   if (!topic) return <EnglishEmptyState c={c} title="还没有写作题目" description="写作题目准备好后，就能开始练习。" />;
   const wordCount = countEnglishWords(progress.draft);
+  const targetChunks = useMemo(
+    () =>
+      loadUserChunks()
+        .filter((ch) => !ch.mastered && ch.en.trim().length > 1)
+        .slice(0, 4),
+    [topic.id],
+  );
 
   function updateDraft(draft: string) {
     setProgress(saveWritingDraft(topic.id, draft));
@@ -99,6 +107,34 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
     </Card>
     <Card c={c}>
         <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
+        {targetChunks.length > 0 && (
+          <div className="mt-4 rounded-xl p-3.5 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
+            <p className="text-xs font-semibold" style={{ color: c.fgMuted }}>
+              尝试在作文中用上你收藏的语块（点击可插入，用上后自动变绿）：
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {targetChunks.map((ch) => {
+                const used = progress.draft.toLowerCase().includes(ch.en.toLowerCase());
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => updateDraft(progress.draft ? `${progress.draft} ${ch.en}` : ch.en)}
+                    className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+                    style={{
+                      background: used ? c.successDim : c.card,
+                      color: used ? c.success : c.accent,
+                      border: `1px solid ${used ? c.success : c.borderSub}`,
+                    }}
+                    title={ch.zh}
+                  >
+                    {used ? `✓ ${ch.en}` : ch.en}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-blue-500/40" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
         {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         <div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void evaluateDraft()}>{busy ? "AI 正在评分…" : "交给 AI 评分与解析"}</EnglishButton></div>

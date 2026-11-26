@@ -18,7 +18,7 @@ export interface ReadingSummaryEvaluationInput {
 
 function prompt(article: ReadingArticle, summary: string) {
   return [
-    "你是一位鼓励式小学英语阅读老师。根据原文判断学生是否理解文章，不要求逐字复述。",
+    "你是一位鼓励式成人英语阅读教练。根据原文判断学习者是否理解文章大意，不要求逐字复述，重点关注表达清晰度与地道性。",
     `文章标题：${article.title}`,
     `原文：${article.content}`,
     `学生概述：${summary}`,

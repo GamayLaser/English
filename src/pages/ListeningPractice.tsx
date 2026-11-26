@@ -31,6 +31,7 @@ export default function ListeningPractice({ c, workspaceUpdate = null }: { c: Th
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [instantChecked, setInstantChecked] = useState(false);
   const [message, setMessage] = useState("");
   const player = useRef<HTMLAudioElement | null>(null);
   const audioStopRef = useRef<(() => void) | null>(null);
@@ -51,6 +52,7 @@ export default function ListeningPractice({ c, workspaceUpdate = null }: { c: Th
     setReady(false);
     setPlaying(false);
     setShowTranscript(false);
+    setInstantChecked(false);
     setMessage("");
     audioStopRef.current?.();
     audioStopRef.current = null;
@@ -240,6 +242,12 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
             const currentWord = showTranscript ? standardWord : words[index] ?? "";
             const wordLength = Math.max(3, standardWord.length, currentWord.length + 0.4);
             const punctuation = reference.match(/[.,!?;:]+$/)?.[0];
+            const isMatched = currentWord.trim().toLowerCase() === standardWord.toLowerCase();
+            const underlineColor = instantChecked
+              ? isMatched
+                ? c.success
+                : c.danger
+              : c.accent;
 
             return (
               <span
@@ -253,7 +261,10 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
                   }}
                   value={currentWord}
                   readOnly={showTranscript}
-                  onChange={(event) => change(index, event.target.value)}
+                  onChange={(event) => {
+                    setInstantChecked(false);
+                    change(index, event.target.value);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === " ") {
                       event.preventDefault();
@@ -265,11 +276,11 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
                     width: `${wordLength}ch`,
                     boxSizing: "content-box",
                     border: "none",
-                    backgroundImage: `linear-gradient(90deg, ${c.accent}, ${c.fgMuted})`,
+                    backgroundImage: `linear-gradient(90deg, ${underlineColor}, ${instantChecked ? underlineColor : c.fgMuted})`,
                     backgroundPosition: "left bottom",
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "100% 2px",
-                    color: c.fg,
+                    color: instantChecked ? (isMatched ? c.success : c.danger) : c.fg,
                                       }}
                   aria-label={`第 ${index + 1} 个默写单词`}
                 />
@@ -287,7 +298,29 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
           </p>
         )}
 
-        <div className="mt-9 flex items-center justify-end gap-3">
+        {instantChecked && (
+          <div
+            className="mt-5 rounded-xl px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2"
+            style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+          >
+            <span style={{ color: c.fg }}>
+              即时拼写核对：正确{" "}
+              <b style={{ color: c.success }}>
+                {referenceWords.filter((ref, idx) => (words[idx] ?? "").trim().toLowerCase() === ref.replace(/[.,!?;:]/g, "").toLowerCase()).length}
+              </b>{" "}
+              / {count} 词（标绿正确，标红可对照原文修改）
+            </span>
+          </div>
+        )}
+
+        <div className="mt-7 flex flex-wrap items-center justify-end gap-3">
+          <EnglishButton
+            variant="secondary"
+            c={c}
+            onClick={() => setInstantChecked((v) => !v)}
+          >
+            {instantChecked ? "隐藏拼写核对" : "即时核对拼写"}
+          </EnglishButton>
           <EnglishButton
             variant="secondary"
             c={c}
@@ -296,7 +329,7 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
             {showTranscript ? "隐藏原文" : "显示原文"}
           </EnglishButton>
           <EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void score()}>
-            {busy ? "AI 正在评分…" : "交给 AI 评分与解析"}
+            {busy ? "AI 正在解析…" : "AI 深度解析与评分"}
           </EnglishButton>
         </div>
 
