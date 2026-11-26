@@ -461,7 +461,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
       </div>
 
       {/* Immersive Book Page */}
-      <Card c={c} className="overflow-hidden">
+      <Card c={c} className="overflow-hidden zen-paper">
         <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-12 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-12"}>
           <header className="text-center pb-6 mb-7 border-b" style={{ borderColor: c.borderSub }}>
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>

@@ -57,20 +57,20 @@ export function buildTheme(mode: Theme): ThemeColors {
   const tint = hueDim(hue, dark ? 0.15 : 0.09);
   const accent = dark ? "#60A5FA" : "#2563EB";
   return {
-    bg: dark ? "#0B1120" : "#F5F7FA",
+    bg: dark ? "#0B1120" : "#F6F7F9",
     sidebar: dark ? "#0F172A" : "#FFFFFF",
     card: dark ? "#162032" : "#FFFFFF",
     cardHover: dark ? "#1E293B" : "#F8FAFC",
-    border: dark ? "rgba(148, 163, 184, 0.14)" : "#E2E8F0",
-    borderSub: dark ? "rgba(148, 163, 184, 0.08)" : "#EEF2F6",
-    fg: dark ? "#F1F5F9" : "#0F172A",
-    fgMuted: dark ? "#94A3B8" : "#64748B",
+    border: dark ? "rgba(148, 163, 184, 0.14)" : "#D5DBE5",
+    borderSub: dark ? "rgba(148, 163, 184, 0.08)" : "#E6E9EF",
+    fg: dark ? "#F1F5F9" : "#111827",
+    fgMuted: dark ? "#94A3B8" : "#8B95A5",
     fgDim: dark ? "#64748B" : "#94A3B8",
-    fgSub: dark ? "#CBD5E1" : "#334155",
-    inputBg: dark ? "#1E293B" : "#F1F5F9",
-    inputBorder: dark ? "rgba(148, 163, 184, 0.18)" : "#E2E8F0",
-    active: dark ? "rgba(148, 163, 184, 0.10)" : "#F1F5F9",
-    activeHover: dark ? "rgba(148, 163, 184, 0.16)" : "#E2E8F0",
+    fgSub: dark ? "#CBD5E1" : "#4B5563",
+    inputBg: dark ? "#1E293B" : "#F1F4F8",
+    inputBorder: dark ? "rgba(148, 163, 184, 0.18)" : "#D5DBE5",
+    active: dark ? "rgba(148, 163, 184, 0.10)" : "#F1F4F8",
+    activeHover: dark ? "rgba(148, 163, 184, 0.16)" : "#E6E9EF",
     accent,
     accentDim: dark ? "rgba(96, 165, 250, 0.15)" : "#EFF6FF",
     accentFg: dark ? "#0B1120" : "#FFFFFF",
@@ -93,6 +93,6 @@ export function buildTheme(mode: Theme): ThemeColors {
     tabBar: dark ? "#0F172A" : "#FFFFFF",
     shadow: dark
       ? "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 20px -4px rgba(0,0,0,0.45)"
-      : "0 1px 2px rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.03)",
+      : "0 1px 2px rgba(15, 23, 42, 0.04)",
   };
 }

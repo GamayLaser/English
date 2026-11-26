@@ -144,7 +144,7 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
       style={{ background: colors.bg, color: colors.fg }}
     >
       <aside
-        className="no-print w-full md:w-[232px] shrink-0 border-b md:border-b-0 md:border-r px-3.5 py-3.5 md:py-5 flex flex-col justify-between"
+        className="no-print w-full md:w-[228px] shrink-0 border-b md:border-b-0 md:border-r px-3.5 py-3.5 md:py-5 flex flex-col justify-between"
         style={{ background: colors.sidebar, borderColor: colors.borderSub }}
       >
         <div className="space-y-4 md:space-y-6">

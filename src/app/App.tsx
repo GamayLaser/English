@@ -39,6 +39,7 @@ export default function App() {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
+    root.setAttribute("data-theme", theme);
     try {
       localStorage.setItem("workspace:theme-v1", theme);
     } catch {}
