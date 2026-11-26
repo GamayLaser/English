@@ -183,16 +183,6 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     return [paragraphs.slice(0, splitIdx), paragraphs.slice(splitIdx)];
   }, [paragraphs]);
 
-  if (loading) {
-    return <div className="py-20 text-center text-sm" style={{ color: c.fgMuted }}>正在打开小说目录…</div>;
-  }
-
-  if (!activeMeta || !chapter) {
-    return <EnglishEmptyState c={c} title="未找到小说章节" description="请确认 public/novel-data 已生成。" />;
-  }
-
-  const activeVolume = novelIndex?.volumes.find((v) => v.id === activeMeta.volumeId) ?? novelIndex?.volumes[0];
-  const fontStyle = FONT_SIZES[fontIdx];
   const chapterRenderedParagraphs = useMemo(() => {
     const seenIds = new Set<string>();
     const map = new Map<
@@ -223,6 +213,17 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     }
     return map;
   }, [paragraphs, progress.annotations, showVocabHints, vocabMatcher, vocabMastered]);
+
+  if (loading) {
+    return <div className="py-20 text-center text-sm" style={{ color: c.fgMuted }}>正在打开小说目录…</div>;
+  }
+
+  if (!activeMeta || !chapter) {
+    return <EnglishEmptyState c={c} title="未找到小说章节" description="请确认 public/novel-data 已生成。" />;
+  }
+
+  const activeVolume = novelIndex?.volumes.find((v) => v.id === activeMeta.volumeId) ?? novelIndex?.volumes[0];
+  const fontStyle = FONT_SIZES[fontIdx];
 
   const isSpread = spreadMode === "spread" && rightParagraphs.length > 0;
 
