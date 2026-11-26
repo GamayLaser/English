@@ -4,6 +4,7 @@ import type { UserProfile } from "@shared/schemas";
 import { api } from "../lib/api";
 import type { ThemeColors } from "../types";
 import { Button, Card } from "../components/ui";
+import BrandLogo from "../components/ui/BrandLogo";
 import { uiFieldClassName, uiFieldStyle } from "../components/ui/styles";
 
 export default function LoginPage({
@@ -46,20 +47,15 @@ export default function LoginPage({
       <Card c={c} wash={c.accentDim} className="w-full max-w-[400px]">
         <form onSubmit={handleSubmit} className="p-6 md:p-7 space-y-5">
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl grid place-items-center font-bold text-sm shrink-0"
-              style={{ background: c.accentDim, color: c.accent }}
-            >
-              E
-            </div>
+            <BrandLogo size={36} />
             <div>
               <p
                 className="type-caption font-semibold tracking-[0.14em] uppercase"
                 style={{ color: c.accent }}
               >
-                ENGLISH STUDIO
+                CADENCE
               </p>
-              <h2 className="type-page leading-tight" style={{ color: c.fg }}>
+              <h2 className="type-page leading-tight" style={{ color: c.fg, fontFamily: "var(--font-serif)" }}>
                 {mode === "login" ? "登录账号" : "注册账号"}
               </h2>
             </div>

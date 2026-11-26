@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router";
 import type { UserProfile } from "@shared/schemas";
+import BrandLogo from "../components/ui/BrandLogo";
 import { loadWrongBook } from "../features/english/storage";
 import { loadVocabProgress } from "../features/vocab/vocabStore";
 import type { Theme, ThemeColors } from "../types";
@@ -139,17 +140,12 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
         <div className="mx-auto max-w-[1440px] flex items-center justify-between gap-3 h-14">
           {/* Brand */}
           <NavLink to="/today" className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="w-7 h-7 rounded-lg grid place-items-center font-bold text-xs"
-              style={{ background: "var(--accent-primary)", color: "var(--accent-on-primary)", fontFamily: "var(--font-serif)" }}
-            >
-              E
-            </div>
+            <BrandLogo size={28} />
             <span
-              className="text-[16px] font-semibold tracking-tight hidden sm:inline"
+              className="text-[18px] font-semibold tracking-tight hidden sm:inline"
               style={{ fontFamily: "var(--font-serif)", color: "var(--text-primary)" }}
             >
-              English Studio
+              Cadence
             </span>
           </NavLink>
 

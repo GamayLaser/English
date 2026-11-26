@@ -1,11 +1,11 @@
 {
-  "name": "English Studio",
-  "short_name": "English Studio",
-  "description": "成人沉浸式英语学习工作台：连载小说精读、美剧精听、视觉词卡与 AI 翻译训练",
+  "name": "Cadence",
+  "short_name": "Cadence",
+  "description": "语流与沉浸式英语习得：连载小说精读、美剧精听、语块沉淀与口译输出",
   "start_url": "/today",
   "display": "standalone",
-  "background_color": "#F6F7F9",
-  "theme_color": "#2563EB",
+  "background_color": "#F5F0E6",
+  "theme_color": "#1C4532",
   "icons": [
     {
       "src": "/icon.svg",
