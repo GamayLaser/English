@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { VocabEntry } from "@shared/schemas";
 import { EnglishButton, EnglishEmptyState, EnglishFilterTabs } from "../components/english/EnglishUi";
 import { Modal } from "../components/ui";
@@ -285,9 +286,16 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     event.stopPropagation();
     const rect = event.currentTarget.getBoundingClientRect();
     const cardWidth = 304;
-    const x = Math.min(Math.max(cardWidth / 2 + 16, rect.left + rect.width / 2), window.innerWidth - cardWidth / 2 - 16);
-    const showAbove = rect.bottom + 360 > window.innerHeight && rect.top > 240;
-    const y = showAbove ? Math.max(16, rect.top - 10) : Math.min(window.innerHeight - 16, rect.bottom + 10);
+    const x = Math.min(
+      Math.max(cardWidth / 2 + 12, rect.left + rect.width / 2),
+      window.innerWidth - cardWidth / 2 - 12,
+    );
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const showAbove = spaceBelow < 380 && spaceAbove > spaceBelow;
+    const y = showAbove
+      ? Math.max(12, rect.top - 8)
+      : Math.min(window.innerHeight - 12, rect.bottom + 8);
     setPending(null);
     setActiveVocabCard({ entry, x, y, above: showAbove, contextSentence });
     speakVocabText(entry.audioText || entry.word, 0.95);
@@ -729,133 +737,139 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
         </Card>
       )}
 
-      {/* Selection Popup */}
-      {pending && (
-        <div
-          className="fixed z-[60] w-80 -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal"
-          style={{ left: pending.x, top: pending.y }}
-        >
-          <p className="text-xs" style={{ color: c.fgMuted }}>“{pending.text}”</p>
-          <p className="mt-2 text-base font-semibold" style={{ color: c.fg }}>
-            {busy ? "正在翻译…" : pending.translation || "暂未获得译文"}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <EnglishButton variant="primary" c={c} disabled={busy || !pending.translation} onClick={addAnnotation}>
-              标注在文中
-            </EnglishButton>
-            <EnglishButton variant="secondary" c={c} disabled={busy || !pending.translation || chunkSaved} onClick={saveSelectionAsChunk}>
-              {chunkSaved ? "已存语块 ✓" : "收藏语块"}
-            </EnglishButton>
-            <EnglishButton variant="ghost" c={c} onClick={() => setPending(null)}>
-              关闭
-            </EnglishButton>
-          </div>
-        </div>
-      )}
-
-      {/* Floating Vocab/Phrase Card Popover */}
-      {activeVocabCard && (
-        <>
+      {/* Selection Popup (portaled to body so zen-page-enter transform never offsets fixed coords) */}
+      {pending &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="fixed inset-0 z-[55]"
-            onClick={() => setActiveVocabCard(null)}
-            aria-hidden="true"
-          />
-          <div
-            className={`fixed z-[60] w-[304px] -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal space-y-3 ${activeVocabCard.above ? "-translate-y-full" : ""}`}
-            style={{
-              left: activeVocabCard.x,
-              top: activeVocabCard.y,
-            }}
+            className="fixed z-[60] w-80 -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal"
+            style={{ left: pending.x, top: pending.y }}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span
-                className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                style={{ background: "var(--bg-subtle)", color: "var(--text-muted)" }}
-              >
-                {activeVocabCard.entry.topic || "词卡联动"}
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => toggleVocabCardBookmark(activeVocabCard.entry, activeVocabCard.contextSentence)}
-                  className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
-                  style={{
-                    background: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accentDim : "var(--bg-subtle)",
-                    color: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accent : c.fgMuted,
-                  }}
-                >
-                  {vocabBookmarks.has(activeVocabCard.entry.id) ? "已收藏 ★" : "收藏"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleVocabCardMastered(activeVocabCard.entry.id)}
-                  className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
-                  style={{
-                    background: vocabMastered.has(activeVocabCard.entry.id) ? c.successDim : "var(--bg-subtle)",
-                    color: vocabMastered.has(activeVocabCard.entry.id) ? c.success : c.fgMuted,
-                  }}
-                >
-                  {vocabMastered.has(activeVocabCard.entry.id) ? "已掌握 ✓" : "掌握"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveVocabCard(null)}
-                  className="rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                  style={{ color: c.fgMuted }}
-                  aria-label="关闭单词卡片"
-                >
-                  ✕
-                </button>
-              </div>
+            <p className="text-xs" style={{ color: c.fgMuted }}>“{pending.text}”</p>
+            <p className="mt-2 text-base font-semibold" style={{ color: c.fg }}>
+              {busy ? "正在翻译…" : pending.translation || "暂未获得译文"}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <EnglishButton variant="primary" c={c} disabled={busy || !pending.translation} onClick={addAnnotation}>
+                标注在文中
+              </EnglishButton>
+              <EnglishButton variant="secondary" c={c} disabled={busy || !pending.translation || chunkSaved} onClick={saveSelectionAsChunk}>
+                {chunkSaved ? "已存语块 ✓" : "收藏语块"}
+              </EnglishButton>
+              <EnglishButton variant="ghost" c={c} onClick={() => setPending(null)}>
+                关闭
+              </EnglishButton>
             </div>
+          </div>,
+          document.body,
+        )}
 
-            <div className="w-full aspect-[4/3] overflow-hidden rounded-xl flex items-center justify-center">
-              <img
-                src={getCardImageUrl(activeVocabCard.entry, cdnBaseUrl)}
-                alt={activeVocabCard.entry.word}
-                className="vocab-card-img"
-              />
-            </div>
-
-            <div className="space-y-1.5">
+      {/* Floating Vocab/Phrase Card Popover (portaled to body for exact anchor near clicked word) */}
+      {activeVocabCard &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[55]"
+              onClick={() => setActiveVocabCard(null)}
+              aria-hidden="true"
+            />
+            <div
+              className={`fixed z-[60] w-[304px] max-h-[82vh] overflow-y-auto -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal space-y-3 ${activeVocabCard.above ? "-translate-y-full" : ""}`}
+              style={{
+                left: activeVocabCard.x,
+                top: activeVocabCard.y,
+              }}
+            >
               <div className="flex items-center justify-between gap-2">
-                <h4 className="text-lg font-bold leading-snug" style={{ color: "var(--text-primary)" }} lang="en">
-                  {activeVocabCard.entry.word}
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => speakVocabText(activeVocabCard.entry.audioText || activeVocabCard.entry.word, 0.95)}
-                  className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer"
-                  style={{ background: c.accentDim, color: c.accent }}
+                <span
+                  className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                  style={{ background: "var(--bg-subtle)", color: "var(--text-muted)" }}
                 >
-                  朗读
-                </button>
+                  {activeVocabCard.entry.topic || "词卡联动"}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleVocabCardBookmark(activeVocabCard.entry, activeVocabCard.contextSentence)}
+                    className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
+                    style={{
+                      background: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accentDim : "var(--bg-subtle)",
+                      color: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accent : c.fgMuted,
+                    }}
+                  >
+                    {vocabBookmarks.has(activeVocabCard.entry.id) ? "已收藏 ★" : "收藏"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleVocabCardMastered(activeVocabCard.entry.id)}
+                    className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
+                    style={{
+                      background: vocabMastered.has(activeVocabCard.entry.id) ? c.successDim : "var(--bg-subtle)",
+                      color: vocabMastered.has(activeVocabCard.entry.id) ? c.success : c.fgMuted,
+                    }}
+                  >
+                    {vocabMastered.has(activeVocabCard.entry.id) ? "已掌握 ✓" : "掌握"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVocabCard(null)}
+                    className="rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                    style={{ color: c.fgMuted }}
+                    aria-label="关闭单词卡片"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              <div className="flex items-baseline gap-2 text-sm">
-                {activeVocabCard.entry.pos && (
-                  <span
-                    className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+
+              <div className="w-full aspect-[4/3] overflow-hidden rounded-xl flex items-center justify-center">
+                <img
+                  src={getCardImageUrl(activeVocabCard.entry, cdnBaseUrl)}
+                  alt={activeVocabCard.entry.word}
+                  className="vocab-card-img"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-lg font-bold leading-snug" style={{ color: "var(--text-primary)" }} lang="en">
+                    {activeVocabCard.entry.word}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => speakVocabText(activeVocabCard.entry.audioText || activeVocabCard.entry.word, 0.95)}
+                    className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer"
                     style={{ background: c.accentDim, color: c.accent }}
                   >
-                    {activeVocabCard.entry.pos}
-                  </span>
+                    朗读
+                  </button>
+                </div>
+                <div className="flex items-baseline gap-2 text-sm">
+                  {activeVocabCard.entry.pos && (
+                    <span
+                      className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+                      style={{ background: c.accentDim, color: c.accent }}
+                    >
+                      {activeVocabCard.entry.pos}
+                    </span>
+                  )}
+                  <span style={{ color: "var(--text-secondary)" }}>{activeVocabCard.entry.definition}</span>
+                </div>
+                {activeVocabCard.entry.sentence && (
+                  <p
+                    className="rounded-xl px-3 py-2 text-xs leading-relaxed mt-1"
+                    style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+                    lang="en"
+                  >
+                    {activeVocabCard.entry.sentence}
+                  </p>
                 )}
-                <span style={{ color: "var(--text-secondary)" }}>{activeVocabCard.entry.definition}</span>
               </div>
-              {activeVocabCard.entry.sentence && (
-                <p
-                  className="rounded-xl px-3 py-2 text-xs leading-relaxed mt-1"
-                  style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
-                  lang="en"
-                >
-                  {activeVocabCard.entry.sentence}
-                </p>
-              )}
             </div>
-          </div>
-        </>
-      )}
+          </>,
+          document.body,
+        )}
       {/* Chapter Directory Modal */}
       <Modal c={c} open={tocOpen} onClose={() => setTocOpen(false)} label="小说章节目录" maxWidthClassName="max-w-2xl">
         <div className="space-y-4">
