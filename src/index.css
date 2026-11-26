@@ -815,14 +815,15 @@ html.dark .vocab-action-btn:hover {
   overflow: hidden;
 }
 html.dark .vocab-img-wrapper {
-  background-color: #E8E4DA;
+  background-color: transparent;
 }
 .vocab-card-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
-  padding: 4px;
+  padding: 0;
+  border-radius: 10px;
   mix-blend-mode: multiply;
 }
 html.dark .vocab-card-img {
