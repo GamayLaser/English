@@ -4,6 +4,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
+import { localShowsPlugin } from "./scripts/local-shows-plugin";
 
 function localCardMediaPlugin(): Plugin {
   const webpDir = path.resolve(import.meta.dirname, "../卡片/images/cards-webp");
@@ -27,6 +28,7 @@ function localCardMediaPlugin(): Plugin {
 export default defineConfig({
   plugins: [
     localCardMediaPlugin(),
+    localShowsPlugin(import.meta.dirname),
     react(),
     tailwindcss(),
     cloudflare(),

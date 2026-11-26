@@ -32,12 +32,23 @@ export type NovelChapterContent = {
 const LAST_NOVEL_CHAPTER_KEY = "english:last-novel-chapter-v1";
 const CHAPTER_CACHE = new Map<string, NovelChapterContent>();
 let indexCache: NovelIndex | null = null;
+const BOOK_CHAPTER_PREFIX = /^Book (?:One|Two|Three) · Chapter \d+:\s*/i;
+
+function stripBookChapterPrefix(title: string): string {
+  return title.replace(BOOK_CHAPTER_PREFIX, "").trim() || title;
+}
 
 export async function loadNovelIndex(): Promise<NovelIndex> {
   if (indexCache) return indexCache;
   const res = await fetch("/novel-data/index.json");
   if (!res.ok) throw new Error("无法加载小说目录");
-  indexCache = (await res.json()) as NovelIndex;
+  const data = (await res.json()) as NovelIndex;
+  for (const volume of data.volumes) {
+    for (const chapter of volume.chapters) {
+      chapter.title = stripBookChapterPrefix(chapter.title);
+    }
+  }
+  indexCache = data;
   return indexCache;
 }
 
@@ -47,6 +58,7 @@ export async function loadNovelChapter(file: string): Promise<NovelChapterConten
   const res = await fetch(`/novel-data/chapters/${file}`);
   if (!res.ok) throw new Error("无法加载章节内容");
   const data = (await res.json()) as NovelChapterContent;
+  data.title = stripBookChapterPrefix(data.title);
   CHAPTER_CACHE.set(file, data);
   return data;
 }

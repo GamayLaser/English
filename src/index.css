@@ -1022,6 +1022,11 @@ html.dark .dialogue-speaker {
   color: var(--accent-primary);
 }
 
+html.novel-immersive .app-shell-header,
+html.novel-immersive .floating-translator {
+  display: none !important;
+}
+
 /* ── Novel ↔ Vocab Card faint wavy underline ─────────────────────────── */
 .novel-vocab-hit {
   text-decoration-line: underline;
@@ -1043,4 +1048,11 @@ html.dark .novel-vocab-hit {
 html.dark .novel-vocab-hit:hover {
   text-decoration-color: rgba(230, 162, 60, 0.6);
   background-color: var(--accent-soft);
+}
+.novel-vocab-hit-on-dark {
+  text-decoration-color: rgba(255, 255, 255, 0.72);
+}
+.novel-vocab-hit-on-dark:hover {
+  text-decoration-color: #fff;
+  background-color: rgba(255, 255, 255, 0.16);
 }

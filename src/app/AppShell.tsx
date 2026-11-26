@@ -141,7 +141,7 @@ export default function AppShell({ theme, colors, user, onLogout, onToggleTheme 
     >
       {/* Minimal Top Navigation Bar */}
       <header
-        className="no-print shrink-0 border-b px-4 md:px-6 zen-glass"
+        className="app-shell-header no-print shrink-0 border-b px-4 md:px-6 zen-glass"
         style={{
           background: "var(--bg-surface)",
           borderColor: "var(--border-subtle)",

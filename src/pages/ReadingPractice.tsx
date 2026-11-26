@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { VocabEntry } from "@shared/schemas";
-import { EnglishButton, EnglishEmptyState, EnglishFilterTabs } from "../components/english/EnglishUi";
-import { Modal } from "../components/ui";
+import { EnglishButton, EnglishEmptyState } from "../components/english/EnglishUi";
 import Card from "../components/ui/Card";
 import { addUserChunk } from "../features/chunks/chunksStore";
 import { loadAiSettings } from "../features/english/aiSettings";
@@ -15,9 +14,9 @@ import {
   type NovelIndex,
 } from "../features/novel/novelStore";
 import { startStreamingReadingAudio } from "../features/reading/elevenLabsTts";
+import { placeVocabCard, VocabCardPopover } from "../components/english/VocabCardPopover";
 import { loadVocabMatcher, tokenizeVocabMatches, type VocabMatcher } from "../features/vocab/vocabMatcher";
 import {
-  getCardImageUrl,
   loadVocabProgress,
   saveVocabBookmarks,
   saveVocabMastered,
@@ -59,9 +58,9 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   const [loading, setLoading] = useState(true);
 
   const [fontIdx, setFontIdx] = useState(1);
-  const [spreadMode, setSpreadMode] = useState<"spread" | "single">("spread");
-  const [tocOpen, setTocOpen] = useState(false);
-  const [tocVolumeId, setTocVolumeId] = useState("vol-1");
+  const [immersive, setImmersive] = useState(false);
+  const [openVolumes, setOpenVolumes] = useState<Set<string>>(() => new Set(["vol-1"]));
+  const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showRetell, setShowRetell] = useState(false);
 
@@ -97,6 +96,9 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   const audioUrlRef = useRef<string | null>(null);
   const audioStopRef = useRef<(() => void) | null>(null);
   const summaryMicRef = useRef<{ stop: () => void } | null>(null);
+  const tocAsideRef = useRef<HTMLElement | null>(null);
+  const mobileTocRef = useRef<HTMLElement | null>(null);
+  const articleScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     loadVocabMatcher().then(setVocabMatcher).catch(() => {});
@@ -119,6 +121,36 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const currentIdx = Math.max(0, allChapters.findIndex((ch) => ch.id === novelChapterId));
   const activeMeta = allChapters[currentIdx] ?? null;
+
+  useEffect(() => {
+    if (!activeMeta) return;
+    setOpenVolumes((prev) => {
+      if (prev.has(activeMeta.volumeId)) return prev;
+      const next = new Set(prev);
+      next.add(activeMeta.volumeId);
+      return next;
+    });
+  }, [activeMeta?.volumeId]);
+
+  function scrollTocToCurrent(root: HTMLElement | null) {
+    const el = root?.querySelector<HTMLElement>("[data-novel-current='true']");
+    if (!root || !el) return;
+    const rootRect = root.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    root.scrollTop += elRect.top - rootRect.top - root.clientHeight / 2 + elRect.height / 2;
+  }
+
+  useEffect(() => {
+    if (immersive || !novelChapterId) return;
+    const frame = requestAnimationFrame(() => scrollTocToCurrent(tocAsideRef.current));
+    return () => cancelAnimationFrame(frame);
+  }, [novelChapterId, immersive]);
+
+  useEffect(() => {
+    if (!mobileTocOpen) return;
+    const frame = requestAnimationFrame(() => scrollTocToCurrent(mobileTocRef.current));
+    return () => cancelAnimationFrame(frame);
+  }, [mobileTocOpen, novelChapterId]);
 
   const progressKey = activeMeta ? `novel:${activeMeta.id}` : "";
   const [progress, setProgress] = useState<ReadingProgress>({ summary: "", annotations: [], lastOpenedAt: 0 });
@@ -152,7 +184,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
       .then((data) => {
         if (active) {
           setChapter(data);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          articleScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
       .catch(() => { });
@@ -161,27 +193,14 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     };
   }, [activeMeta?.id]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("novel-immersive", immersive);
+    return () => document.documentElement.classList.remove("novel-immersive");
+  }, [immersive]);
+
   useEffect(() => () => stopAudio(), []);
 
   const paragraphs = useMemo(() => createReadingParagraphs(chapter?.story ?? ""), [chapter?.story]);
-
-  const [leftParagraphs, rightParagraphs] = useMemo(() => {
-    if (paragraphs.length <= 1) return [paragraphs, []];
-    const weights = paragraphs.map((p) => Math.max(40, p.text.length));
-    const total = weights.reduce((a, b) => a + b, 0);
-    const half = total / 2;
-    let acc = 0;
-    let splitIdx = 1;
-    for (let i = 0; i < weights.length - 1; i++) {
-      acc += weights[i];
-      if (acc >= half) {
-        splitIdx = i + 1;
-        break;
-      }
-      splitIdx = i + 1;
-    }
-    return [paragraphs.slice(0, splitIdx), paragraphs.slice(splitIdx)];
-  }, [paragraphs]);
 
   const chapterRenderedParagraphs = useMemo(() => {
     const seenIds = new Set<string>();
@@ -224,8 +243,76 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const activeVolume = novelIndex?.volumes.find((v) => v.id === activeMeta.volumeId) ?? novelIndex?.volumes[0];
   const fontStyle = FONT_SIZES[fontIdx];
+  const chapterContent = chapter;
 
-  const isSpread = spreadMode === "spread" && rightParagraphs.length > 0;
+  function toggleVolume(volumeId: string) {
+    setOpenVolumes((prev) => {
+      const next = new Set(prev);
+      if (next.has(volumeId)) next.delete(volumeId);
+      else next.add(volumeId);
+      return next;
+    });
+  }
+
+  function renderToc(onSelect: () => void) {
+    if (!novelIndex) return null;
+    return (
+      <nav aria-label="小说章节目录">
+        <p className="px-1 pb-2 text-xs font-semibold tracking-[0.16em] uppercase" style={{ color: c.accent }}>
+          目录
+        </p>
+        <div className="space-y-1">
+          {novelIndex.volumes.map((volume) => {
+            const open = openVolumes.has(volume.id);
+            const containsCurrent = volume.id === activeMeta.volumeId;
+            return (
+              <div key={volume.id}>
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => toggleVolume(volume.id)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-semibold cursor-pointer"
+                  style={{ color: containsCurrent ? c.accent : c.fg }}
+                >
+                  <span className="w-3 shrink-0 text-xs" style={{ color: c.fgMuted }}>{open ? "▾" : "▸"}</span>
+                  <span className="min-w-0 flex-1 truncate">{volume.name}</span>
+                  <span className="shrink-0 text-[11px] zen-tnum" style={{ color: c.fgMuted }}>{volume.chapters.length}</span>
+                </button>
+                {open && (
+                  <ul className="ml-3 border-l py-1" style={{ borderColor: c.borderSub }}>
+                    {volume.chapters.map((ch) => {
+                      const isCurrent = ch.id === activeMeta.id;
+                      return (
+                        <li key={ch.id}>
+                          <button
+                            type="button"
+                            data-novel-current={isCurrent ? "true" : undefined}
+                            title={ch.title}
+                            onClick={() => {
+                              setNovelChapterId(ch.id);
+                              onSelect();
+                            }}
+                            className="w-full truncate rounded-md px-2.5 py-1.5 text-left text-xs cursor-pointer"
+                            style={{
+                              color: isCurrent ? c.accent : c.fgSub,
+                              background: isCurrent ? c.accentDim : "transparent",
+                              fontWeight: isCurrent ? 600 : 400,
+                            }}
+                          >
+                            {ch.title}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  }
 
   function renderParagraphList(list: typeof paragraphs) {
     return list.map((paragraph) => {
@@ -312,23 +399,10 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     event: React.MouseEvent<HTMLSpanElement>,
     contextSentence: string,
   ) {
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) return;
-    event.stopPropagation();
-    const rect = event.currentTarget.getBoundingClientRect();
-    const cardWidth = 304;
-    const x = Math.min(
-      Math.max(cardWidth / 2 + 12, rect.left + rect.width / 2),
-      window.innerWidth - cardWidth / 2 - 12,
-    );
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const showAbove = spaceBelow < 380 && spaceAbove > spaceBelow;
-    const y = showAbove
-      ? Math.max(12, rect.top - 8)
-      : Math.min(window.innerHeight - 12, rect.bottom + 8);
+    const card = placeVocabCard(entry, event, contextSentence);
+    if (!card) return;
     setPending(null);
-    setActiveVocabCard({ entry, x, y, above: showAbove, contextSentence });
+    setActiveVocabCard(card);
     speakVocabText(entry.audioText || entry.word, 0.95);
   }
 
@@ -511,261 +585,187 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     }
   }
 
-  return (
-    <div className={`space-y-5 pb-12 zen-page-enter ${isSpread ? "w-full" : "mx-auto max-w-3xl"}`}>
-      {/* Slim Reader Top Bar */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl px-4 py-2.5 zen-card"
-        style={{ borderColor: c.borderSub }}
+  function chip(label: string, onClick: () => void, active = false, disabled = false) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className="shrink-0 whitespace-nowrap min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+        style={active ? { background: c.accentDim, color: c.accent } : { background: c.inputBg, color: c.fgSub }}
       >
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
-          <EnglishButton
-            type="button"
-            variant="secondary"
-            c={c}
-            onClick={() => {
-              setTocVolumeId(activeVolume?.id ?? "vol-1");
-              setTocOpen(true);
-            }}
-          >
-            目录 · {activeVolume?.name.split(" · ")[0]} ({currentIdx + 1}/{allChapters.length})
-          </EnglishButton>
-          <span className="hidden sm:inline text-xs truncate max-w-[320px]" style={{ color: c.fgMuted }}>
-            {chapter.title}
-          </span>
-        </div>
+        {label}
+      </button>
+    );
+  }
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setShowVocabHints((v) => !v)}
-            className="min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
-            style={
-              showVocabHints
-                ? { background: c.accentDim, color: c.accent }
-                : { background: c.inputBg, color: c.fgSub }
-            }
-            title="开启/关闭文中词卡波浪线提示"
-          >
-            {showVocabHints ? "词卡波浪线 ✓" : "词卡波浪线"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSpreadMode((m) => (m === "spread" ? "single" : "spread"))}
-            className="hidden lg:inline-flex items-center min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
-            style={{ background: c.inputBg, color: c.fgSub }}
-            title="切换单页 / 宽屏双页"
-          >
-            {spreadMode === "spread" ? "双页" : "单页"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setFontIdx((i) => (i + 1) % FONT_SIZES.length)}
-            className="min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
-            style={{ background: c.inputBg, color: c.fgSub }}
-            title="切换字号"
-          >
-            字号 {fontStyle.label}
-          </button>
-          <EnglishButton
-            type="button"
-            variant="secondary"
-            c={c}
-            disabled={audioBusy}
-            onClick={() => void playChapter()}
-          >
-            {audioBusy ? "准备中…" : playingAudio ? "停止朗读" : "朗读本章"}
-          </EnglishButton>
-        </div>
-      </div>
+  function renderReadingTools(variant: "article" | "bar") {
+    return (
+      <>
+        {variant === "bar" && chip("目录", () => setMobileTocOpen(true), mobileTocOpen)}
+        {chip(showVocabHints ? "词卡波浪线 ✓" : "词卡波浪线", () => setShowVocabHints((v) => !v), showVocabHints)}
+        {chip(`字号 ${fontStyle.label}`, () => setFontIdx((i) => (i + 1) % FONT_SIZES.length))}
+        {chip(audioBusy ? "准备中…" : playingAudio ? "停止朗读" : "朗读本章", () => void playChapter(), playingAudio, audioBusy)}
+        {variant === "bar" && chip("上一章", () => stepChapter(-1), false, currentIdx === 0)}
+        {variant === "bar" && chip("下一章", () => stepChapter(1), false, currentIdx >= allChapters.length - 1)}
+        {chip("沉浸模式", () => { setImmersive(true); setMobileTocOpen(false); })}
+      </>
+    );
+  }
 
-      {/* Immersive Book Page */}
-      <Card c={c} className="overflow-hidden zen-paper" style={{ boxShadow: "var(--shadow-book)" }}>
-        <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-14 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-10"}>
-          {isSpread ? (
-            <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 relative">
-              {/* Warm Book Spine Gutter Shadow & Crease */}
-              <div
-                aria-hidden="true"
-                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-12 -translate-x-1/2"
-                style={{
-                  background: "linear-gradient(to right, transparent, rgba(120, 100, 75, 0.08), transparent)",
-                }}
-              />
-              <div
-                aria-hidden="true"
-                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
-                style={{ background: "rgba(120, 100, 75, 0.16)" }}
-              />
-
-              {/* Left Page (Opening Chapter Header + First Half) */}
-              <div className="flex flex-col justify-between min-w-0">
-                <div>
-                  <header className="mb-6">
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: c.accent }}>
-                      RIVER STREET · {activeVolume?.name}
-                    </p>
-                    <h1
-                      className="mt-1.5 text-2xl font-bold tracking-tight"
-                      style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
-                    >
-                      {chapter.title}
-                    </h1>
-                    <p className="mt-1 text-xs zen-tnum" style={{ color: c.fgMuted }}>
-                      约 {chapter.wordCount} 词 · 划词查译并收藏进语块本
-                    </p>
-                  </header>
-                  <div className="space-y-3.5">{renderParagraphList(leftParagraphs)}</div>
-                </div>
-                <p className="hidden lg:block text-center text-xs zen-tnum pt-7" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                  — {currentIdx * 2 + 1} —
-                </p>
-              </div>
-
-              {/* Right Page */}
-              <div className="flex flex-col justify-between min-w-0">
-                <div>
-                  <p className="hidden lg:block text-right text-[11px] tracking-[0.12em] mb-6 truncate" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                    {chapter.title}
-                  </p>
-                  <div className="space-y-3.5">{renderParagraphList(rightParagraphs)}</div>
-                </div>
-                <p className="hidden lg:block text-center text-xs zen-tnum pt-7" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                  — {currentIdx * 2 + 2} —
-                </p>
-              </div>
+  function renderSidePanels() {
+    return (
+      <>
+        {showStudyGuide && chapterContent.studyGuide && (
+          <Card c={c}>
+            <div className="p-4 whitespace-pre-line text-sm leading-relaxed" style={{ color: c.fgSub }}>
+              {chapterContent.studyGuide}
             </div>
-          ) : (
-            <div>
-              <header className="text-center pb-6 mb-7 border-b" style={{ borderColor: c.borderSub }}>
-                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>
-                  RIVER STREET · {activeVolume?.name}
-                </p>
+          </Card>
+        )}
+        {showRetell && (
+          <Card c={c}>
+            <div className="p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold" style={{ color: c.fg }}>用 2~3 句英文复述本章</h3>
+                  <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>合上书自己讲一遍，AI 帮你改得更地道</p>
+                </div>
+                <EnglishButton variant={summaryMic ? "danger" : "secondary"} c={c} onClick={toggleSummaryVoice}>
+                  {summaryMic ? "停止录音" : "语音复述"}
+                </EnglishButton>
+              </div>
+              <textarea
+                value={summaryText}
+                onChange={(e) => setSummaryText(e.target.value)}
+                rows={4}
+                placeholder="用简单的英文说说这一章发生了什么…"
+                className="w-full resize-y rounded-xl border px-3 py-2 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/35"
+                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+              />
+              {summaryError && <p className="text-xs" style={{ color: c.danger }}>{summaryError}</p>}
+              <div className="flex justify-end">
+                <EnglishButton variant="primary" c={c} disabled={summaryBusy || !summaryText.trim()} onClick={() => void submitSummary()}>
+                  {summaryBusy ? "正在点评…" : "提交点评"}
+                </EnglishButton>
+              </div>
+              {summaryResult && (
+                <div className="rounded-xl p-3 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold" style={{ color: c.fg }}>复述点评</span>
+                    <span className="type-title" style={{ color: c.accent }}>{summaryResult.score} 分</span>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: c.fgSub }}>{summaryResult.feedback}</p>
+                  {summaryResult.modelSummary && (
+                    <div className="mt-2 rounded-lg p-3 space-y-1.5" style={{ background: "var(--accent-soft)" }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold" style={{ color: c.accent }}>母语者复述示范</span>
+                        <button
+                          type="button"
+                          onClick={() => speakVocabText(summaryResult.modelSummary!, 0.9)}
+                          className="rounded px-2 py-0.5 text-xs font-medium cursor-pointer"
+                          style={{ background: c.card, color: c.accent }}
+                        >
+                          朗读示范
+                        </button>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: c.fg }} lang="en">{summaryResult.modelSummary}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+    <div className={`zen-page-enter -mx-4 -my-5 flex min-h-0 items-stretch justify-center gap-6 overflow-hidden px-4 md:-mx-7 md:-my-6 md:px-7 ${immersive ? "h-dvh py-8" : "h-[calc(100dvh-3.5rem)] pt-5 md:pt-6"}`}>
+      {!immersive && (
+        <aside
+          ref={tocAsideRef}
+          className="hidden min-h-0 w-[220px] shrink-0 self-stretch overflow-y-auto rounded-2xl p-3 zen-card xl:block"
+          style={{ borderColor: c.borderSub }}
+        >
+          {renderToc(() => {})}
+        </aside>
+      )}
+
+      <div
+        ref={articleScrollRef}
+        className={`min-h-0 w-full max-w-3xl self-stretch overflow-y-auto px-1 pt-1 ${immersive ? "pb-8" : "pb-28 xl:pb-6"}`}
+      >
+          <Card c={c} className="overflow-hidden zen-paper" style={{ boxShadow: "var(--shadow-book)" }}>
+            <article className="px-6 py-8 sm:px-12 sm:py-10">
+              <header className={`text-center ${immersive ? "mb-8" : "border-b pb-5 mb-5 xl:mb-0 xl:border-b-0"}`} style={{ borderColor: c.borderSub }}>
+                {!immersive && (
+                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>
+                    RIVER STREET · {activeVolume?.name}
+                  </p>
+                )}
                 <h1
                   className="mt-2 text-2xl font-bold tracking-tight"
                   style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   {chapter.title}
                 </h1>
-                <p className="mt-1.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
-                  约 {chapter.wordCount} 词 · 划词可查释义并收藏进语块本
-                </p>
+                {!immersive && (
+                  <p className="mt-1.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
+                    约 {chapter.wordCount} 词 · {currentIdx + 1}/{allChapters.length}
+                  </p>
+                )}
               </header>
+              {!immersive && (
+                <div className="mt-4 mb-7 hidden flex-wrap items-center justify-center gap-1.5 border-b pb-5 xl:flex" style={{ borderColor: c.borderSub }}>
+                  {renderReadingTools("article")}
+                </div>
+              )}
               <div className="space-y-3.5">{renderParagraphList(paragraphs)}</div>
+              {audioMessage && <p className="mt-6 text-sm" style={{ color: c.danger }}>{audioMessage}</p>}
+              {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
+              {!immersive && (
+                <footer className="mt-10 flex items-center justify-between gap-3 border-t pt-6" style={{ borderColor: c.borderSub }}>
+                  <EnglishButton variant="secondary" c={c} disabled={currentIdx === 0} onClick={() => stepChapter(-1)}>
+                    ← 上一章
+                  </EnglishButton>
+                  <EnglishButton variant="primary" c={c} disabled={currentIdx >= allChapters.length - 1} onClick={() => stepChapter(1)}>
+                    下一章 →
+                  </EnglishButton>
+                </footer>
+              )}
+              {!immersive && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  {chapterContent.studyGuide && (
+                    <EnglishButton variant="ghost" c={c} onClick={() => setShowStudyGuide((v) => !v)}>
+                      {showStudyGuide ? "收起重点讲解" : "重点讲解"}
+                    </EnglishButton>
+                  )}
+                  <EnglishButton variant="ghost" c={c} onClick={() => setShowRetell((v) => !v)}>
+                    {showRetell ? "收起复述" : "复述卡"}
+                  </EnglishButton>
+                </div>
+              )}
+            </article>
+          </Card>
+          {!immersive && (
+            <div className="mt-4 space-y-4">
+              {renderSidePanels()}
             </div>
           )}
-
-          {audioMessage && <p className="mt-6 text-sm" style={{ color: c.danger }}>{audioMessage}</p>}
-          {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
-
-          {/* Chapter Bottom Bar */}
-          <footer
-            className="mt-10 pt-6 border-t flex flex-wrap items-center justify-between gap-3"
-            style={{ borderColor: c.borderSub }}
-          >
-            <EnglishButton
-              variant="secondary"
-              c={c}
-              disabled={currentIdx === 0}
-              onClick={() => stepChapter(-1)}
-            >
-              ← 上一章
-            </EnglishButton>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {chapter.studyGuide && (
-                <EnglishButton
-                  variant="ghost"
-                  c={c}
-                  onClick={() => setShowStudyGuide((v) => !v)}
-                >
-                  {showStudyGuide ? "收起重点讲解" : "本章重点讲解"}
-                </EnglishButton>
-              )}
-              <EnglishButton
-                variant="ghost"
-                c={c}
-                onClick={() => setShowRetell((v) => !v)}
-              >
-                {showRetell ? "收起复述" : "口头复述打卡"}
-              </EnglishButton>
-            </div>
-
-            <EnglishButton
-              variant="primary"
-              c={c}
-              disabled={currentIdx >= allChapters.length - 1}
-              onClick={() => stepChapter(1)}
-            >
-              下一章 →
-            </EnglishButton>
-          </footer>
-        </article>
-      </Card>
-
-      {/* Optional Study Guide Drawer */}
-      {showStudyGuide && chapter.studyGuide && (
-        <Card c={c}>
-          <div className="p-6 whitespace-pre-line text-sm leading-relaxed" style={{ color: c.fgSub }}>
-            {chapter.studyGuide}
-          </div>
-        </Card>
-      )}
-
-      {/* Optional Oral Retell Card */}
-      {showRetell && (
-        <Card c={c}>
-          <div className="p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold" style={{ color: c.fg }}>用 2~3 句英文复述本章</h3>
-                <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>合上书自己讲一遍，AI 帮你改得更地道</p>
-              </div>
-              <EnglishButton variant={summaryMic ? "danger" : "secondary"} c={c} onClick={toggleSummaryVoice}>
-                {summaryMic ? "停止录音" : "语音复述"}
-              </EnglishButton>
-            </div>
-            <textarea
-              value={summaryText}
-              onChange={(e) => setSummaryText(e.target.value)}
-              rows={3}
-              placeholder="用简单的英文说说这一章发生了什么…"
-              className="w-full resize-y rounded-xl border px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/35"
-              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-            />
-            {summaryError && <p className="text-xs" style={{ color: c.danger }}>{summaryError}</p>}
-            <div className="flex justify-end">
-              <EnglishButton variant="primary" c={c} disabled={summaryBusy || !summaryText.trim()} onClick={() => void submitSummary()}>
-                {summaryBusy ? "正在点评…" : "提交点评"}
-              </EnglishButton>
-            </div>
-            {summaryResult && (
-              <div className="rounded-xl p-4 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold" style={{ color: c.fg }}>复述点评</span>
-                  <span className="type-title" style={{ color: c.accent }}>{summaryResult.score} 分</span>
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: c.fgSub }}>{summaryResult.feedback}</p>
-                {summaryResult.modelSummary && (
-                  <div className="mt-2 rounded-lg p-3 space-y-1.5" style={{ background: "var(--accent-soft)" }}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold" style={{ color: c.accent }}>母语者复述示范</span>
-                      <button
-                        type="button"
-                        onClick={() => speakVocabText(summaryResult.modelSummary!, 0.9)}
-                        className="rounded px-2 py-0.5 text-xs font-medium cursor-pointer"
-                        style={{ background: c.card, color: c.accent }}
-                      >
-                        朗读示范
-                      </button>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color: c.fg }} lang="en">{summaryResult.modelSummary}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </Card>
+        </div>
+      </div>
+      {immersive && (
+        <button
+          type="button"
+          onClick={() => setImmersive(false)}
+          className="fixed right-4 top-4 z-50 min-h-8 rounded-lg px-3 text-xs font-medium cursor-pointer zen-card"
+          style={{ color: c.accent, background: c.card }}
+        >
+          退出沉浸
+        </button>
       )}
 
       {/* Selection Popup (portaled to body so zen-page-enter transform never offsets fixed coords) */}
@@ -795,179 +795,42 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
           document.body,
         )}
 
-      {/* Floating Vocab/Phrase Card Popover (portaled to body for exact anchor near clicked word) */}
-      {activeVocabCard &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <>
-            <div
-              className="fixed inset-0 z-[55]"
-              onClick={() => setActiveVocabCard(null)}
-              aria-hidden="true"
-            />
-            <div
-              className={`fixed z-[60] w-[304px] max-h-[82vh] overflow-y-auto -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal space-y-3 ${activeVocabCard.above ? "-translate-y-full" : ""}`}
-              style={{
-                left: activeVocabCard.x,
-                top: activeVocabCard.y,
-              }}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                  style={{ background: "var(--bg-subtle)", color: "var(--text-muted)" }}
-                >
-                  {activeVocabCard.entry.topic || "词卡联动"}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleVocabCardBookmark(activeVocabCard.entry, activeVocabCard.contextSentence)}
-                    className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
-                    style={{
-                      background: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accentDim : "var(--bg-subtle)",
-                      color: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accent : c.fgMuted,
-                    }}
-                  >
-                    {vocabBookmarks.has(activeVocabCard.entry.id) ? "已收藏 ★" : "收藏"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleVocabCardMastered(activeVocabCard.entry.id)}
-                    className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
-                    style={{
-                      background: vocabMastered.has(activeVocabCard.entry.id) ? c.successDim : "var(--bg-subtle)",
-                      color: vocabMastered.has(activeVocabCard.entry.id) ? c.success : c.fgMuted,
-                    }}
-                  >
-                    {vocabMastered.has(activeVocabCard.entry.id) ? "已掌握 ✓" : "掌握"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveVocabCard(null)}
-                    className="rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                    style={{ color: c.fgMuted }}
-                    aria-label="关闭单词卡片"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-full aspect-[4/3] overflow-hidden rounded-xl flex items-center justify-center">
-                <img
-                  src={getCardImageUrl(activeVocabCard.entry, cdnBaseUrl)}
-                  alt={activeVocabCard.entry.word}
-                  className="vocab-card-img"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-lg font-bold leading-snug" style={{ color: "var(--text-primary)" }} lang="en">
-                    {activeVocabCard.entry.word}
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => speakVocabText(activeVocabCard.entry.audioText || activeVocabCard.entry.word, 0.95)}
-                    className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer"
-                    style={{ background: c.accentDim, color: c.accent }}
-                  >
-                    朗读
-                  </button>
-                </div>
-                <div className="flex items-baseline gap-2 text-sm">
-                  {activeVocabCard.entry.pos && (
-                    <span
-                      className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold"
-                      style={{ background: c.accentDim, color: c.accent }}
-                    >
-                      {activeVocabCard.entry.pos}
-                    </span>
-                  )}
-                  <span style={{ color: "var(--text-secondary)" }}>{activeVocabCard.entry.definition}</span>
-                </div>
-                {activeVocabCard.entry.sentence && (
-                  <p
-                    className="rounded-xl px-3 py-2 text-xs leading-relaxed mt-1"
-                    style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
-                    lang="en"
-                  >
-                    {activeVocabCard.entry.sentence}
-                  </p>
-                )}
-              </div>
+      <VocabCardPopover
+        c={c}
+        card={activeVocabCard}
+        bookmarked={activeVocabCard ? vocabBookmarks.has(activeVocabCard.entry.id) : false}
+        mastered={activeVocabCard ? vocabMastered.has(activeVocabCard.entry.id) : false}
+        cdnBaseUrl={cdnBaseUrl}
+        onClose={() => setActiveVocabCard(null)}
+        onToggleBookmark={toggleVocabCardBookmark}
+        onToggleMastered={toggleVocabCardMastered}
+      />
+      {!immersive && mobileTocOpen && typeof document !== "undefined" && createPortal(
+        <div className="xl:hidden fixed inset-0 z-50">
+          <button type="button" className="absolute inset-0 cursor-pointer" style={{ background: "rgba(0,0,0,0.45)" }} aria-label="关闭目录" onClick={() => setMobileTocOpen(false)} />
+          <aside
+            ref={mobileTocRef}
+            className="absolute inset-y-0 left-0 w-[min(86vw,320px)] overflow-y-auto p-4"
+            style={{ background: c.card, borderRight: `1px solid ${c.border}` }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold" style={{ color: c.fg }}>章节目录</span>
+              <button type="button" className="rounded-lg px-2 py-1 text-xs cursor-pointer" style={{ color: c.fgMuted }} onClick={() => setMobileTocOpen(false)}>关闭</button>
             </div>
-          </>,
-          document.body,
-        )}
-      {/* Chapter Directory Modal */}
-      <Modal c={c} open={tocOpen} onClose={() => setTocOpen(false)} label="小说章节目录" maxWidthClassName="max-w-2xl">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
-                RIVER STREET · 497 CHAPTERS
-              </p>
-              <h3 className="type-title mt-0.5" style={{ color: c.fg }}>章节目录</h3>
-            </div>
-            <EnglishButton variant="ghost" c={c} onClick={() => setTocOpen(false)}>关闭</EnglishButton>
-          </div>
-          {novelIndex && (
-            <>
-              <EnglishFilterTabs
-                tabs={novelIndex.volumes.map((v) => ({ id: v.id, label: `${v.name.split(" · ")[0]} (${v.chapters.length})` }))}
-                value={tocVolumeId}
-                onChange={setTocVolumeId}
-                ariaLabel="选择小说卷"
-                c={c}
-              />
-              <div className="max-h-[55vh] overflow-y-auto space-y-1.5 pr-1">
-                {(novelIndex.volumes.find((v) => v.id === tocVolumeId)?.chapters ?? []).map((ch) => {
-                  const isCurrent = ch.id === activeMeta.id;
-                  return (
-                    <button
-                      key={ch.id}
-                      type="button"
-                      onClick={() => {
-                        setNovelChapterId(ch.id);
-                        setTocOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors cursor-pointer"
-                      style={{
-                        background: isCurrent ? c.accentDim : c.inputBg,
-                        color: isCurrent ? c.accent : c.fg,
-                        border: `1px solid ${isCurrent ? c.accent : c.borderSub}`,
-                      }}
-                    >
-                      <span className="font-medium truncate">{ch.title}</span>
-                      <span className="text-xs shrink-0 zen-tnum" style={{ color: isCurrent ? c.accent : c.fgMuted }}>
-                        {isCurrent ? "正在阅读" : `${ch.wordCount} 词`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+            {renderToc(() => setMobileTocOpen(false))}
+          </aside>
+        </div>,
+        document.body,
+      )}
+      {!immersive && (
+        <div
+          className="xl:hidden fixed bottom-3 inset-x-3 z-40 flex items-center gap-1.5 overflow-x-auto rounded-2xl px-3 py-2.5 zen-card zen-glass"
+          style={{ borderColor: c.border }}
+        >
+          {renderReadingTools("bar")}
         </div>
-      </Modal>
-      {/* Mobile Floating Chapter Controls */}
-      <div
-        className="md:hidden fixed bottom-4 inset-x-4 z-40 flex items-center justify-between gap-2 rounded-2xl px-3.5 py-2.5 zen-card zen-glass"
-        style={{ borderColor: c.border }}
-      >
-        <EnglishButton variant="ghost" c={c} disabled={currentIdx === 0} onClick={() => stepChapter(-1)}>
-          ← 上一章
-        </EnglishButton>
-        <EnglishButton variant="secondary" c={c} disabled={audioBusy} onClick={() => void playChapter()}>
-          {audioBusy ? "准备中…" : playingAudio ? "停止朗读" : "朗读"}
-        </EnglishButton>
-        <EnglishButton variant="primary" c={c} disabled={currentIdx >= allChapters.length - 1} onClick={() => stepChapter(1)}>
-          下一章 →
-        </EnglishButton>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 

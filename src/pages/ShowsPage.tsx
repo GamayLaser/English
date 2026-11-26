@@ -1,25 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NavLink } from "react-router";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import type { VocabEntry } from "@shared/schemas";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
-import { Button, Card, EmptyState } from "../components/ui";
+import { placeVocabCard, VocabCardPopover, VocabLinkedText, type VocabCardAnchor } from "../components/english/VocabCardPopover";
+import { Button, Card } from "../components/ui";
 import { addUserChunk } from "../features/chunks/chunksStore";
 import { formatTime, parseSubtitles, type SubtitleCue } from "../features/video/srtParser";
+import { loadVocabMatcher, type VocabMatcher } from "../features/vocab/vocabMatcher";
+import { loadVocabProgress, saveVocabBookmarks, saveVocabMastered, speakVocabText } from "../features/vocab/vocabStore";
+import { api } from "../lib/api";
 import type { ThemeColors } from "../types";
 
-type CloudVideoItem = {
+type ShowItem = {
   id: string;
   title: string;
-  videoKey: string;
-  subtitleKey: string | null;
+  videoUrl: string;
+  subtitleUrl: string | null;
   size: number;
-  uploadedAt: string;
-};
-
-type LocalShowItem = {
-  id: string;
-  title: string;
-  videoFile: File;
-  subtitleFile: File | null;
+  cropBottom: number;
 };
 
 type SubtitleMode = "bilingual" | "en" | "hidden";
@@ -32,14 +29,13 @@ function formatBytes(bytes: number): string {
 }
 
 export default function ShowsPage({ c }: { c: ThemeColors }) {
-  const [cloudVideos, setCloudVideos] = useState<CloudVideoItem[]>([]);
-  const [cloudAuthRequired, setCloudAuthRequired] = useState(false);
-  const [loadingList, setLoadingList] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [shows, setShows] = useState<ShowItem[]>([]);
+  const [showsLoading, setShowsLoading] = useState(true);
 
   const [activeTitle, setActiveTitle] = useState("未选择视频");
   const [videoSrc, setVideoSrc] = useState("");
+  const [cropBottom, setCropBottom] = useState(0);
   const [cues, setCues] = useState<SubtitleCue[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [subMode, setSubMode] = useState<SubtitleMode>("bilingual");
@@ -49,47 +45,42 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [recording, setRecording] = useState(false);
   const [myRecordingUrl, setMyRecordingUrl] = useState<string | null>(null);
   const [savedCueIds, setSavedCueIds] = useState<Set<string>>(() => new Set());
-  const [localShows, setLocalShows] = useState<LocalShowItem[]>([]);
   const [rightTab, setRightTab] = useState<"transcript" | "cloze">("transcript");
   const [clozeInputs, setClozeInputs] = useState<Record<string, string>>({});
   const [clozeChecked, setClozeChecked] = useState(false);
+  const [vocabMatcher, setVocabMatcher] = useState<VocabMatcher | null>(null);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState("");
+  const [vocabBookmarks, setVocabBookmarks] = useState<Set<string>>(() => loadVocabProgress().bookmarked);
+  const [vocabMastered, setVocabMastered] = useState<Set<string>>(() => loadVocabProgress().mastered);
+  const [activeVocabCard, setActiveVocabCard] = useState<VocabCardAnchor | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const activeLineRef = useRef<HTMLButtonElement | null>(null);
-  const localUrlRef = useRef<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordAudioRef = useRef<HTMLAudioElement | null>(null);
-  const localVideoInputRef = useRef<HTMLInputElement | null>(null);
-  const localSubInputRef = useRef<HTMLInputElement | null>(null);
-  const localFolderInputRef = useRef<HTMLInputElement | null>(null);
-  const cloudUploadInputRef = useRef<HTMLInputElement | null>(null);
 
-  const fetchCloudVideos = useCallback(async () => {
-    setLoadingList(true);
-    try {
-      const res = await fetch("/api/videos");
-      if (res.status === 401) {
-        setCloudAuthRequired(true);
-        setCloudVideos([]);
-        return;
-      }
-      if (!res.ok) throw new Error("无法获取云端视频列表");
-      const data = (await res.json()) as { videos?: CloudVideoItem[] };
-      setCloudAuthRequired(false);
-      setCloudVideos(data.videos ?? []);
-    } catch {
-      setCloudVideos([]);
-    } finally {
-      setLoadingList(false);
-    }
+  useEffect(() => {
+    loadVocabMatcher().then(setVocabMatcher).catch(() => {});
+    api.health().then((health) => setCdnBaseUrl(health.cardsCdnUrl || "")).catch(() => {});
   }, []);
 
   useEffect(() => {
-    void fetchCloudVideos();
+    let active = true;
+    fetch("/api/shows")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("无法读取片库"))))
+      .then((data: { videos?: ShowItem[] }) => {
+        if (active) setShows(data.videos ?? []);
+      })
+      .catch(() => {
+        if (active) setStatusMessage("无法读取 public/shows 片库。");
+      })
+      .finally(() => {
+        if (active) setShowsLoading(false);
+      });
     return () => {
-      if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
+      active = false;
     };
-  }, [fetchCloudVideos]);
+  }, []);
 
   const activeCueIndex = useMemo(() => {
     return cues.findIndex((cue) => currentTime >= cue.startSec && currentTime <= cue.endSec);
@@ -186,149 +177,54 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     jumpToCue(cues[targetIdx]);
   }
 
-  async function selectCloudVideo(item: CloudVideoItem) {
-    if (localUrlRef.current) {
-      URL.revokeObjectURL(localUrlRef.current);
-      localUrlRef.current = null;
-    }
-    setActiveTitle(item.title);
-    setVideoSrc(`/api/videos/stream/${encodeURIComponent(item.videoKey)}`);
-    setLockedCue(null);
-    setCurrentTime(0);
-    setStatusMessage("");
-    if (item.subtitleKey) {
-      try {
-        const res = await fetch(`/api/videos/subtitle/${encodeURIComponent(item.subtitleKey)}`);
-        if (res.ok) {
-          setCues(parseSubtitles(await res.text()));
-          return;
-        }
-      } catch {}
-    }
-    setCues([]);
+  function openVocabCard(entry: VocabEntry, event: MouseEvent<HTMLElement>, sentence: string) {
+    const card = placeVocabCard(entry, event, sentence);
+    if (!card) return;
+    setActiveVocabCard(card);
+    speakVocabText(entry.audioText || entry.word, 0.95);
   }
 
-  async function handleCloudUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = "";
-    if (!files.length) return;
-
-    const oversized = files.find((f) => f.size > 95 * 1024 * 1024);
-    if (oversized) {
-      setStatusMessage(`「${oversized.name}」超过单次上传上限 95MB，建议先用 ffmpeg 切分为 3~5 分钟精听片段再上传。`);
-      return;
-    }
-
-    setUploading(true);
-    setStatusMessage("");
-    try {
-      for (const file of files) {
-        const res = await fetch("/api/videos/upload", {
-          method: "PUT",
-          headers: { "x-file-name": encodeURIComponent(file.name) },
-          body: file,
-        });
-        if (!res.ok) {
-          const err = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(err?.error || `上传 ${file.name} 失败`);
-        }
-      }
-      setStatusMessage(`已成功上传 ${files.length} 个文件到 Cloudflare R2（同名视频与字幕会自动配对）。`);
-      await fetchCloudVideos();
-    } catch (err) {
-      setStatusMessage(err instanceof Error ? err.message : "上传失败，请重试。");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function deleteCloudVideo(item: CloudVideoItem) {
-    if (typeof window !== "undefined" && !window.confirm(`确定要从云端永久删除「${item.title}」吗？此操作不可撤销。`)) {
-      return;
-    }
-    try {
-      const res = await fetch(`/api/videos/${encodeURIComponent(item.videoKey)}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        if (activeTitle === item.title) {
-          setVideoSrc("");
-          setCues([]);
-          setActiveTitle("未选择视频");
-        }
-        await fetchCloudVideos();
-      }
-    } catch {}
-  }
-
-  function handleLocalVideo(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
-    const url = URL.createObjectURL(file);
-    localUrlRef.current = url;
-    setVideoSrc(url);
-    setActiveTitle(file.name.replace(/\.[^.]+$/, ""));
-    setLockedCue(null);
-    setStatusMessage("");
-  }
-
-  async function handleLocalFolder(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = "";
-    if (!files.length) return;
-
-    const videoMap = new Map<string, File>();
-    const subMap = new Map<string, File>();
-    for (const file of files) {
-      const lower = file.name.toLowerCase();
-      const stem = file.name.replace(/\.[^.]+$/, "");
-      if (/\.(mp4|webm|m4v|mov)$/.test(lower)) videoMap.set(stem, file);
-      else if (/\.(srt|vtt)$/.test(lower)) subMap.set(stem, file);
-    }
-
-    const items: LocalShowItem[] = [...videoMap.entries()]
-      .map(([stem, videoFile]) => ({
-        id: stem,
-        title: stem.replace(/[_-]+/g, " "),
-        videoFile,
-        subtitleFile: subMap.get(stem) ?? null,
-      }))
-      .sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true }));
-
-    setLocalShows(items);
-    setStatusMessage(
-      items.length
-        ? `已扫描本地文件夹：共匹配 ${items.length} 个视频（其中 ${items.filter((i) => i.subtitleFile).length} 个已自动配对字幕）。`
-        : "该文件夹下未找到 .mp4/.webm/.m4v/.mov 视频文件。",
-    );
-  }
-
-  async function selectLocalShow(item: LocalShowItem) {
-    if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
-    const url = URL.createObjectURL(item.videoFile);
-    localUrlRef.current = url;
-    setVideoSrc(url);
-    setActiveTitle(item.title);
-    setLockedCue(null);
-    setCurrentTime(0);
-    if (item.subtitleFile) {
-      const text = await item.subtitleFile.text();
-      setCues(parseSubtitles(text));
+  function toggleVocabCardBookmark(entry: VocabEntry, contextSentence: string) {
+    const next = new Set(vocabBookmarks);
+    if (next.has(entry.id)) {
+      next.delete(entry.id);
     } else {
-      setCues([]);
+      next.add(entry.id);
+      addUserChunk({
+        en: entry.word,
+        zh: entry.definition,
+        context: contextSentence.slice(0, 120),
+        source: "shows",
+        sourceRef: activeTitle,
+      });
     }
+    setVocabBookmarks(next);
+    saveVocabBookmarks(next);
   }
 
-  async function handleLocalSubtitle(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    const text = await file.text();
-    const parsed = parseSubtitles(text);
-    setCues(parsed);
-    setStatusMessage(parsed.length ? `已载入 ${parsed.length} 句字幕。` : "未能识别该字幕文件中的时间轴。");
+  function toggleVocabCardMastered(entryId: string) {
+    const next = new Set(vocabMastered);
+    if (next.has(entryId)) next.delete(entryId);
+    else next.add(entryId);
+    setVocabMastered(next);
+    saveVocabMastered(next);
+  }
+
+  async function selectShow(item: ShowItem) {
+    setVideoSrc(item.videoUrl);
+    setCropBottom(item.cropBottom || 0);
+    setActiveTitle(item.title);
+    setLockedCue(null);
+    setCurrentTime(0);
+    setCues([]);
+    if (!item.subtitleUrl) return;
+    try {
+      const res = await fetch(item.subtitleUrl);
+      if (!res.ok) return;
+      setCues(parseSubtitles(await res.text()));
+    } catch {
+      setStatusMessage("字幕读取失败。");
+    }
   }
 
   return (
@@ -337,61 +233,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
         c={c}
         eyebrow="TV SHOW STUDIO"
         title="美剧精听"
-        description="支持 Cloudflare R2 云端片库与本地视频直放；点击任意台词跳播、单句循环、切换无字幕盲听。"
-        aside={
-          <>
-            <input
-              ref={localVideoInputRef}
-              type="file"
-              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.m4v,.mov"
-              onChange={handleLocalVideo}
-              className="hidden"
-            />
-            <input
-              ref={localSubInputRef}
-              type="file"
-              accept=".srt,.vtt"
-              onChange={(e) => void handleLocalSubtitle(e)}
-              className="hidden"
-            />
-            <input
-              ref={localFolderInputRef}
-              type="file"
-              // @ts-expect-error non-standard folder picker attribute supported in Chromium/WebKit
-              webkitdirectory=""
-              multiple
-              onChange={(e) => void handleLocalFolder(e)}
-              className="hidden"
-            />
-            <input
-              ref={cloudUploadInputRef}
-              type="file"
-              multiple
-              accept=".mp4,.webm,.m4v,.mov,.srt,.vtt"
-              onChange={(e) => void handleCloudUpload(e)}
-              className="hidden"
-            />
-            <Button c={c} variant="secondary" onClick={() => localFolderInputRef.current?.click()}>
-              扫描本地文件夹
-            </Button>
-            <Button c={c} variant="secondary" onClick={() => localVideoInputRef.current?.click()}>
-              本地选视频
-            </Button>
-            <Button c={c} variant="secondary" onClick={() => localSubInputRef.current?.click()}>
-              载入 SRT 字幕
-            </Button>
-            {!cloudAuthRequired && (
-              <Button
-                c={c}
-                variant="secondary"
-                disabled={uploading}
-                onClick={() => cloudUploadInputRef.current?.click()}
-              >
-                {uploading ? "正在上传 R2…" : "上传到 Cloudflare R2"}
-              </Button>
-            )}
-          </>
-        }
+        description="片库来自 public/shows。同名字幕会自动配对；点击任意台词跳播、单句循环、切换无字幕盲听。"
       />
 
       {statusMessage && (
@@ -407,7 +249,10 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
       <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
         {/* Left: Video Player & Controls */}
         <Card c={c} className="overflow-hidden">
-          <div className={`relative aspect-video w-full flex items-center justify-center ${videoSrc ? "bg-black" : "bg-[#0F172A] p-6"}`}>
+          <div
+            className={`relative w-full overflow-hidden flex items-center justify-center ${videoSrc ? "bg-black" : "aspect-video bg-[#0F172A] p-6"}`}
+            style={videoSrc ? { aspectRatio: cropBottom > 0 ? `16 / ${9 * (1 - cropBottom)}` : "16 / 9" } : undefined}
+          >
             {videoSrc ? (
               <>
                 <video
@@ -415,12 +260,19 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                   src={videoSrc}
                   controls
                   onTimeUpdate={handleTimeUpdate}
-                  className="w-full h-full object-contain"
+                  className="h-full w-full bg-black"
+                  style={{ objectFit: cropBottom > 0 ? "cover" : "contain", objectPosition: "center top" }}
                 />
                 {activeCue && subMode !== "hidden" && (
                   <div className="pointer-events-none absolute inset-x-4 bottom-12 flex flex-col items-center text-center gap-1">
-                    <span className="rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
-                      {activeCue.en}
+                    <span className="pointer-events-auto rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
+                      <VocabLinkedText
+                        text={activeCue.en}
+                        matcher={vocabMatcher}
+                        excludedIds={vocabMastered}
+                        hitClassName="novel-vocab-hit novel-vocab-hit-on-dark"
+                        onOpen={openVocabCard}
+                      />
                     </span>
                     {subMode === "bilingual" && activeCue.zh && (
                       <span className="rounded-md bg-black/70 px-2.5 py-0.5 text-xs text-slate-200 backdrop-blur-sm">
@@ -436,7 +288,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                   尚未选择美剧片段
                 </p>
                 <p className="text-xs text-slate-400 max-w-sm">
-                  点击右上角「扫描本地文件夹」或「本地选视频」，也可从下方 Cloudflare R2 云端片库选片开始精听
+                  从下方片库选择一集开始精听
                 </p>
               </div>
             )}
@@ -576,7 +428,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {cues.length === 0 ? (
                 <p className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>
-                  请先载入视频与 SRT 字幕。
+                  从片库选择带字幕的一集后，这里会出现填空。
                 </p>
               ) : (
                 <>
@@ -604,7 +456,18 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                         </div>
                         <p className="text-sm leading-loose flex flex-wrap items-center gap-1.5" lang="en">
                           {tokens.map((tok, i) => {
-                            if (i !== targetIdx) return <span key={i} style={{ color: c.fg }}>{tok}</span>;
+                            if (i !== targetIdx) {
+                              return (
+                                <span key={i} style={{ color: c.fg }}>
+                                  <VocabLinkedText
+                                    text={tok}
+                                    matcher={vocabMatcher}
+                                    excludedIds={vocabMastered}
+                                    onOpen={openVocabCard}
+                                  />
+                                </span>
+                              );
+                            }
                             const clean = tok.replace(/[.,!?;:'"]/g, "");
                             const key = `${cue.id}-${i}`;
                             const val = clozeInputs[key] ?? "";
@@ -643,7 +506,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
             {cues.length === 0 ? (
               <div className="h-full grid place-items-center text-center px-4">
                 <p className="text-sm" style={{ color: c.fgMuted }}>
-                  载入 `.srt` 或 `.vtt` 字幕后，这里会生成可点击跳播的台词列表。
+                  这一集还没有同名字幕。
                 </p>
               </div>
             ) : (
@@ -679,7 +542,12 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                               style={{ color: isActive ? c.accent : c.fg }}
                               lang="en"
                             >
-                              {cue.en}
+                              <VocabLinkedText
+                                text={cue.en}
+                                matcher={vocabMatcher}
+                                excludedIds={vocabMastered}
+                                onOpen={openVocabCard}
+                              />
                             </p>
                           ) : (
                             <p className="text-[13px] italic" style={{ color: c.fgMuted }}>
@@ -719,87 +587,25 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
       </div>
 
       {/* Local Folder Scanned Library */}
-      {localShows.length > 0 && (
-        <Card c={c}>
-          <div className="p-5 md:p-6 space-y-4">
-            <div>
-              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
-                LOCAL FOLDER LIBRARY
-              </p>
-              <h3 className="type-title mt-1" style={{ color: c.fg }}>
-                本地美剧片库 ({localShows.length})
-              </h3>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {localShows.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl p-4 flex flex-col justify-between gap-3"
-                  style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
-                >
-                  <div>
-                    <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
-                      {item.title}
-                    </p>
-                    <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
-                      {formatBytes(item.videoFile.size)} · {item.subtitleFile ? "已配对字幕" : "无同名字幕"}
-                    </p>
-                  </div>
-                  <Button c={c} variant="primary" onClick={() => void selectLocalShow(item)}>
-                    播放精听
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Cloudflare R2 Cloud Library */}
       <Card c={c}>
         <div className="p-5 md:p-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
-                CLOUDFLARE R2 LIBRARY
-              </p>
-              <h3 className="type-title mt-1" style={{ color: c.fg }}>
-                云端美剧片库（私有存储 · 仅本人可见）
-              </h3>
-            </div>
-            {cloudAuthRequired && (
-              <NavLink
-                to="/login"
-                className="rounded-xl px-3.5 py-2 text-[13px] font-semibold"
-                style={{ background: c.accent, color: c.accentFg }}
-              >
-                登录后使用云端 R2
-              </NavLink>
-            )}
+          <div>
+            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+              SHOW LIBRARY
+            </p>
+            <h3 className="type-title mt-1" style={{ color: c.fg }}>
+              美剧片库 ({shows.length})
+            </h3>
           </div>
-
-          {cloudAuthRequired ? (
+          {showsLoading ? (
+            <p className="text-sm" style={{ color: c.fgMuted }}>正在读取片库…</p>
+          ) : shows.length === 0 ? (
             <p className="text-sm" style={{ color: c.fgMuted }}>
-              当前为本地访客模式，可直接使用上方「本地选视频」播放电脑里的美剧；登录个人账号后即可上传并在多设备间流式播放 Cloudflare R2 里的视频片段。
+              public/shows 里还没有视频。把 .mp4 和同名 .srt 放进这个文件夹后刷新页面。
             </p>
-          ) : loadingList ? (
-            <p className="py-6 text-center text-sm" style={{ color: c.fgMuted }}>
-              正在读取 Cloudflare R2 片库…
-            </p>
-          ) : cloudVideos.length === 0 ? (
-            <EmptyState
-              c={c}
-              title="云端片库还是空的"
-              description="把切好的美剧片段（如 friends-s01e01.mp4 和同名 friends-s01e01.srt）一起上传到 R2，系统会自动配对字幕。"
-              action={
-                <Button c={c} variant="primary" onClick={() => cloudUploadInputRef.current?.click()}>
-                  立即上传视频与字幕
-                </Button>
-              }
-            />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {cloudVideos.map((item) => (
+              {shows.map((item) => (
                 <div
                   key={item.id}
                   className="rounded-xl p-4 flex flex-col justify-between gap-3"
@@ -810,23 +616,28 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                       {item.title}
                     </p>
                     <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
-                      {formatBytes(item.size)} · {item.subtitleKey ? "已配对字幕" : "无外挂字幕"}
+                      {formatBytes(item.size)} · {item.subtitleUrl ? "已配对字幕" : "无同名字幕"}
                     </p>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <Button c={c} variant="primary" onClick={() => void selectCloudVideo(item)}>
-                      播放精听
-                    </Button>
-                    <Button c={c} variant="ghost" onClick={() => void deleteCloudVideo(item)}>
-                      删除
-                    </Button>
-                  </div>
+                  <Button c={c} variant="primary" onClick={() => void selectShow(item)}>
+                    播放精听
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </div>
       </Card>
+      <VocabCardPopover
+        c={c}
+        card={activeVocabCard}
+        bookmarked={activeVocabCard ? vocabBookmarks.has(activeVocabCard.entry.id) : false}
+        mastered={activeVocabCard ? vocabMastered.has(activeVocabCard.entry.id) : false}
+        cdnBaseUrl={cdnBaseUrl}
+        onClose={() => setActiveVocabCard(null)}
+        onToggleBookmark={toggleVocabCardBookmark}
+        onToggleMastered={toggleVocabCardMastered}
+      />
     </div>
   );
 }

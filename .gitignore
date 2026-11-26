@@ -3,3 +3,5 @@ dist
 .wrangler
 .dev.vars
 *.local
+public/shows/*
+!public/shows/.gitkeep
