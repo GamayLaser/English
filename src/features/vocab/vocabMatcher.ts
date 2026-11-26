@@ -88,7 +88,11 @@ export function loadVocabMatcher(): Promise<VocabMatcher> {
   return cachedMatcherPromise;
 }
 
-export function tokenizeVocabMatches(text: string, matcher: VocabMatcher | null): VocabToken[] {
+export function tokenizeVocabMatches(
+  text: string,
+  matcher: VocabMatcher | null,
+  options?: { seenIds?: Set<string>; excludedIds?: Set<string> },
+): VocabToken[] {
   if (!text || !matcher?.regex) return [{ text }];
 
   const tokens: VocabToken[] = [];
@@ -104,7 +108,14 @@ export function tokenizeVocabMatches(text: string, matcher: VocabMatcher | null)
     }
     const key = normalizeTerm(matchedText);
     const entry = matcher.lookup.get(key);
-    tokens.push(entry ? { text: matchedText, entry } : { text: matchedText });
+    const isExcluded = entry && options?.excludedIds?.has(entry.id);
+    const isSeen = entry && options?.seenIds?.has(entry.id);
+    if (entry && !isExcluded && !isSeen) {
+      options?.seenIds?.add(entry.id);
+      tokens.push({ text: matchedText, entry });
+    } else {
+      tokens.push({ text: matchedText });
+    }
     lastIndex = start + matchedText.length;
   }
 

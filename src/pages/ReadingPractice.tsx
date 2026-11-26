@@ -193,13 +193,43 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const activeVolume = novelIndex?.volumes.find((v) => v.id === activeMeta.volumeId) ?? novelIndex?.volumes[0];
   const fontStyle = FONT_SIZES[fontIdx];
+  const chapterRenderedParagraphs = useMemo(() => {
+    const seenIds = new Set<string>();
+    const map = new Map<
+      string,
+      Array<{
+        text: string;
+        translation?: string;
+        vocabTokens?: ReturnType<typeof tokenizeVocabMatches>;
+      }>
+    >();
+    for (const paragraph of paragraphs) {
+      const matchingLineIds = [paragraph.id, ...paragraph.legacyLineIds];
+      const notes = progress.annotations.filter((note) => matchingLineIds.includes(note.lineId));
+      const segments = buildAnnotatedSegments(paragraph.text, notes);
+      map.set(
+        paragraph.id,
+        segments.map((seg) => ({
+          ...seg,
+          vocabTokens:
+            !seg.translation && showVocabHints && vocabMatcher
+              ? tokenizeVocabMatches(seg.text, vocabMatcher, {
+                  seenIds,
+                  excludedIds: vocabMastered,
+                })
+              : undefined,
+        })),
+      );
+    }
+    return map;
+  }, [paragraphs, progress.annotations, showVocabHints, vocabMatcher, vocabMastered]);
+
   const isSpread = spreadMode === "spread" && rightParagraphs.length > 0;
 
   function renderParagraphList(list: typeof paragraphs) {
     return list.map((paragraph) => {
       const matchingLineIds = [paragraph.id, ...paragraph.legacyLineIds];
-      const notes = progress.annotations.filter((note) => matchingLineIds.includes(note.lineId));
-      const segments = buildAnnotatedSegments(paragraph.text, notes);
+      const segments = chapterRenderedParagraphs.get(paragraph.id) ?? [];
       let sourceCursor = 0;
 
       return (
@@ -252,9 +282,9 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
                 </span>
               ) : (
                 <span key={`${segment.text}-${index}`} data-reading-segment data-reading-start={startIndex}>
-                  {showVocabHints && vocabMatcher
-                    ? tokenizeVocabMatches(segment.text, vocabMatcher).map((tok, tokIdx) =>
-                        tok.entry && !vocabMastered.has(tok.entry.id) ? (
+                  {segment.vocabTokens
+                    ? segment.vocabTokens.map((tok, tokIdx) =>
+                        tok.entry ? (
                           <span
                             key={`${tokIdx}-${tok.text}`}
                             className="novel-vocab-hit"
