@@ -445,7 +445,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
       </div>
 
       {/* Immersive Book Page */}
-      <Card c={c} className="overflow-hidden zen-paper">
+      <Card c={c} className="overflow-hidden zen-paper" style={{ boxShadow: "var(--shadow-book)" }}>
         <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-14 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-10"}>
           {isSpread ? (
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 relative">
@@ -595,7 +595,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
               onChange={(e) => setSummaryText(e.target.value)}
               rows={3}
               placeholder="用简单的英文说说这一章发生了什么…"
-              className="w-full resize-y rounded-xl border px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full resize-y rounded-xl border px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/35"
               style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
             />
             {summaryError && <p className="text-xs" style={{ color: c.danger }}>{summaryError}</p>}

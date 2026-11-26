@@ -25,8 +25,8 @@
   50%       { opacity: 0.6; transform: scale(0.85); }
 }
 @keyframes zen-glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px 1px rgba(96, 165, 250, 0.3); }
-  50%       { box-shadow: 0 0 16px 3px rgba(96, 165, 250, 0.5); }
+  0%, 100% { box-shadow: 0 0 8px 1px var(--accent-soft); }
+  50%       { box-shadow: 0 0 16px 3px var(--accent-soft); }
 }
 @keyframes zen-slide-up {
   from { opacity: 0; transform: translateY(8px); }
@@ -86,8 +86,8 @@
 /* ── 设计 Token（与 App.tsx ThemeColors / zen-* 实用类保持同步） ── */
 @theme inline {
   /* 字体栈 */
-  --font-sans: 'Geist Variable', ui-sans-serif, -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* ── 深色主题色票 ── */
   --color-background:     #0B1120;
@@ -102,7 +102,7 @@
   --color-muted-fg:       #6b7280;
   --color-primary:        #ffffff;
   --color-primary-fg:     #0B1120;
-  --color-accent:         #60A5FA;
+  --color-accent:         var(--accent-primary);
   --color-accent-hover:   #a5b4fc;
   --color-input-bg:       #1c2026;
   --color-input-border:   rgba(255,255,255,0.1);
@@ -122,63 +122,91 @@
   --color-danger-dim:     rgba(239, 68, 68, 0.12);
   --color-purple:         #c084fc;
   --color-purple-dim:     rgba(192, 132, 252, 0.12);
-  --color-accent-deep:    #2563EB;
+  --color-accent-deep:    var(--accent-primary);
   --color-accent-deeper:  #4338ca;
 }
 
 /* ── 全局根元素 ────────────────────────────────────────────────────── */
 :root,
-html.light,
-[data-theme="light"] {
-  --bg-canvas: #F6F7F9;
-  --bg-surface: #FFFFFF;
-  --bg-paper: #FCFBF7;
-  --bg-subtle: #F1F4F8;
+[data-theme="light"],
+html.light {
+  --font-serif: 'Newsreader', 'Georgia', 'Songti SC', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  --border-subtle: #E6E9EF;
-  --border-strong: #D5DBE5;
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --bg-canvas: #F5F0E6;
+  --bg-surface: #FAF7F0;
+  --bg-elevated: #FFFDF9;
+  --bg-paper: #FDFBF7;
+  --bg-subtle: #EDE7DA;
 
-  --accent-primary: #2563EB;
-  --accent-hover: #1D4ED8;
-  --accent-soft: #EFF6FF;
+  --border-subtle: #E2DACB;
+  --border-strong: #CFC4B0;
+  --shadow-card: 0 2px 10px rgba(45, 38, 28, 0.04);
+  --shadow-book: 0 12px 32px rgba(45, 38, 28, 0.08);
 
-  --text-primary: #111827;
-  --text-secondary: #4B5563;
-  --text-muted: #8B95A5;
+  --accent-primary: #1C4532;
+  --accent-hover: #143325;
+  --accent-on-primary: #FAF7F0;
+  --accent-soft: rgba(28, 69, 50, 0.08);
+  --accent-secondary: #B85A3A;
+  --accent-secondary-soft: rgba(184, 90, 58, 0.10);
 
-  --c-accent: #2563EB;
-  --c-success: #059669;
-  --c-warning: #b45309;
-  --c-danger: #dc2626;
-  --c-info: #2563eb;
-  --c-active: rgba(15, 23, 42, 0.05);
+  --text-primary: #1D231F;
+  --text-secondary: #525B54;
+  --text-muted: #848C85;
+
+  --status-success: #2A6B4F;
+  --status-error: #B43C3C;
+  --status-error-soft: rgba(180, 60, 60, 0.08);
+  --radius-card: 12px;
+  --radius-btn: 8px;
+
+  --c-accent: #1C4532;
+  --c-success: #2A6B4F;
+  --c-warning: #B85A3A;
+  --c-danger: #B43C3C;
+  --c-info: #1C4532;
+  --c-active: rgba(28, 69, 50, 0.08);
 }
-html.dark,
-[data-theme="dark"] {
-  --bg-canvas: #0B1120;
-  --bg-surface: #162032;
-  --bg-paper: #141D2E;
-  --bg-subtle: #1E293B;
 
-  --border-subtle: rgba(148, 163, 184, 0.14);
-  --border-strong: rgba(148, 163, 184, 0.24);
-  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 20px -4px rgba(0, 0, 0, 0.45);
+[data-theme="dark"],
+.dark,
+html.dark {
+  --bg-canvas: #0B0D12;
+  --bg-surface: #13161E;
+  --bg-elevated: #191D28;
+  --bg-paper: #11141B;
+  --bg-subtle: #1A1F2B;
 
-  --accent-primary: #60A5FA;
-  --accent-hover: #93C5FD;
-  --accent-soft: rgba(96, 165, 250, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-book: 0 16px 40px rgba(0, 0, 0, 0.55);
 
-  --text-primary: #F1F5F9;
-  --text-secondary: #CBD5E1;
-  --text-muted: #94A3B8;
+  --accent-primary: #E6A23C;
+  --accent-hover: #F2B450;
+  --accent-on-primary: #0B0D12;
+  --accent-soft: rgba(230, 162, 60, 0.14);
+  --accent-secondary: #D97706;
+  --accent-secondary-soft: rgba(217, 119, 6, 0.16);
 
-  --c-accent: #60A5FA;
-  --c-success: #3ecf8e;
-  --c-warning: #f59e0b;
-  --c-danger: #ef4444;
-  --c-info: #3b82f6;
-  --c-active: rgba(255, 255, 255, 0.07);
+  --text-primary: #ECEAE4;
+  --text-secondary: #9CA3AF;
+  --text-muted: #646B7A;
+
+  --status-success: #34D399;
+  --status-error: #F87171;
+  --status-error-soft: rgba(248, 113, 113, 0.12);
+  --radius-card: 14px;
+  --radius-btn: 9px;
+
+  --c-accent: #E6A23C;
+  --c-success: #34D399;
+  --c-warning: #E6A23C;
+  --c-danger: #F87171;
+  --c-info: #E6A23C;
+  --c-active: rgba(230, 162, 60, 0.14);
 }
 
 html,
@@ -233,20 +261,20 @@ html.light .zen-card {
 html.dark .zen-card-hover:hover,
 :root:not(.light) .zen-card-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(96, 165, 250, 0.28);
+  border-color: var(--accent-soft);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
     0 2px 4px rgba(0, 0, 0, 0.35),
     0 12px 32px -4px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(96, 165, 250, 0.10);
+    0 0 0 1px var(--accent-soft);
 }
 html.light .zen-card-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: var(--accent-soft);
   box-shadow:
     0 4px 8px -1px rgba(15, 23, 42, 0.05),
     0 14px 28px -4px #E2E8F0,
-    0 0 0 1px rgba(37, 99, 235, 0.12);
+    0 0 0 1px var(--accent-soft);
 }
 
 /* ── 3D 微倾卡片 hover（首页模块卡专用） ───────────────────────────── */
@@ -261,20 +289,20 @@ html.light .zen-card-hover:hover {
 html.dark .zen-card-3d:hover,
 :root:not(.light) .zen-card-3d:hover {
   transform: perspective(900px) rotateX(1.5deg) translateY(-4px);
-  border-color: rgba(96, 165, 250, 0.30);
+  border-color: var(--accent-soft);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
     0 4px 8px rgba(0, 0, 0, 0.4),
     0 16px 40px -6px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(96, 165, 250, 0.12);
+    0 0 0 1px var(--accent-soft);
 }
 html.light .zen-card-3d:hover {
   transform: perspective(900px) rotateX(1.5deg) translateY(-4px);
-  border-color: rgba(37, 99, 235, 0.30);
+  border-color: var(--accent-soft);
   box-shadow:
     0 4px 10px -1px rgba(15, 23, 42, 0.07),
     0 18px 36px -6px rgba(15, 23, 42, 0.10),
-    0 0 0 1px rgba(37, 99, 235, 0.14);
+    0 0 0 1px var(--accent-soft);
 }
 
 /* 内容卡左上角色晕。--card-wash 用 hueDim 或语义浅色，叠在顶沿高光之上。 */
@@ -326,7 +354,7 @@ html.dark .zen-ambient-glow::before,
   pointer-events: none;
   background: radial-gradient(
     ellipse 75% 50% at 50% -10%,
-    rgba(96, 165, 250, 0.10) 0%,
+    var(--accent-soft) 0%,
     transparent 70%
   );
   z-index: 0;
@@ -338,23 +366,17 @@ html.light .zen-ambient-glow::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 75% 50% at 50% -10%,
-    rgba(37, 99, 235, 0.06) 0%,
+    var(--accent-soft) 0%,
     transparent 70%
   );
   z-index: 0;
 }
 
 /* ── 激活态导航项微光药丸 ──────────────────────────────────────────── */
-html.dark .zen-nav-active,
-:root:not(.light) .zen-nav-active {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
-  color: #ffffff !important;
-}
-html.light .zen-nav-active {
-  background: rgba(37, 99, 235, 0.09);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18);
-  color: #2563EB !important;
+.zen-nav-active {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  color: var(--accent-primary) !important;
 }
 
 /* ── 激活态导航左侧竖条指示器 ─────────────────────────────────────── */
@@ -365,13 +387,13 @@ html.light .zen-nav-active {
   height: 60%;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: #60A5FA;
+  background: var(--accent-primary);
   animation: zen-bar-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 8px var(--accent-soft);
 }
 html.light .zen-nav-bar {
-  background: #2563EB;
-  box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-soft);
 }
 
 /* ── Tooltip（折叠侧边栏导航项悬停提示） ──────────────────────────── */
@@ -528,7 +550,7 @@ html.light .zen-tooltip-wrap .zen-tooltip {
 }
 .zen-badge-blue {
   background: rgba(59, 130, 246, 0.14);
-  color: #60a5fa;
+  color: var(--accent-primary);
   border: 1px solid rgba(59, 130, 246, 0.22);
 }
 .zen-badge-purple {
@@ -562,8 +584,8 @@ html.light .zen-badge-muted {
 .diary-rich em { font-style: italic; opacity: 0.9; }
 .diary-rich ul { list-style: disc; padding-left: 1.4em; margin: 0.3em 0; }
 .diary-rich ol { list-style: decimal; padding-left: 1.4em; margin: 0.3em 0; }
-.diary-rich blockquote { border-left: 3px solid #60A5FA; padding-left: 14px; opacity: 0.75; margin: 0.3em 0; }
-html.light .diary-rich blockquote { border-left-color: #2563EB; }
+.diary-rich blockquote { border-left: 3px solid var(--accent-primary); padding-left: 14px; opacity: 0.75; margin: 0.3em 0; }
+html.light .diary-rich blockquote { border-left-color: var(--accent-primary); }
 .diary-rich p { margin: 0; }
 .diary-rich div { margin: 0; }
 
@@ -697,8 +719,8 @@ html.light .diary-rich blockquote { border-left-color: #2563EB; }
 }
 
 .vocab-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -711,18 +733,18 @@ html.light .diary-rich blockquote { border-left-color: #2563EB; }
               border-color 0.22s ease;
 }
 html.dark .vocab-card {
-  background-color: #162032;
-  border-color: rgba(148, 163, 184, 0.14);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  background-color: var(--bg-surface);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-card);
 }
 .vocab-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.10);
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: var(--accent-soft);
 }
 html.dark .vocab-card:hover {
   box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45);
-  border-color: rgba(96, 165, 250, 0.4);
+  border-color: var(--accent-soft);
 }
 
 .vocab-card-header {
@@ -782,6 +804,8 @@ html.dark .vocab-action-btn:hover {
   justify-content: center;
   cursor: pointer;
 }
+html.dark .vocab-img-wrapper { background-color: #E8E4DA; border-color: rgba(255,255,255,0.08); }
+html.dark .vocab-card-img { filter: brightness(0.92) contrast(0.96); }
 .vocab-img-wrapper {
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -830,21 +854,21 @@ html.dark .vocab-word-text { color: #f1f5f9; }
   height: 32px;
   border-radius: 50%;
   background-color: #eff6ff;
-  color: #2563eb;
+  color: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 2px 4px var(--accent-soft);
   cursor: pointer;
 }
 html.dark .vocab-audio-btn {
-  background-color: rgba(96, 165, 250, 0.16);
-  color: #60a5fa;
+  background-color: var(--accent-soft);
+  color: var(--accent-primary);
 }
 .vocab-audio-btn:hover {
-  background-color: #2563eb;
+  background-color: var(--accent-primary);
   color: #ffffff;
   transform: scale(1.08);
 }
@@ -877,7 +901,7 @@ html.dark .vocab-pos-tag {
 html.dark .vocab-meaning-text { color: #e2e8f0; }
 
 .vocab-example-box {
-  background-color: #F4F7FB;
+  background-color: var(--bg-subtle);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.82rem;
@@ -897,10 +921,10 @@ html.dark .vocab-example-box {
 html.dark .vocab-example-en { color: #cbd5e1; }
 .vocab-example-en mark {
   background-color: transparent;
-  color: #2563eb;
+  color: var(--accent-primary);
   font-weight: 700;
 }
-html.dark .vocab-example-en mark { color: #60a5fa; }
+html.dark .vocab-example-en mark { color: var(--accent-primary); }
 
 .vocab-sentence-audio-btn {
   color: #94a3b8;
@@ -909,7 +933,7 @@ html.dark .vocab-example-en mark { color: #60a5fa; }
   transition: color 0.15s ease;
   cursor: pointer;
 }
-.vocab-sentence-audio-btn:hover { color: #2563eb; }
+.vocab-sentence-audio-btn:hover { color: var(--accent-primary); }
 
 /* Sentence Groups */
 .sentence-groups { display: flex; flex-direction: column; gap: 28px; }
@@ -930,8 +954,8 @@ html.dark .sentence-group-title { color: #f1f5f9; }
   gap: 16px;
 }
 .sentence-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 14px 16px 16px;
   display: flex;
@@ -945,13 +969,13 @@ html.dark .sentence-group-title { color: #f1f5f9; }
               border-color 0.22s ease;
 }
 html.dark .sentence-card {
-  background-color: #162032;
-  border-color: rgba(148, 163, 184, 0.14);
+  background-color: var(--bg-surface);
+  border-color: var(--border-subtle);
 }
 .sentence-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.10);
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: var(--accent-soft);
 }
 .sentence-headline { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .sentence-target {
@@ -971,7 +995,7 @@ html.dark .sentence-definition { color: #94a3b8; }
   gap: 6px;
   padding: 10px 12px;
   border-radius: 10px;
-  background-color: #F4F7FB;
+  background-color: var(--bg-subtle);
 }
 html.dark .dialogue-box { background-color: var(--bg-subtle); }
 .dialogue-line { display: flex; align-items: flex-start; gap: 8px; }
@@ -986,9 +1010,9 @@ html.dark .dialogue-box { background-color: var(--bg-subtle); }
   font-weight: 700;
   flex-shrink: 0;
   background-color: #eff6ff;
-  color: #2563eb;
+  color: var(--accent-primary);
 }
 html.dark .dialogue-speaker {
-  background-color: rgba(96, 165, 250, 0.18);
-  color: #60a5fa;
+  background-color: var(--accent-soft);
+  color: var(--accent-primary);
 }

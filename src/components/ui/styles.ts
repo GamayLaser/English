@@ -4,7 +4,7 @@ import type { ThemeColors } from "../../types";
 export type UiButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 
 export const uiFocusRingClassName =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40";
 
 export function uiButtonClassName(variant: UiButtonVariant, disabled = false) {
   const base = `inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl px-3.5 py-1.5 text-[13px] font-medium tracking-[-0.005em] transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 disabled:hover:translate-y-0 cursor-pointer ${uiFocusRingClassName}`;

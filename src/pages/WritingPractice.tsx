@@ -153,7 +153,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
             </div>
           </div>
         )}
-        <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-blue-500/40" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
+        <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-[var(--accent-primary)]/35" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
         {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         <div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void evaluateDraft()}>{busy ? "AI 正在评分…" : "交给 AI 评分与解析"}</EnglishButton></div>
         {progress.evaluation && <WritingEvaluationCard c={c} draft={progress.draft} evaluation={progress.evaluation} onComplete={completeGroup} />}

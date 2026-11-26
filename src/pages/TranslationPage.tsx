@@ -304,7 +304,7 @@ export default function TranslationPage({ c }: { c: ThemeColors }) {
                 onChange={(event) => replacePractice({ ...practice, answer: event.target.value })}
                 onKeyDown={onAnswerKeyDown}
                 placeholder="在这里输入你的译文，或点击下方语音口译输入…"
-                className="w-full resize-y rounded-xl border px-4 py-3 text-base leading-7 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 md:min-h-32"
+                className="w-full resize-y rounded-xl border px-4 py-3 text-base leading-7 outline-none transition focus:border-[var(--accent-primary)] focus:ring-4 focus:ring-[var(--accent-primary)]/15 md:min-h-32"
                 style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }}
               />
               <div className="mt-4 flex flex-wrap items-center justify-end gap-2">

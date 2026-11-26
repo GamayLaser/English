@@ -227,7 +227,7 @@ function ListeningContent({ c }: { c: ThemeColors }) {
         {items.slice(0, visibleCount).map((x) => (
           <article
             key={x.id}
-            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-blue-500/40"
+            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-[var(--accent-primary)]/40"
             style={cardWashStyle(hueDimOf(c, "teal"))}
           >
             <button type="button" aria-label={`查看${x.title}全文`} onClick={() => setSelected(x)} className="absolute inset-0 rounded-2xl" />
@@ -508,7 +508,7 @@ function ArticleContent({ c }: { c: ThemeColors }) {
         {visible.slice(0, visibleCount).map((article) => (
           <article
             key={article.id}
-            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-blue-500/40"
+            className="relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left zen-card zen-card-wash zen-card-hover focus-within:ring-2 focus-within:ring-[var(--accent-primary)]/40"
             style={cardWashStyle(hueDimOf(c, "teal"))}
           >
             <button type="button" aria-label={`查看${article.title}全文`} onClick={() => setSelected(article)} className="absolute inset-0 rounded-2xl" />
