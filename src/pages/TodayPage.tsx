@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
-import { Button, Card } from "../components/ui";
+import { Button, Card, Modal } from "../components/ui";
 import { loadReports, loadWrongBook } from "../features/english/storage";
-import { loadUserChunks, removeUserChunk, toggleUserChunkMastered } from "../features/chunks/chunksStore";
+import {
+  getDueUserChunks,
+  loadUserChunks,
+  recordUserChunkReview,
+  removeUserChunk,
+  toggleUserChunkMastered,
+  type UserChunk,
+} from "../features/chunks/chunksStore";
 import { loadListeningReports } from "../features/listening/listeningProgress";
 import { loadReadingReports } from "../features/reading/readingProgress";
 import { loadVocabProgress, speakVocabText } from "../features/vocab/vocabStore";
@@ -56,6 +63,10 @@ function SpeakerIcon() {
 export default function TodayPage({ c }: { c: ThemeColors }) {
   const navigate = useNavigate();
   const [tick, setTick] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewQueue, setReviewQueue] = useState<UserChunk[]>([]);
+  const [reviewIdx, setReviewIdx] = useState(0);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     const refresh = () => setTick((t) => t + 1);
@@ -66,7 +77,19 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
   void tick;
   const vocab = loadVocabProgress();
   const chunks = loadUserChunks();
+  const dueChunks = getDueUserChunks();
   const wrongPending = loadWrongBook().filter((item) => item.lastVerdict !== "acceptable").length;
+
+  function startChunkReview() {
+    const list = dueChunks.length > 0 ? dueChunks : chunks.filter((ch) => !ch.mastered);
+    if (!list.length) return;
+    setReviewQueue(list.slice(0, 15));
+    setReviewIdx(0);
+    setRevealed(false);
+    setReviewOpen(true);
+  }
+
+  const activeReviewChunk = reviewQueue[reviewIdx] ?? null;
   const totalSessions =
     loadReports().length +
     loadReadingReports().length +
@@ -245,12 +268,19 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
                 MY CHUNKS · 个人语块本
               </p>
               <h3 className="type-title mt-1" style={{ color: c.fg }}>
-                从阅读、美剧、快译中收藏的地道表达 ({chunks.length})
+                收藏的地道表达 ({chunks.length}) · 待复习 {dueChunks.length}
               </h3>
             </div>
-            <Button c={c} variant="ghost" onClick={() => navigate("/reading")}>
-              去读小说收集更多 →
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {chunks.filter((ch) => !ch.mastered).length > 0 && (
+                <Button c={c} variant="primary" onClick={startChunkReview}>
+                  开始语块复习 ({dueChunks.length || chunks.filter((ch) => !ch.mastered).length})
+                </Button>
+              )}
+              <Button c={c} variant="ghost" onClick={() => navigate("/reading")}>
+                去读小说收集 →
+              </Button>
+            </div>
           </div>
 
           {chunks.length === 0 ? (
@@ -318,6 +348,94 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
           )}
         </div>
       </Card>
+
+      {/* Due Chunks Recall Review Modal */}
+      <Modal c={c} open={reviewOpen} onClose={() => setReviewOpen(false)} label="个人语块回译复习" maxWidthClassName="max-w-lg">
+        {reviewIdx >= reviewQueue.length ? (
+          <div className="py-6 text-center space-y-4">
+            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>REVIEW DONE</p>
+            <h3 className="type-page" style={{ color: c.fg }}>本轮语块复习完成</h3>
+            <p className="type-secondary" style={{ color: c.fgMuted }}>已按记忆曲线自动安排下次复习时间。</p>
+            <Button c={c} variant="primary" onClick={() => setReviewOpen(false)}>返回今日学习</Button>
+          </div>
+        ) : activeReviewChunk ? (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium zen-tnum" style={{ color: c.fgMuted }}>
+                {reviewIdx + 1} / {reviewQueue.length}
+              </span>
+              <Button c={c} variant="ghost" onClick={() => setReviewOpen(false)}>退出</Button>
+            </div>
+
+            <div className="rounded-2xl p-6 text-center space-y-3" style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}>
+              <p className="text-xs font-semibold" style={{ color: c.accent }}>看中文，试着开口说出英文</p>
+              <h3 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+                {activeReviewChunk.zh || "（无中文释义，点击下方查看原文）"}
+              </h3>
+              {activeReviewChunk.context && (
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  出处：{activeReviewChunk.context}
+                </p>
+              )}
+
+              {revealed && (
+                <div className="pt-4 mt-4 border-t space-y-2" style={{ borderColor: "var(--border-subtle)" }}>
+                  <p className="text-2xl font-bold" style={{ color: "var(--accent-primary)" }} lang="en">
+                    {activeReviewChunk.en}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => speakVocabText(activeReviewChunk.en, 0.9)}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium cursor-pointer"
+                    style={{ background: c.accentDim, color: c.accent }}
+                  >
+                    重听发音
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!revealed ? (
+              <Button
+                c={c}
+                variant="primary"
+                className="w-full"
+                onClick={() => {
+                  setRevealed(true);
+                  speakVocabText(activeReviewChunk.en, 0.9);
+                }}
+              >
+                查看英文并朗读
+              </Button>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  c={c}
+                  variant="secondary"
+                  onClick={() => {
+                    recordUserChunkReview(activeReviewChunk.id, false);
+                    setRevealed(false);
+                    setReviewIdx((i) => i + 1);
+                  }}
+                >
+                  还生疏（明天再练）
+                </Button>
+                <Button
+                  c={c}
+                  variant="primary"
+                  onClick={() => {
+                    recordUserChunkReview(activeReviewChunk.id, true);
+                    setRevealed(false);
+                    setReviewIdx((i) => i + 1);
+                  }}
+                >
+                  记住了（拉长间隔）
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

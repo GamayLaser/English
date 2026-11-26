@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { VocabCategoryMeta, VocabEntry } from "@shared/schemas";
 import { Button, Card, EmptyState, FilterChip, Modal, SearchField } from "../components/ui";
+import { addUserChunk } from "../features/chunks/chunksStore";
 import { api } from "../lib/api";
 import type { ThemeColors } from "../types";
 import {
@@ -433,12 +434,24 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
   const toggleBookmark = useCallback((id: string) => {
     setBookmarked((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const adding = !next.has(id);
+      if (adding) next.add(id);
+      else next.delete(id);
       saveVocabBookmarks(next);
+      if (adding) {
+        const found = entries.find((e) => e.id === id);
+        if (found) {
+          addUserChunk({
+            en: found.word,
+            zh: found.definition,
+            context: found.sentence || undefined,
+            source: "card",
+          });
+        }
+      }
       return next;
     });
-  }, []);
+  }, [entries]);
 
   const toggleMastered = useCallback((id: string) => {
     setMastered((prev) => {

@@ -10,7 +10,7 @@ function clamp(value: unknown, min: number, max: number) {
 
 function prompt(topic: WritingTopic, draft: string) {
   return [
-    "你是一位鼓励式小学英语写作老师。请根据题目要求评价学生作文，表达方式不同不应无依据扣分。",
+    "你是一位成人英语写作教练。请重点识别并修正中式英语，保留作者原意并给出更地道的母语者表达。",
     `题目：${topic.title}`,
     `任务：${topic.prompt}`,
     `词数要求：至少 ${topic.minWords} 词，建议 ${topic.recommendedWords} 词。`,

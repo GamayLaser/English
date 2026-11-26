@@ -13,6 +13,7 @@ import {
   type NovelIndex,
 } from "../features/novel/novelStore";
 import { startStreamingReadingAudio } from "../features/reading/elevenLabsTts";
+import { speakVocabText } from "../features/vocab/vocabStore";
 import {
   buildAnnotatedSegments,
   createReadingParagraphs,
@@ -610,6 +611,22 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
                   <span className="type-title" style={{ color: c.accent }}>{summaryResult.score} 分</span>
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: c.fgSub }}>{summaryResult.feedback}</p>
+                {summaryResult.modelSummary && (
+                  <div className="mt-2 rounded-lg p-3 space-y-1.5" style={{ background: "var(--accent-soft)" }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold" style={{ color: c.accent }}>母语者复述示范</span>
+                      <button
+                        type="button"
+                        onClick={() => speakVocabText(summaryResult.modelSummary!, 0.9)}
+                        className="rounded px-2 py-0.5 text-xs font-medium cursor-pointer"
+                        style={{ background: c.card, color: c.accent }}
+                      >
+                        朗读示范
+                      </button>
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color: c.fg }} lang="en">{summaryResult.modelSummary}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

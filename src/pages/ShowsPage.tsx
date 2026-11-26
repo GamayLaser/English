@@ -50,6 +50,9 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [myRecordingUrl, setMyRecordingUrl] = useState<string | null>(null);
   const [savedCueIds, setSavedCueIds] = useState<Set<string>>(() => new Set());
   const [localShows, setLocalShows] = useState<LocalShowItem[]>([]);
+  const [rightTab, setRightTab] = useState<"transcript" | "cloze">("transcript");
+  const [clozeInputs, setClozeInputs] = useState<Record<string, string>>({});
+  const [clozeChecked, setClozeChecked] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const activeLineRef = useRef<HTMLButtonElement | null>(null);
@@ -155,6 +158,21 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
 
   function playShadowComparison() {
     if (!myRecordingUrl) return;
+    const targetCue = lockedCue ?? activeCue;
+    const vid = videoRef.current;
+    if (vid && targetCue) {
+      vid.currentTime = targetCue.startSec;
+      void vid.play().catch(() => {});
+      const ms = Math.max(800, (targetCue.endSec - targetCue.startSec) * 1000 / speed);
+      window.setTimeout(() => {
+        vid.pause();
+        const audio = new Audio(myRecordingUrl);
+        recordAudioRef.current?.pause();
+        recordAudioRef.current = audio;
+        void audio.play().catch(() => {});
+      }, ms);
+      return;
+    }
     const audio = new Audio(myRecordingUrl);
     recordAudioRef.current?.pause();
     recordAudioRef.current = audio;
@@ -511,7 +529,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 </Button>
                 {myRecordingUrl && (
                   <Button c={c} variant="primary" onClick={playShadowComparison}>
-                    回放我的发音
+                    原声 → 我的对比
                   </Button>
                 )}
               </div>
@@ -519,20 +537,106 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
           </div>
         </Card>
 
-        {/* Right: Interactive Subtitle Transcript */}
+        {/* Right: Interactive Subtitle Transcript / Cloze Dictation */}
         <Card c={c} className="flex flex-col h-[460px] lg:h-[520px]">
           <div
-            className="px-5 py-3.5 border-b flex items-center justify-between"
+            className="px-4 py-3 border-b flex items-center justify-between gap-2"
             style={{ borderColor: c.borderSub }}
           >
-            <h3 className="text-sm font-semibold" style={{ color: c.fg }}>
-              台词列表 ({cues.length})
-            </h3>
+            <div className="flex items-center gap-1.5 rounded-lg p-0.5" style={{ background: c.inputBg }}>
+              <button
+                type="button"
+                onClick={() => setRightTab("transcript")}
+                className="rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer"
+                style={rightTab === "transcript" ? { background: c.card, color: c.fg } : { color: c.fgMuted }}
+              >
+                台词 ({cues.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRightTab("cloze");
+                  setClozeChecked(false);
+                }}
+                className="rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer"
+                style={rightTab === "cloze" ? { background: c.card, color: c.fg } : { color: c.fgMuted }}
+              >
+                盲听填空
+              </button>
+            </div>
             <span className="text-xs" style={{ color: c.fgMuted }}>
-              点击任意句跳播
+              {rightTab === "transcript" ? "点击任意句跳播" : "填写空缺实词"}
             </span>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+
+          {rightTab === "cloze" ? (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {cues.length === 0 ? (
+                <p className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>
+                  请先载入视频与 SRT 字幕。
+                </p>
+              ) : (
+                <>
+                  {cues.slice(Math.max(0, activeCueIndex), Math.max(0, activeCueIndex) + 4).map((cue) => {
+                    const tokens = cue.en.split(/\s+/).filter(Boolean);
+                    const targetIdx = tokens.findIndex((t) => /^[a-zA-Z]{4,}$/.test(t.replace(/[.,!?;:'"]/g, "")));
+                    return (
+                      <div
+                        key={cue.id}
+                        className="rounded-xl p-3.5 space-y-2"
+                        style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] zen-tnum" style={{ color: c.fgMuted }}>
+                            {formatTime(cue.startSec)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => jumpToCue(cue)}
+                            className="text-xs font-medium cursor-pointer"
+                            style={{ color: c.accent }}
+                          >
+                            播放这句
+                          </button>
+                        </div>
+                        <p className="text-sm leading-loose flex flex-wrap items-center gap-1.5" lang="en">
+                          {tokens.map((tok, i) => {
+                            if (i !== targetIdx) return <span key={i} style={{ color: c.fg }}>{tok}</span>;
+                            const clean = tok.replace(/[.,!?;:'"]/g, "");
+                            const key = `${cue.id}-${i}`;
+                            const val = clozeInputs[key] ?? "";
+                            const ok = val.trim().toLowerCase() === clean.toLowerCase();
+                            return (
+                              <input
+                                key={i}
+                                value={val}
+                                onChange={(e) => {
+                                  setClozeChecked(false);
+                                  setClozeInputs((prev) => ({ ...prev, [key]: e.target.value }));
+                                }}
+                                placeholder={"_".repeat(Math.min(8, clean.length))}
+                                className="w-24 rounded-md border-b-2 bg-transparent px-1.5 py-0.5 text-center text-sm font-semibold outline-none"
+                                style={{
+                                  borderColor: clozeChecked ? (ok ? c.success : c.danger) : c.accent,
+                                  color: clozeChecked ? (ok ? c.success : c.danger) : c.fg,
+                                }}
+                              />
+                            );
+                          })}
+                        </p>
+                      </div>
+                    );
+                  })}
+                  <div className="flex justify-end">
+                    <Button c={c} variant="primary" onClick={() => setClozeChecked(true)}>
+                      核对填空
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {cues.length === 0 ? (
               <div className="h-full grid place-items-center text-center px-4">
                 <p className="text-sm" style={{ color: c.fgMuted }}>
@@ -607,6 +711,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
               })
             )}
           </div>
+          )}
         </Card>
       </div>
 

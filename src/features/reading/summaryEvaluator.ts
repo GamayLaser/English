@@ -8,6 +8,7 @@ export interface ReadingSummaryEvaluation {
   feedback: string;
   strengths: string[];
   improvements: string[];
+  modelSummary?: string;
 }
 
 export interface ReadingSummaryEvaluationInput {
@@ -23,16 +24,16 @@ function prompt(article: ReadingArticle, summary: string) {
     `原文：${article.content}`,
     `学生概述：${summary}`,
     "请从人物、事件、时间地点、结果和关键细节等角度综合评分；不能因为表达方式不同扣分。",
-    "仅返回 JSON：{score:0-100,feedback:string,strengths:string[],improvements:string[]}。feedback 用简明中文解释得分原因；strengths 和 improvements 各给 0-3 条具体建议。",
+    "仅返回 JSON：{score:0-100,feedback:string,strengths:string[],improvements:string[],modelSummary:string}。feedback 用简明中文解释得分原因；strengths 和 improvements 各给 0-3 条具体建议；modelSummary 为 2-3 句地道母语者英文复述示范。",
   ].join("\n");
 }
 
 export function parseReadingSummaryEvaluation(content: unknown): ReadingSummaryEvaluation {
   try {
     const value = JSON.parse(typeof content === "string" ? content : "") as Record<string, unknown>;
-    const { score, feedback, strengths, improvements } = value;
+    const { score, feedback, strengths, improvements, modelSummary } = value;
     if (typeof score !== "number" || typeof feedback !== "string" || !Array.isArray(strengths) || !strengths.every((item) => typeof item === "string") || !Array.isArray(improvements) || !improvements.every((item) => typeof item === "string")) throw new Error();
-    return { score: Math.max(0, Math.min(100, Math.round(score))), feedback, strengths, improvements };
+    return { score: Math.max(0, Math.min(100, Math.round(score))), feedback, strengths, improvements, modelSummary: typeof modelSummary === "string" ? modelSummary : undefined };
   } catch {
     throw new Error("模型反馈不完整，请重试");
   }

@@ -24,6 +24,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [topicModalOpen, setTopicModalOpen] = useState(false);
+  const [chunkMode, setChunkMode] = useState(false);
   const lastWorkspaceRevision = useRef(0);
 
   useEffect(() => {
@@ -83,6 +84,15 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
       description={`至少 ${topic.minWords} 词，建议写到 ${topic.recommendedWords} 词左右；草稿会自动保存到云端。`}
       aside={
         <>
+          {targetChunks.length > 0 && (
+            <EnglishButton
+              variant={chunkMode ? "primary" : "secondary"}
+              c={c}
+              onClick={() => setChunkMode((v) => !v)}
+            >
+              {chunkMode ? "语块造句模式 ✓" : "从语块本出题"}
+            </EnglishButton>
+          )}
           {topics.length > 1 && (
             <EnglishButton variant="secondary" c={c} onClick={() => setTopicModalOpen(true)}>
               切换题目 ({topics.findIndex((t) => t.id === topic.id) + 1}/{topics.length})
@@ -94,7 +104,16 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
     />
     <Card c={c}>
       <div className="p-5 md:p-6">
-        <div><p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>TOPIC PROMPT</p><h3 className="mt-1.5 text-lg font-semibold leading-snug" style={{ color: c.fg }}>{topic.prompt}</h3></div>
+        <div>
+          <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+            {chunkMode ? "CHUNK CHALLENGE · 60–80 WORDS" : "TOPIC PROMPT"}
+          </p>
+          <h3 className="mt-1.5 text-lg font-semibold leading-snug" style={{ color: c.fg }}>
+            {chunkMode
+              ? `用下方 ${targetChunks.length} 个你收藏的语块，写一段 60–80 词的真实生活或工作记录`
+              : topic.prompt}
+          </h3>
+        </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2"><section className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-xs font-semibold" style={{ color: c.fg }}>需要写到</p><ol className="mt-2 space-y-1.5 text-[13px] leading-relaxed" style={{ color: c.fgSub }}>{topic.requiredPoints.map((point, index) => <li key={point}><span className="mr-1.5 font-semibold" style={{ color: c.accent }}>{index + 1}.</span>{point}</li>)}</ol></section><section className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-xs font-semibold" style={{ color: c.fg }}>可以参考的词</p><div className="mt-2 flex flex-wrap gap-1.5">{topic.vocabularyHints.map((word) => <span key={word} className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: c.card, color: c.accent, border: `1px solid ${c.borderSub}` }}>{word}</span>)}</div></section></div>
       </div>
     </Card>

@@ -5,7 +5,7 @@ import { speakVocabText } from "../features/vocab/vocabStore";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { loadAiSettings } from "../features/english/aiSettings";
 import { evaluateTranslation } from "../features/english/deepseekEvaluator";
-import { createPracticeSet } from "../features/english/practiceScheduler";
+import { createPracticeSet, type PracticeDirectionMode } from "../features/english/practiceScheduler";
 import { AUTO_ADVANCE_MS, shouldAutoAdvance, shouldFocusAnswerInput } from "../features/english/practiceFlow";
 import { importWorkbook, loadSentenceLibrary, saveSentenceLibrary } from "../features/english/sentenceLibrary";
 import { loadSentenceLearningStats, recordSentenceAttempt } from "../features/english/learningStats";
@@ -29,28 +29,38 @@ export const translationPromptClassName = "relative overflow-hidden rounded-2xl 
 type View = "practice" | "reading" | "writing" | "listening" | "vocabulary" | "wrongbook" | "reports";
 const isView = (value: string): value is View => ["practice", "reading", "writing", "listening", "vocabulary", "wrongbook", "reports"].includes(value);
 
-function createGroup() {
+type PracticeSourceFilter = "smart" | "chunks" | "builtin";
+
+function createGroup(directionMode: PracticeDirectionMode = "zh2en", sourceFilter: PracticeSourceFilter = "smart") {
   const history = loadSchedulerHistory();
-  const baseQuestions = createPracticeSet({ library: loadSentenceLibrary(), wrongBook: loadWrongBook(), ...history });
+  const baseQuestions = createPracticeSet({
+    library: loadSentenceLibrary(),
+    wrongBook: loadWrongBook(),
+    ...history,
+    directionMode,
+  });
   const chunkQuestions: PracticeQuestion[] = loadUserChunks()
     .filter((ch) => !ch.mastered && ch.en.trim() && ch.zh.trim())
-    .slice(0, 3)
-    .map((ch) => ({
+    .slice(0, sourceFilter === "chunks" ? 20 : 3)
+    .map((ch, idx) => ({
       sentence: { id: `chunk:${ch.id}`, en: ch.en, zh: ch.zh, source: "imported" },
-      direction: "zh2en" as const,
+      direction: directionMode === "en2zh" ? "en2zh" : directionMode === "mixed" && idx % 2 === 1 ? "en2zh" : "zh2en",
       kind: "review" as const,
       previousIssues: [],
     }));
+
   const questions =
-    chunkQuestions.length > 0
-      ? [...chunkQuestions, ...baseQuestions.slice(0, Math.max(1, baseQuestions.length - chunkQuestions.length))]
-      : baseQuestions;
+    sourceFilter === "chunks" && chunkQuestions.length > 0
+      ? chunkQuestions
+      : sourceFilter === "smart" && chunkQuestions.length > 0
+        ? [...chunkQuestions, ...baseQuestions.slice(0, Math.max(1, baseQuestions.length - chunkQuestions.length))]
+        : baseQuestions;
   saveSchedulerHistory({ groupsCreated: history.groupsCreated + 1, reviewsAssigned: history.reviewsAssigned + questions.filter((item) => item.kind === "review").length });
   return questions;
 }
 
-function createTranslationPracticeSession(): TranslationPracticeSession {
-  return { questions: createGroup(), index: 0, answer: "", attempts: [], evaluation: null };
+function createTranslationPracticeSession(directionMode: PracticeDirectionMode = "zh2en", sourceFilter: PracticeSourceFilter = "smart"): TranslationPracticeSession {
+  return { questions: createGroup(directionMode, sourceFilter), index: 0, answer: "", attempts: [], evaluation: null };
 }
 
 export function loadOrCreateTranslationPracticeSession(): TranslationPracticeSession {
@@ -67,6 +77,8 @@ export default function EnglishPage({ c, initialView = "practice", onViewChange,
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [finished, setFinished] = useState(false);
+  const [directionMode, setDirectionMode] = useState<PracticeDirectionMode>("zh2en");
+  const [sourceFilter, setSourceFilter] = useState<PracticeSourceFilter>("smart");
   const answerInputRef = useRef<HTMLTextAreaElement>(null);
   const lastWorkspaceRevision = useRef(0);
   const [panelRevisions, setPanelRevisions] = useState({ wrongbook: 0, reports: 0 });
@@ -118,8 +130,8 @@ export default function EnglishPage({ c, initialView = "practice", onViewChange,
     replacePractice({ ...practice, index: index + 1, answer: "", evaluation: null }); setMessage("");
   }
 
-  function restart() {
-    replacePractice(createTranslationPracticeSession()); setFinished(false); setMessage(""); setView("practice");
+  function restart(nextDir = directionMode, nextSource = sourceFilter) {
+    replacePractice(createTranslationPracticeSession(nextDir, nextSource)); setFinished(false); setMessage(""); setView("practice");
   }
 
   useEffect(() => {
@@ -141,13 +153,13 @@ export default function EnglishPage({ c, initialView = "practice", onViewChange,
   }
 
   return <div className="flex min-h-0 flex-col md:h-full">
-    <div className="min-h-0 flex-1"><Suspense fallback={<div className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>正在加载练习…</div>}>{view === "vocabulary" ? <VisualVocabulary mode="word" c={c} /> : view === "reading" ? <ReadingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "writing" ? <WritingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "listening" ? <ListeningPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "wrongbook" ? <WrongBookDetails key={panelRevisions.wrongbook} c={c} onStartPractice={() => changeView("practice")} /> : view === "reports" ? <ReportHistory key={panelRevisions.reports} c={c} /> : finished ? <Completed c={c} total={questions.length} accepted={accepted} tags={tags} attempts={attempts} onRestart={restart} onWrongBook={() => changeView("wrongbook")} /> : <TranslationPractice c={c} index={index} total={questions.length} current={current} answer={answer} setAnswer={(nextAnswer) => replacePractice({ ...practice, answer: nextAnswer })} evaluation={evaluation} busy={busy} message={message} inputRef={answerInputRef} onSubmit={submit} onNext={next} />}</Suspense></div>
+    <div className="min-h-0 flex-1"><Suspense fallback={<div className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>正在加载练习…</div>}>{view === "vocabulary" ? <VisualVocabulary mode="word" c={c} /> : view === "reading" ? <ReadingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "writing" ? <WritingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "listening" ? <ListeningPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "wrongbook" ? <WrongBookDetails key={panelRevisions.wrongbook} c={c} onStartPractice={() => changeView("practice")} /> : view === "reports" ? <ReportHistory key={panelRevisions.reports} c={c} /> : finished ? <Completed c={c} total={questions.length} accepted={accepted} tags={tags} attempts={attempts} onRestart={() => restart()} onWrongBook={() => changeView("wrongbook")} /> : <TranslationPractice c={c} index={index} total={questions.length} current={current} answer={answer} setAnswer={(nextAnswer) => replacePractice({ ...practice, answer: nextAnswer })} evaluation={evaluation} busy={busy} message={message} inputRef={answerInputRef} directionMode={directionMode} sourceFilter={sourceFilter} onChangeMode={(m) => { setDirectionMode(m); restart(m, sourceFilter); }} onChangeSource={(s) => { setSourceFilter(s); restart(directionMode, s); }} onSubmit={submit} onNext={next} />}</Suspense></div>
   </div>;
 }
 
 export const translationAnswerStageClassName = "w-full rounded-xl border p-4 md:p-6";
 
-export function TranslationPractice({ c, index, total, current, answer, setAnswer, evaluation, busy, message, inputRef, onSubmit, onNext }: { c: ThemeColors; index: number; total: number; current: PracticeQuestion; answer: string; setAnswer: (value: string) => void; evaluation: Evaluation | null; busy: boolean; message: string; inputRef: React.RefObject<HTMLTextAreaElement | null>; onSubmit: () => void; onNext: () => void }) {
+export function TranslationPractice({ c, index, total, current, answer, setAnswer, evaluation, busy, message, inputRef, directionMode, sourceFilter, onChangeMode, onChangeSource, onSubmit, onNext }: { c: ThemeColors; index: number; total: number; current: PracticeQuestion; answer: string; setAnswer: (value: string) => void; evaluation: Evaluation | null; busy: boolean; message: string; inputRef: React.RefObject<HTMLTextAreaElement | null>; directionMode: PracticeDirectionMode; sourceFilter: PracticeSourceFilter; onChangeMode: (m: PracticeDirectionMode) => void; onChangeSource: (s: PracticeSourceFilter) => void; onSubmit: () => void; onNext: () => void }) {
   const prompt = current.direction === "en2zh" ? current.sentence.en : current.sentence.zh;
   const [micActive, setMicActive] = useState(false);
   const micRef = useRef<{ stop: () => void } | null>(null);
@@ -193,8 +205,8 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
     <EnglishPageHeader
       c={c}
       eyebrow="TRANSLATION PRACTICE"
-      title="句子翻译"
-      description="AI 逐句精批，自动识别薄弱维度并按间隔调度复习。"
+      title="句子翻译 · 口译输出"
+      description="默认以汉译英为主，支持语音口译输入与 AI 5 维精批。"
       aside={
         <div className="flex items-center gap-3 rounded-xl px-3.5 py-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
           <span className="type-title zen-tnum" style={{ color: c.fg }}>{String(index + 1).padStart(2, "0")}</span>
@@ -204,7 +216,32 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
           </div>
         </div>
       }
-    />
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <EnglishSegmentedTabs
+          tabs={[
+            { id: "zh2en", label: "汉译英（口译）" },
+            { id: "en2zh", label: "英译汉" },
+            { id: "mixed", label: "混合" },
+          ]}
+          value={directionMode}
+          onChange={(v) => onChangeMode(v as PracticeDirectionMode)}
+          ariaLabel="翻译方向模式"
+          c={c}
+        />
+        <select
+          value={sourceFilter}
+          onChange={(e) => onChangeSource(e.target.value as PracticeSourceFilter)}
+          className="min-h-8 rounded-lg border px-2.5 py-1 text-xs font-medium outline-none"
+          style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+          aria-label="选择语料来源"
+        >
+          <option value="smart">智能调度（错题+语块）</option>
+          <option value="chunks">个人语块本优先</option>
+          <option value="builtin">内置句库</option>
+        </select>
+      </div>
+    </EnglishPageHeader>
     <div className="flex w-full flex-col gap-4">
       <div className="flex items-center gap-2 px-1">
         <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: c.accent }}>{current.direction === "en2zh" ? "ENGLISH → CHINESE" : "CHINESE → ENGLISH"}</span>
