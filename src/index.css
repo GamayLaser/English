@@ -1,4 +1,4 @@
-﻿@import 'tailwindcss';
+@import 'tailwindcss';
 
 /* ── 字体注册 ──────────────────────────────────────────────────────── */
 @layer base {
@@ -1020,4 +1020,27 @@ html.dark .dialogue-box { background-color: var(--bg-subtle); }
 html.dark .dialogue-speaker {
   background-color: var(--accent-soft);
   color: var(--accent-primary);
+}
+
+/* ── Novel ↔ Vocab Card faint wavy underline ─────────────────────────── */
+.novel-vocab-hit {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(28, 69, 50, 0.24);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: text-decoration-color 0.16s ease, background-color 0.16s ease;
+}
+.novel-vocab-hit:hover {
+  text-decoration-color: var(--accent-primary);
+  background-color: var(--accent-soft);
+}
+html.dark .novel-vocab-hit {
+  text-decoration-color: rgba(230, 162, 60, 0.28);
+}
+html.dark .novel-vocab-hit:hover {
+  text-decoration-color: var(--accent-primary);
+  background-color: var(--accent-soft);
 }

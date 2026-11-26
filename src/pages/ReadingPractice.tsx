@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { VocabEntry } from "@shared/schemas";
 import { EnglishButton, EnglishEmptyState, EnglishFilterTabs } from "../components/english/EnglishUi";
 import { Modal } from "../components/ui";
 import Card from "../components/ui/Card";
@@ -13,7 +14,15 @@ import {
   type NovelIndex,
 } from "../features/novel/novelStore";
 import { startStreamingReadingAudio } from "../features/reading/elevenLabsTts";
-import { speakVocabText } from "../features/vocab/vocabStore";
+import { loadVocabMatcher, tokenizeVocabMatches, type VocabMatcher } from "../features/vocab/vocabMatcher";
+import {
+  getCardImageUrl,
+  loadVocabProgress,
+  saveVocabBookmarks,
+  saveVocabMastered,
+  speakVocabText,
+} from "../features/vocab/vocabStore";
+import { api } from "../lib/api";
 import {
   buildAnnotatedSegments,
   createReadingParagraphs,
@@ -60,6 +69,19 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [vocabMatcher, setVocabMatcher] = useState<VocabMatcher | null>(null);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState("");
+  const [showVocabHints, setShowVocabHints] = useState(true);
+  const [activeVocabCard, setActiveVocabCard] = useState<{
+    entry: VocabEntry;
+    x: number;
+    y: number;
+    above: boolean;
+    contextSentence: string;
+  } | null>(null);
+  const [vocabBookmarks, setVocabBookmarks] = useState<Set<string>>(() => loadVocabProgress().bookmarked);
+  const [vocabMastered, setVocabMastered] = useState<Set<string>>(() => loadVocabProgress().mastered);
+
   const [summaryText, setSummaryText] = useState("");
   const [summaryResult, setSummaryResult] = useState<ReadingSummaryEvaluation | null>(null);
   const [summaryBusy, setSummaryBusy] = useState(false);
@@ -76,6 +98,8 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   const summaryMicRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
+    loadVocabMatcher().then(setVocabMatcher).catch(() => {});
+    api.health().then((h) => setCdnBaseUrl(h.cardsCdnUrl || "")).catch(() => {});
     loadNovelIndex()
       .then((idx) => {
         setNovelIndex(idx);
@@ -115,6 +139,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     saveLastNovelChapterId(activeMeta.id);
     setProgress(loadReadingProgress(`novel:${activeMeta.id}`));
     setPending(null);
+    setActiveVocabCard(null);
     setChunkSaved(false);
     setMessage("");
     setShowStudyGuide(false);
@@ -226,7 +251,21 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
                 </span>
               ) : (
                 <span key={`${segment.text}-${index}`} data-reading-segment data-reading-start={startIndex}>
-                  {segment.text}
+                  {showVocabHints && vocabMatcher
+                    ? tokenizeVocabMatches(segment.text, vocabMatcher).map((tok, tokIdx) =>
+                        tok.entry ? (
+                          <span
+                            key={`${tokIdx}-${tok.text}`}
+                            className="novel-vocab-hit"
+                            onClick={(e) => handleVocabHitClick(tok.entry!, e, paragraph.text)}
+                          >
+                            {tok.text}
+                          </span>
+                        ) : (
+                          tok.text
+                        ),
+                      )
+                    : segment.text}
                 </span>
               );
             })}
@@ -234,6 +273,50 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
         </div>
       );
     });
+  }
+
+  function handleVocabHitClick(
+    entry: VocabEntry,
+    event: React.MouseEvent<HTMLSpanElement>,
+    contextSentence: string,
+  ) {
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) return;
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const cardWidth = 304;
+    const x = Math.min(Math.max(cardWidth / 2 + 16, rect.left + rect.width / 2), window.innerWidth - cardWidth / 2 - 16);
+    const showAbove = rect.bottom + 360 > window.innerHeight && rect.top > 240;
+    const y = showAbove ? Math.max(16, rect.top - 10) : Math.min(window.innerHeight - 16, rect.bottom + 10);
+    setPending(null);
+    setActiveVocabCard({ entry, x, y, above: showAbove, contextSentence });
+    speakVocabText(entry.audioText || entry.word, 0.95);
+  }
+
+  function toggleVocabCardBookmark(entry: VocabEntry, contextSentence: string) {
+    const next = new Set(vocabBookmarks);
+    if (next.has(entry.id)) {
+      next.delete(entry.id);
+    } else {
+      next.add(entry.id);
+      addUserChunk({
+        en: entry.word,
+        zh: entry.definition,
+        context: contextSentence.slice(0, 120),
+        source: "novel",
+        sourceRef: activeMeta?.id,
+      });
+    }
+    setVocabBookmarks(next);
+    saveVocabBookmarks(next);
+  }
+
+  function toggleVocabCardMastered(entryId: string) {
+    const next = new Set(vocabMastered);
+    if (next.has(entryId)) next.delete(entryId);
+    else next.add(entryId);
+    setVocabMastered(next);
+    saveVocabMastered(next);
   }
 
   function stepChapter(delta: -1 | 1) {
@@ -414,6 +497,19 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowVocabHints((v) => !v)}
+            className="min-h-8 rounded-lg px-2.5 text-xs font-medium cursor-pointer"
+            style={
+              showVocabHints
+                ? { background: c.accentDim, color: c.accent }
+                : { background: c.inputBg, color: c.fgSub }
+            }
+            title="开启/关闭文中词卡波浪线提示"
+          >
+            {showVocabHints ? "词卡波浪线 ✓" : "词卡波浪线"}
+          </button>
           <button
             type="button"
             onClick={() => setSpreadMode((m) => (m === "spread" ? "single" : "spread"))}
@@ -655,6 +751,110 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
             </EnglishButton>
           </div>
         </div>
+      )}
+
+      {/* Floating Vocab/Phrase Card Popover */}
+      {activeVocabCard && (
+        <>
+          <div
+            className="fixed inset-0 z-[55]"
+            onClick={() => setActiveVocabCard(null)}
+            aria-hidden="true"
+          />
+          <div
+            className={`fixed z-[60] w-[304px] -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal space-y-3 ${activeVocabCard.above ? "-translate-y-full" : ""}`}
+            style={{
+              left: activeVocabCard.x,
+              top: activeVocabCard.y,
+            }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                style={{ background: "var(--bg-subtle)", color: "var(--text-muted)" }}
+              >
+                {activeVocabCard.entry.topic || "词卡联动"}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => toggleVocabCardBookmark(activeVocabCard.entry, activeVocabCard.contextSentence)}
+                  className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
+                  style={{
+                    background: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accentDim : "var(--bg-subtle)",
+                    color: vocabBookmarks.has(activeVocabCard.entry.id) ? c.accent : c.fgMuted,
+                  }}
+                >
+                  {vocabBookmarks.has(activeVocabCard.entry.id) ? "已收藏 ★" : "收藏"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleVocabCardMastered(activeVocabCard.entry.id)}
+                  className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
+                  style={{
+                    background: vocabMastered.has(activeVocabCard.entry.id) ? c.successDim : "var(--bg-subtle)",
+                    color: vocabMastered.has(activeVocabCard.entry.id) ? c.success : c.fgMuted,
+                  }}
+                >
+                  {vocabMastered.has(activeVocabCard.entry.id) ? "已掌握 ✓" : "掌握"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveVocabCard(null)}
+                  className="rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                  style={{ color: c.fgMuted }}
+                  aria-label="关闭单词卡片"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="w-full aspect-[4/3] overflow-hidden rounded-xl flex items-center justify-center">
+              <img
+                src={getCardImageUrl(activeVocabCard.entry, cdnBaseUrl)}
+                alt={activeVocabCard.entry.word}
+                className="vocab-card-img"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-lg font-bold leading-snug" style={{ color: "var(--text-primary)" }} lang="en">
+                  {activeVocabCard.entry.word}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => speakVocabText(activeVocabCard.entry.audioText || activeVocabCard.entry.word, 0.95)}
+                  className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer"
+                  style={{ background: c.accentDim, color: c.accent }}
+                >
+                  朗读
+                </button>
+              </div>
+              <div className="flex items-baseline gap-2 text-sm">
+                {activeVocabCard.entry.pos && (
+                  <span
+                    className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+                    style={{ background: c.accentDim, color: c.accent }}
+                  >
+                    {activeVocabCard.entry.pos}
+                  </span>
+                )}
+                <span style={{ color: "var(--text-secondary)" }}>{activeVocabCard.entry.definition}</span>
+              </div>
+              {activeVocabCard.entry.sentence && (
+                <p
+                  className="rounded-xl px-3 py-2 text-xs leading-relaxed mt-1"
+                  style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+                  lang="en"
+                >
+                  {activeVocabCard.entry.sentence}
+                </p>
+              )}
+            </div>
+          </div>
+        </>
       )}
       {/* Chapter Directory Modal */}
       <Modal c={c} open={tocOpen} onClose={() => setTocOpen(false)} label="小说章节目录" maxWidthClassName="max-w-2xl">
