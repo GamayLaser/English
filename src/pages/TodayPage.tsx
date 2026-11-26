@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
 import { Button, Card } from "../components/ui";
 import { loadReports, loadWrongBook } from "../features/english/storage";
+import { loadUserChunks, removeUserChunk, toggleUserChunkMastered } from "../features/chunks/chunksStore";
 import { loadListeningReports } from "../features/listening/listeningProgress";
 import { loadReadingReports } from "../features/reading/readingProgress";
 import { loadVocabProgress, speakVocabText } from "../features/vocab/vocabStore";
@@ -64,6 +65,7 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
 
   void tick;
   const vocab = loadVocabProgress();
+  const chunks = loadUserChunks();
   const wrongPending = loadWrongBook().filter((item) => item.lastVerdict !== "acceptable").length;
   const totalSessions =
     loadReports().length +
@@ -231,6 +233,89 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
               </button>
             ))}
           </div>
+        </div>
+      </Card>
+
+      {/* Unified Personal Chunks (my_chunks) */}
+      <Card c={c}>
+        <div className="p-5 md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+                MY CHUNKS · 个人语块本
+              </p>
+              <h3 className="type-title mt-1" style={{ color: c.fg }}>
+                从阅读、美剧、快译中收藏的地道表达 ({chunks.length})
+              </h3>
+            </div>
+            <Button c={c} variant="ghost" onClick={() => navigate("/reading")}>
+              去读小说收集更多 →
+            </Button>
+          </div>
+
+          {chunks.length === 0 ? (
+            <p className="mt-4 text-sm" style={{ color: c.fgMuted }}>
+              还没有收藏语块。去「阅读训练（连载小说）」划词、或在「美剧精听」点台词旁的「收藏」，就会统一汇总到这里复习。
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {chunks.slice(0, 9).map((chunk) => (
+                <div
+                  key={chunk.id}
+                  className="rounded-xl p-4 flex flex-col justify-between gap-3"
+                  style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[14.5px] font-semibold leading-snug" style={{ color: c.fg }} lang="en">
+                        {chunk.en}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => speakVocabText(chunk.en, 0.9)}
+                        className="grid size-7 shrink-0 place-items-center rounded-full cursor-pointer"
+                        style={{ background: c.accentDim, color: c.accent }}
+                        aria-label="朗读语块"
+                      >
+                        <SpeakerIcon />
+                      </button>
+                    </div>
+                    {chunk.zh && (
+                      <p className="mt-1.5 text-xs leading-relaxed" style={{ color: c.fgSub }}>
+                        {chunk.zh}
+                      </p>
+                    )}
+                    {chunk.context && (
+                      <p className="mt-1 text-[11px] truncate" style={{ color: c.fgMuted }}>
+                        出处：{chunk.context}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleUserChunkMastered(chunk.id)}
+                      className="rounded-lg px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                      style={{
+                        background: chunk.mastered ? c.successDim : c.card,
+                        color: chunk.mastered ? c.success : c.fgMuted,
+                      }}
+                    >
+                      {chunk.mastered ? "已掌握 ✓" : "标记掌握"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeUserChunk(chunk.id)}
+                      className="text-[11px] cursor-pointer"
+                      style={{ color: c.fgMuted }}
+                    >
+                      移除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     </div>

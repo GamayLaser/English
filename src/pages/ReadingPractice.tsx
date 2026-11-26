@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadAiSettings } from "../features/english/aiSettings";
+import { addUserChunk } from "../features/chunks/chunksStore";
+import {
+  loadLastNovelChapterId,
+  loadNovelChapter,
+  loadNovelIndex,
+  saveLastNovelChapterId,
+  type NovelChapterContent,
+  type NovelIndex,
+} from "../features/novel/novelStore";
 import { startStreamingReadingAudio } from "../features/reading/elevenLabsTts";
 import { loadReadingLibrary } from "../features/reading/readingLibrary";
 import { createReadingQuiz, evaluateReadingQuiz, type ReadingQuiz, type ReadingQuizResult } from "../features/reading/readingQuiz";
@@ -16,7 +25,7 @@ import {
 } from "../features/reading/readingProgress";
 import { getLineSelection } from "../features/reading/readingSelection";
 import { quickTranslate } from "../features/translator/quickTranslate";
-import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
+import { EnglishButton, EnglishEmptyState, EnglishFilterTabs, EnglishPageHeader } from "../components/english/EnglishUi";
 import type { ThemeColors } from "../types";
 import Card from "../components/ui/Card";
 import type { WorkspaceUpdate } from "../features/persistence/workspaceUpdateRouting";
@@ -31,12 +40,68 @@ interface PendingSelection {
 }
 
 export default function ReadingPractice({ c, workspaceUpdate = null }: { c: ThemeColors; workspaceUpdate?: WorkspaceUpdate | null }) {
+  const [sourceMode, setSourceMode] = useState<"novel" | "articles">("novel");
+  const [novelIndex, setNovelIndex] = useState<NovelIndex | null>(null);
+  const [novelChapterId, setNovelChapterId] = useState<string>(() => loadLastNovelChapterId() ?? "");
+  const [novelChapter, setNovelChapter] = useState<NovelChapterContent | null>(null);
+  const [showStudyGuide, setShowStudyGuide] = useState(false);
+
   const [articles, setArticles] = useState(loadReadingLibrary);
   const [articleId, setArticleId] = useState(() => loadLastReadingArticle() ?? articles[0]?.id ?? "");
-  const article = articles.find((item) => item.id === articleId) ?? articles[0];
+  const customArticle = articles.find((item) => item.id === articleId) ?? articles[0];
+
+  useEffect(() => {
+    loadNovelIndex()
+      .then((idx) => {
+        setNovelIndex(idx);
+        const allChapters = idx.volumes.flatMap((v) => v.chapters);
+        if (!novelChapterId || !allChapters.some((ch) => ch.id === novelChapterId)) {
+          const first = allChapters[0]?.id ?? "";
+          if (first) setNovelChapterId(first);
+        }
+      })
+      .catch(() => {
+        setSourceMode("articles");
+      });
+  }, []);
+
+  const allNovelChapters = useMemo(
+    () => novelIndex?.volumes.flatMap((v) => v.chapters.map((ch) => ({ ...ch, volumeId: v.id, volumeName: v.name }))) ?? [],
+    [novelIndex],
+  );
+
+  const activeNovelMeta = allNovelChapters.find((ch) => ch.id === novelChapterId) ?? allNovelChapters[0] ?? null;
+
+  useEffect(() => {
+    if (!activeNovelMeta) return;
+    let active = true;
+    saveLastNovelChapterId(activeNovelMeta.id);
+    loadNovelChapter(activeNovelMeta.file)
+      .then((data) => {
+        if (active) setNovelChapter(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [activeNovelMeta?.id]);
+
+  const article = useMemo(() => {
+    if (sourceMode === "novel" && novelChapter) {
+      return {
+        id: `novel:${novelChapter.id}`,
+        title: novelChapter.title,
+        content: novelChapter.story,
+        source: "built-in" as const,
+      };
+    }
+    return customArticle;
+  }, [sourceMode, novelChapter, customArticle]);
+
   const paragraphs = useMemo(() => createReadingParagraphs(article?.content ?? ""), [article?.content]);
   const [progress, setProgress] = useState<ReadingProgress>(() => article ? loadReadingProgress(article.id) : { summary: "", annotations: [], lastOpenedAt: 0 });
   const [pending, setPending] = useState<PendingSelection | null>(null);
+  const [chunkSaved, setChunkSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [quiz, setQuiz] = useState<ReadingQuiz | null>(null);
@@ -72,12 +137,13 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
   useEffect(() => {
     if (!article) return;
     stopAudio();
-    saveLastReadingArticle(article.id);
+    if (sourceMode === "articles") saveLastReadingArticle(article.id);
     setProgress(loadReadingProgress(article.id));
     setPending(null);
+    setChunkSaved(false);
     setMessage("");
     setQuiz(null); setQuizAnswers({}); setQuizResult(null); setQuizMessage("");
-  }, [article?.id]);
+  }, [article?.id, sourceMode]);
 
   useEffect(() => () => {
     audioRef.current?.pause();
@@ -101,6 +167,7 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
     const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
     const y = rect ? rect.bottom + 12 : 120;
     setPending({ lineId, text: selectedText, startIndex, translation: "", x, y });
+    setChunkSaved(false);
     setMessage("");
     const settings = loadAiSettings();
     if (!settings) { setMessage("请先在设置中保存 DeepSeek API Key。"); return; }
@@ -116,18 +183,42 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
   }
 
   function addAnnotation() {
-    if (!pending?.translation) return;
+    if (!pending?.translation || !article) return;
     setProgress(upsertAnnotation({ articleId: article.id, lineId: pending.lineId, selectedText: pending.text, startIndex: pending.startIndex, translation: pending.translation }));
     setPending(null);
     window.getSelection()?.removeAllRanges();
   }
 
+  function saveSelectionAsChunk() {
+    if (!pending?.translation || !article) return;
+    addUserChunk({
+      en: pending.text,
+      zh: pending.translation,
+      context: article.title,
+      source: sourceMode === "novel" ? "novel" : "reading",
+    });
+    setChunkSaved(true);
+  }
+
   function removeNote(lineIds: string[], selectedText: string, startIndex: number) {
+    if (!article) return;
     const next = lineIds.reduce((current, lineId) => removeAnnotation(article.id, lineId, selectedText, startIndex), progress);
     setProgress(next);
   }
 
+  function stepNovelChapter(delta: -1 | 1) {
+    if (!activeNovelMeta) return;
+    const idx = allNovelChapters.findIndex((ch) => ch.id === activeNovelMeta.id);
+    const target = allNovelChapters[idx + delta];
+    if (target) setNovelChapterId(target.id);
+  }
+
   function completeGroup() {
+    if (!article) return;
+    if (sourceMode === "novel") {
+      stepNovelChapter(1);
+      return;
+    }
     try {
       const { nextArticleId } = completeReadingGroup({ articles, article, progress, completedAt: Date.now() });
       if (nextArticleId) setArticleId(nextArticleId);
@@ -205,28 +296,66 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
     }
   }
 
+  if (!article) return <EnglishEmptyState c={c} title="正在准备阅读内容" description="请稍候，或切换到自定义文章导入一篇新文章。" />;
+
+  const activeVolume = novelIndex?.volumes.find((v) => v.id === activeNovelMeta?.volumeId) ?? novelIndex?.volumes[0];
+
   return <div className="flex w-full flex-col gap-5 pb-8 zen-page-enter">
     <EnglishPageHeader
       c={c}
-      eyebrow="READING PRACTICE"
+      eyebrow={sourceMode === "novel" ? "GRADED NOVEL · RIVER STREET" : "READING PRACTICE"}
       title={article.title}
-      description="划词即时翻译并添加行间释义，支持全文朗读与 AI 阅读理解出题。"
+      description="划词即时翻译、添加行间释义或收藏进个人语块本，支持全文朗读与 AI 阅读理解。"
       aside={
         <>
-          {articles.length > 1 && (
-            <select
-              value={article.id}
-              onChange={(e) => setArticleId(e.target.value)}
-              className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
-              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-              aria-label="选择阅读文章"
-            >
-              {articles.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
+          {sourceMode === "novel" && novelIndex ? (
+            <>
+              <select
+                value={activeVolume?.id ?? ""}
+                onChange={(e) => {
+                  const vol = novelIndex.volumes.find((v) => v.id === e.target.value);
+                  if (vol?.chapters[0]) setNovelChapterId(vol.chapters[0].id);
+                }}
+                className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none"
+                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                aria-label="选择小说卷"
+              >
+                {novelIndex.volumes.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({v.chapters.length}章)
+                  </option>
+                ))}
+              </select>
+              <select
+                value={activeNovelMeta?.id ?? ""}
+                onChange={(e) => setNovelChapterId(e.target.value)}
+                className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
+                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                aria-label="选择小说章节"
+              >
+                {(activeVolume?.chapters ?? []).map((ch) => (
+                  <option key={ch.id} value={ch.id}>
+                    {ch.title} ({ch.wordCount}词)
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            articles.length > 1 && (
+              <select
+                value={article.id}
+                onChange={(e) => setArticleId(e.target.value)}
+                className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
+                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                aria-label="选择阅读文章"
+              >
+                {articles.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            )
           )}
           <EnglishButton type="button" variant="secondary" c={c} disabled={audioBusyId === "full-article"} onClick={() => void playArticle()}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -243,7 +372,32 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
           </EnglishButton>
         </>
       }
-    />
+    >
+      {novelIndex && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <EnglishFilterTabs
+            tabs={[
+              { id: "novel", label: `连载小说 (${allNovelChapters.length}章)` },
+              { id: "articles", label: `自定义文章 (${articles.length})` },
+            ]}
+            value={sourceMode}
+            onChange={(val) => setSourceMode(val as "novel" | "articles")}
+            ariaLabel="阅读内容来源"
+            c={c}
+          />
+          {sourceMode === "novel" && (
+            <div className="flex items-center gap-2">
+              <EnglishButton variant="ghost" c={c} onClick={() => stepNovelChapter(-1)}>
+                ← 上一章
+              </EnglishButton>
+              <EnglishButton variant="ghost" c={c} onClick={() => stepNovelChapter(1)}>
+                下一章 →
+              </EnglishButton>
+            </div>
+          )}
+        </div>
+      )}
+    </EnglishPageHeader>
     <Card c={c}>
       <div className="p-5 md:p-8">
         <div className="w-full">
@@ -270,6 +424,27 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
       </div>
     </Card>
 
+    {sourceMode === "novel" && novelChapter?.studyGuide && (
+      <Card c={c}>
+        <div className="p-5 md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: c.fg }}>情节提示与本章重点</h3>
+              <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>先自己读英文故事，卡壳或读完后再展开核对</p>
+            </div>
+            <EnglishButton variant="secondary" c={c} onClick={() => setShowStudyGuide((v) => !v)}>
+              {showStudyGuide ? "收起讲解" : "展开讲解"}
+            </EnglishButton>
+          </div>
+          {showStudyGuide && (
+            <div className="mt-4 rounded-xl p-4 whitespace-pre-line text-sm leading-relaxed" style={{ background: c.inputBg, color: c.fgSub }}>
+              {novelChapter.studyGuide}
+            </div>
+          )}
+        </div>
+      </Card>
+    )}
+
     <Card c={c}>
       <div className="p-6 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-base font-semibold" style={{ color: c.fg }}>AI 阅读理解</h3><EnglishButton variant="secondary" c={c} className="shrink-0" disabled={quizBusy} onClick={() => void generateQuiz()}>{quizBusy && !quiz ? "AI 正在出题…" : quiz ? "重新出题" : "AI 出题"}</EnglishButton></div>
@@ -277,15 +452,15 @@ export default function ReadingPractice({ c, workspaceUpdate = null }: { c: Them
         {quizMessage && <p className="mt-4 text-sm" style={{ color: c.danger }}>{quizMessage}</p>}
         {quizResult && <section className="mt-5 rounded-xl p-4" style={{ background: `${c.accent}0d`, border: `1px solid ${c.borderSub}` }}><p className="type-title" style={{ color: c.accent }}>{quizResult.score} 分</p><p className="mt-2 text-sm leading-relaxed" style={{ color: c.fgSub }}>{quizResult.feedback}</p></section>}
         <div className="mt-5 flex justify-end border-t pt-5" style={{ borderColor: c.borderSub }}>
-          <EnglishButton variant="primary" c={c} onClick={completeGroup}>完成本组并进入下一组</EnglishButton>
+          <EnglishButton variant="primary" c={c} onClick={completeGroup}>{sourceMode === "novel" ? "读完本章，进入下一章 →" : "完成本组并进入下一组"}</EnglishButton>
         </div>
       </div>
     </Card>
 
-    {pending && <div className="fixed z-[60] w-72 -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal" style={{ left: pending.x, top: pending.y }}>
+    {pending && <div className="fixed z-[60] w-80 -translate-x-1/2 rounded-2xl p-4 zen-card zen-modal" style={{ left: pending.x, top: pending.y }}>
       <p className="text-xs" style={{ color: c.fgMuted }}>“{pending.text}”</p>
       <p className="mt-2 text-base font-semibold" style={{ color: c.fg }}>{busy ? "正在翻译…" : pending.translation || "暂未获得译文"}</p>
-      <div className="mt-4 flex items-center gap-2"><EnglishButton variant="primary" c={c} disabled={busy || !pending.translation} onClick={addAnnotation}>添加到文中</EnglishButton><EnglishButton variant="ghost" c={c} onClick={() => setPending(null)}>关闭</EnglishButton></div>
+      <div className="mt-4 flex flex-wrap items-center gap-2"><EnglishButton variant="primary" c={c} disabled={busy || !pending.translation} onClick={addAnnotation}>添加到文中</EnglishButton><EnglishButton variant="secondary" c={c} disabled={busy || !pending.translation || chunkSaved} onClick={saveSelectionAsChunk}>{chunkSaved ? "已存语块 ✓" : "收藏语块"}</EnglishButton><EnglishButton variant="ghost" c={c} onClick={() => setPending(null)}>关闭</EnglishButton></div>
     </div>}
   </div>;
 }

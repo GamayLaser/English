@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
 import { Button, Card, EmptyState, FilterChip } from "../components/ui";
+import { addUserChunk } from "../features/chunks/chunksStore";
 import { formatTime, parseSubtitles, type SubtitleCue } from "../features/video/srtParser";
 import type { ThemeColors } from "../types";
 
@@ -38,10 +39,15 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [speed, setSpeed] = useState(1.0);
   const [loopSentence, setLoopSentence] = useState(false);
   const [lockedCue, setLockedCue] = useState<SubtitleCue | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [myRecordingUrl, setMyRecordingUrl] = useState<string | null>(null);
+  const [savedCueIds, setSavedCueIds] = useState<Set<string>>(() => new Set());
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const activeLineRef = useRef<HTMLButtonElement | null>(null);
   const localUrlRef = useRef<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordAudioRef = useRef<HTMLAudioElement | null>(null);
   const localVideoInputRef = useRef<HTMLInputElement | null>(null);
   const localSubInputRef = useRef<HTMLInputElement | null>(null);
   const cloudUploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -108,6 +114,42 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setLockedCue(cue);
     el.currentTime = cue.startSec + 0.01;
     void el.play().catch(() => {});
+  }
+
+  async function toggleShadowRecord() {
+    if (recording && recorderRef.current) {
+      recorderRef.current.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        if (myRecordingUrl) URL.revokeObjectURL(myRecordingUrl);
+        const url = URL.createObjectURL(blob);
+        setMyRecordingUrl(url);
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+    } catch {
+      setStatusMessage("无法访问麦克风，请检查浏览器权限。");
+    }
+  }
+
+  function playShadowComparison() {
+    if (!myRecordingUrl) return;
+    const audio = new Audio(myRecordingUrl);
+    recordAudioRef.current?.pause();
+    recordAudioRef.current = audio;
+    void audio.play().catch(() => {});
   }
 
   function stepCue(delta: -1 | 0 | 1) {
@@ -366,6 +408,18 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 >
                   {speed}x
                 </Button>
+                <Button
+                  c={c}
+                  variant={recording ? "danger" : "secondary"}
+                  onClick={() => void toggleShadowRecord()}
+                >
+                  {recording ? "停止录音" : "跟读录音"}
+                </Button>
+                {myRecordingUrl && (
+                  <Button c={c} variant="secondary" onClick={playShadowComparison}>
+                    回放我的发音
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -394,47 +448,67 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
             ) : (
               cues.map((cue, idx) => {
                 const isActive = idx === activeCueIndex;
+                const isSaved = savedCueIds.has(cue.id);
                 return (
-                  <button
+                  <div
                     key={cue.id}
-                    ref={isActive ? activeLineRef : null}
-                    type="button"
-                    onClick={() => jumpToCue(cue)}
-                    className="w-full rounded-xl px-3.5 py-2.5 text-left transition-colors cursor-pointer"
+                    className="flex items-start gap-1.5 rounded-xl px-2.5 py-2 transition-colors"
                     style={{
                       background: isActive ? c.accentDim : "transparent",
                       border: `1px solid ${isActive ? `${c.accent}44` : "transparent"}`,
                     }}
                   >
-                    <div className="flex items-start gap-2.5">
-                      <span
-                        className="text-[11px] font-medium zen-tnum mt-0.5 shrink-0"
-                        style={{ color: isActive ? c.accent : c.fgDim }}
-                      >
-                        {formatTime(cue.startSec)}
-                      </span>
-                      <div className="min-w-0 space-y-0.5">
-                        {subMode !== "hidden" ? (
-                          <p
-                            className="text-[13.5px] leading-snug font-medium"
-                            style={{ color: isActive ? c.accent : c.fg }}
-                            lang="en"
-                          >
-                            {cue.en}
-                          </p>
-                        ) : (
-                          <p className="text-[13px] italic" style={{ color: c.fgMuted }}>
-                            （盲听隐藏 · 点击可跳播）
-                          </p>
-                        )}
-                        {subMode === "bilingual" && cue.zh && (
-                          <p className="text-xs leading-snug" style={{ color: c.fgMuted }}>
-                            {cue.zh}
-                          </p>
-                        )}
+                    <button
+                      ref={isActive ? activeLineRef : null}
+                      type="button"
+                      onClick={() => jumpToCue(cue)}
+                      className="flex-1 text-left cursor-pointer min-w-0"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span
+                          className="text-[11px] font-medium zen-tnum mt-0.5 shrink-0"
+                          style={{ color: isActive ? c.accent : c.fgDim }}
+                        >
+                          {formatTime(cue.startSec)}
+                        </span>
+                        <div className="min-w-0 space-y-0.5">
+                          {subMode !== "hidden" ? (
+                            <p
+                              className="text-[13.5px] leading-snug font-medium"
+                              style={{ color: isActive ? c.accent : c.fg }}
+                              lang="en"
+                            >
+                              {cue.en}
+                            </p>
+                          ) : (
+                            <p className="text-[13px] italic" style={{ color: c.fgMuted }}>
+                              （盲听隐藏 · 点击可跳播）
+                            </p>
+                          )}
+                          {subMode === "bilingual" && cue.zh && (
+                            <p className="text-xs leading-snug" style={{ color: c.fgMuted }}>
+                              {cue.zh}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addUserChunk({ en: cue.en, zh: cue.zh, context: activeTitle, source: "shows" });
+                        setSavedCueIds((prev) => new Set(prev).add(cue.id));
+                      }}
+                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium cursor-pointer"
+                      style={{
+                        background: isSaved ? c.successDim : c.inputBg,
+                        color: isSaved ? c.success : c.fgMuted,
+                      }}
+                      title="收藏到个人语块本"
+                    >
+                      {isSaved ? "已存" : "收藏"}
+                    </button>
+                  </div>
                 );
               })
             )}

@@ -134,6 +134,41 @@ export const translationAnswerStageClassName = "w-full rounded-xl border p-4 md:
 
 export function TranslationPractice({ c, index, total, current, answer, setAnswer, evaluation, busy, message, inputRef, onSubmit, onNext }: { c: ThemeColors; index: number; total: number; current: PracticeQuestion; answer: string; setAnswer: (value: string) => void; evaluation: Evaluation | null; busy: boolean; message: string; inputRef: React.RefObject<HTMLTextAreaElement | null>; onSubmit: () => void; onNext: () => void }) {
   const prompt = current.direction === "en2zh" ? current.sentence.en : current.sentence.zh;
+  const [micActive, setMicActive] = useState(false);
+  const micRef = useRef<{ stop: () => void } | null>(null);
+  const hasSpeech = typeof window !== "undefined" && Boolean((window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition);
+
+  function toggleVoiceAnswer() {
+    if (micActive) {
+      micRef.current?.stop();
+      setMicActive(false);
+      return;
+    }
+    const w = window as unknown as Record<string, unknown>;
+    const Ctor = (w.SpeechRecognition || w.webkitSpeechRecognition) as (new () => {
+      lang: string;
+      interimResults: boolean;
+      onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+      start: () => void;
+      stop: () => void;
+    }) | undefined;
+    if (!Ctor) return;
+    const rec = new Ctor();
+    rec.lang = current.direction === "zh2en" ? "en-US" : "zh-CN";
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const text = e.results?.[0]?.[0]?.transcript?.trim();
+      if (text) setAnswer(answer ? `${answer} ${text}` : text);
+    };
+    rec.onerror = () => setMicActive(false);
+    rec.onend = () => setMicActive(false);
+    micRef.current = rec;
+    setMicActive(true);
+    rec.start();
+  }
+
   function onAnswerKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing || busy || evaluation || !answer.trim()) return;
     event.preventDefault();
@@ -163,7 +198,14 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
         <div className={translationAnswerStageClassName} style={{ background: c.inputBg, borderColor: c.inputBorder }}>
           <label htmlFor="translation-answer" className="mb-3 block text-sm font-semibold" style={{ color: c.fg }}>你的译文</label>
           <textarea id="translation-answer" data-testid="translation-answer" aria-label="你的翻译" rows={2} ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={onAnswerKeyDown} placeholder="在这里输入你的译文…" className="w-full resize-y rounded-xl border bg-transparent px-4 py-3 text-base leading-7 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 md:min-h-40" style={{ borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }} />
-          <div className="mt-4 flex justify-end"><Button type="button" variant="primary" c={c} aria-label="提交翻译" disabled={busy || !answer.trim()} onClick={onSubmit} className="w-full sm:w-auto">{busy ? "正在提交…" : "提交译文"}</Button></div>
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+            {hasSpeech && (
+              <Button type="button" variant={micActive ? "danger" : "secondary"} c={c} onClick={toggleVoiceAnswer}>
+                {micActive ? "停止口译录音" : "语音口译输入"}
+              </Button>
+            )}
+            <Button type="button" variant="primary" c={c} aria-label="提交翻译" disabled={busy || !answer.trim()} onClick={onSubmit} className="w-full sm:w-auto">{busy ? "正在提交…" : "提交译文"}</Button>
+          </div>
         </div>
         {message && <p className="text-sm" style={{ color: c.danger }}>{message}</p>}
       </> : <><Feedback c={c} answer={answer} evaluation={evaluation} />{shouldAutoAdvance(evaluation.verdict) ? <AutoAdvance c={c} /> : <Button type="button" variant="primary" c={c} className="self-center" onClick={onNext}>{index === total - 1 ? "完成练习" : "下一题"}</Button>}</>}
