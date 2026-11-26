@@ -386,7 +386,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
   }
 
   return (
-    <div className={`mx-auto space-y-5 pb-12 zen-page-enter transition-all ${isSpread ? "max-w-6xl" : "max-w-3xl"}`}>
+    <div className={`space-y-5 pb-12 zen-page-enter ${isSpread ? "w-full" : "mx-auto max-w-3xl"}`}>
       {/* Slim Reader Top Bar */}
       <div
         className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl px-4 py-3 zen-card"
@@ -461,32 +461,64 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
       </div>
 
       {/* Immersive Book Page */}
-      <Card c={c}>
-        <article className="px-6 py-8 sm:px-12 sm:py-12">
-          <header className="text-center pb-7 mb-8 border-b" style={{ borderColor: c.borderSub }}>
+      <Card c={c} className="overflow-hidden">
+        <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-12 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-12"}>
+          <header className="text-center pb-6 mb-7 border-b" style={{ borderColor: c.borderSub }}>
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>
               RIVER STREET · {activeVolume?.name}
             </p>
             <h1
-              className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight"
+              className="mt-2 text-2xl sm:text-[26px] font-bold tracking-tight"
               style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
               {chapter.title}
             </h1>
-            <p className="mt-2 text-xs zen-tnum" style={{ color: c.fgMuted }}>
+            <p className="mt-1.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
               约 {chapter.wordCount} 词 · 划词可查释义并收藏进语块本
             </p>
           </header>
 
           {isSpread ? (
-            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 relative">
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 relative">
+              {/* Book Spine Gutter Shadow & Crease */}
               <div
                 aria-hidden="true"
-                className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
-                style={{ background: `linear-gradient(to bottom, transparent, ${c.border}, transparent)` }}
+                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-10 -translate-x-1/2"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${c.borderSub}, transparent)`,
+                }}
               />
-              <div className="space-y-5">{renderParagraphList(leftParagraphs)}</div>
-              <div className="space-y-5">{renderParagraphList(rightParagraphs)}</div>
+              <div
+                aria-hidden="true"
+                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
+                style={{ background: c.border }}
+              />
+
+              {/* Left Page */}
+              <div className="flex flex-col justify-between min-w-0">
+                <div>
+                  <p className="hidden lg:block text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                    River Street
+                  </p>
+                  <div className="space-y-5">{renderParagraphList(leftParagraphs)}</div>
+                </div>
+                <p className="hidden lg:block text-center text-xs zen-tnum pt-8" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                  — {currentIdx * 2 + 1} —
+                </p>
+              </div>
+
+              {/* Right Page */}
+              <div className="flex flex-col justify-between min-w-0">
+                <div>
+                  <p className="hidden lg:block text-right text-[11px] tracking-[0.12em] mb-5 truncate" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                    {chapter.title}
+                  </p>
+                  <div className="space-y-5">{renderParagraphList(rightParagraphs)}</div>
+                </div>
+                <p className="hidden lg:block text-center text-xs zen-tnum pt-8" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                  — {currentIdx * 2 + 2} —
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-5">{renderParagraphList(paragraphs)}</div>
