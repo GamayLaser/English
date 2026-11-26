@@ -85,3 +85,64 @@ export const aiUsageLogs = sqliteTable(
   },
   (table) => [index("ai_usage_logs_user_created_idx").on(table.userId, table.createdAt)],
 );
+
+export const userChunks = sqliteTable(
+  "user_chunks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    en: text("en").notNull(),
+    zh: text("zh").notNull().default(""),
+    contextSentence: text("context_sentence"),
+    sourceType: text("source_type", { enum: ["novel", "show", "card", "translator"] }).notNull().default("novel"),
+    sourceRef: text("source_ref"),
+    masteryLevel: integer("mastery_level").notNull().default(0),
+    nextReviewAt: integer("next_review_at", { mode: "timestamp_ms" }).notNull(),
+    reviewCount: integer("review_count").notNull().default(0),
+    mastered: integer("mastered", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("user_chunks_user_due_idx").on(table.userId, table.mastered, table.nextReviewAt),
+  ],
+);
+
+export const novelProgress = sqliteTable(
+  "novel_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    volumeId: text("volume_id").notNull(),
+    chapterId: text("chapter_id").notNull(),
+    annotationsJson: text("annotations_json").notNull().default("[]"),
+    lastReadAt: integer("last_read_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("novel_progress_user_chapter_idx").on(table.userId, table.chapterId),
+  ],
+);
+
+export const practiceSessions = sqliteTable(
+  "practice_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    module: text("module", { enum: ["translation", "reading", "writing", "listening"] }).notNull(),
+    score: integer("score").notNull().default(0),
+    totalItems: integer("total_items").notNull().default(0),
+    correctItems: integer("correct_items").notNull().default(0),
+    summaryJson: text("summary_json").notNull().default("{}"),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("practice_sessions_user_mod_idx").on(table.userId, table.module, table.completedAt),
+  ],
+);

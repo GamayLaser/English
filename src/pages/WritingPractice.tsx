@@ -18,7 +18,13 @@ export function countEnglishWords(text: string) {
 
 export default function WritingPractice({ c, workspaceUpdate = null }: { c: ThemeColors; workspaceUpdate?: WorkspaceUpdate | null }) {
   const [topics] = useState(loadWritingTopics);
-  const [topicId, setTopicId] = useState(() => loadLastWritingTopic() ?? topics[0]?.id ?? "");
+  const [topicId, setTopicId] = useState(() => {
+    const saved = loadLastWritingTopic();
+    if (saved && topics.some((t) => t.id === saved)) return saved;
+    const firstPending = topics.find((t) => !loadWritingProgress(t.id).evaluation);
+    return firstPending?.id ?? topics[0]?.id ?? "";
+  });
+  const [levelFilter, setLevelFilter] = useState<"all" | "basic" | "intermediate" | "real">("all");
   const topic = topics.find((item) => item.id === topicId) ?? topics[0];
   const [progress, setProgress] = useState<WritingProgress>(() => topic ? loadWritingProgress(topic.id) : { draft: "", lastOpenedAt: 0 });
   const [busy, setBusy] = useState(false);
@@ -118,7 +124,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
       </div>
     </Card>
     <Card c={c}>
-        <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
+      <div className="p-5 md:p-8"><div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold" style={{ color: c.fg }}>你的作文</h3><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>完成后可交给 AI 从内容、语法、词汇、结构四维评分。</p></div><span className="text-xs font-medium" style={{ color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount >= topic.minWords ? "已达到最低词数" : `还差 ${topic.minWords - wordCount} 词`}</span></div>
         {targetChunks.length > 0 && (
           <div className="mt-4 rounded-xl p-3.5 space-y-2" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
             <p className="text-xs font-semibold" style={{ color: c.fgMuted }}>
@@ -163,8 +169,43 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
           </div>
           <EnglishButton variant="ghost" c={c} onClick={() => setTopicModalOpen(false)}>关闭</EnglishButton>
         </div>
+        <div className="flex flex-wrap gap-1.5">
+          {(
+            [
+              { id: "all", label: "全部" },
+              { id: "basic", label: "基础" },
+              { id: "intermediate", label: "进阶" },
+              { id: "real", label: "真实场景" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setLevelFilter(tab.id)}
+              className="rounded-lg px-2.5 py-1 text-xs font-medium cursor-pointer"
+              style={
+                levelFilter === tab.id
+                  ? { background: c.accentDim, color: c.accent }
+                  : { background: c.inputBg, color: c.fgMuted }
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-1">
-          {topics.map((item, idx) => {
+          {topics
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ idx }) =>
+              levelFilter === "all"
+                ? true
+                : levelFilter === "basic"
+                  ? idx < 10
+                  : levelFilter === "intermediate"
+                    ? idx >= 10 && idx < 20
+                    : idx >= 20,
+            )
+            .map(({ item, idx }) => {
             const isCurrent = item.id === topic.id;
             return (
               <button

@@ -21,7 +21,13 @@ export const countDictationWords = (value: string) =>
 
 export default function ListeningPractice({ c, workspaceUpdate = null }: { c: ThemeColors; workspaceUpdate?: WorkspaceUpdate | null }) {
   const [articles, setArticles] = useState(loadListeningLibrary);
-  const [id, setId] = useState(() => loadLastListeningArticle() ?? articles[0]?.id ?? "");
+  const [id, setId] = useState(() => {
+    const saved = loadLastListeningArticle();
+    if (saved && articles.some((a) => a.id === saved)) return saved;
+    const firstPending = articles.find((a) => !loadListeningProgress(a.id).evaluation);
+    return firstPending?.id ?? articles[0]?.id ?? "";
+  });
+  const [levelFilter, setLevelFilter] = useState<"all" | "basic" | "intermediate" | "real">("all");
   const article = articles.find((item) => item.id === id) ?? articles[0];
   const [progress, setProgress] = useState(() =>
     article ? loadListeningProgress(article.id) : { draft: "", lastOpenedAt: 0 },
@@ -185,19 +191,43 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
           <>
             <AudioVisualizerBars active={playing} color={c.accent} />
             {articles.length > 1 && (
-              <select
-                value={article.id}
-                onChange={(e) => setId(e.target.value)}
-                className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[200px]"
-                style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-                aria-label="选择听力原文"
-              >
-                {articles.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value as typeof levelFilter)}
+                  className="min-h-9 rounded-xl border px-2.5 py-1.5 text-[13px] font-medium outline-none"
+                  style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                  aria-label="筛选听力难度"
+                >
+                  <option value="all">全部难度</option>
+                  <option value="basic">基础</option>
+                  <option value="intermediate">进阶</option>
+                  <option value="real">真实场景</option>
+                </select>
+                <select
+                  value={article.id}
+                  onChange={(e) => setId(e.target.value)}
+                  className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[200px]"
+                  style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
+                  aria-label="选择听力原文"
+                >
+                  {articles
+                    .filter((_, idx) =>
+                      levelFilter === "all"
+                        ? true
+                        : levelFilter === "basic"
+                          ? idx < 10
+                          : levelFilter === "intermediate"
+                            ? idx >= 10 && idx < 20
+                            : idx >= 20,
+                    )
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
+                </select>
+              </>
             )}
             <EnglishButton
               variant={playing ? "danger" : "primary"}

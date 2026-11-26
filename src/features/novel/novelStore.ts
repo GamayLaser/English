@@ -5,6 +5,9 @@ export type NovelChapterMeta = {
   file: string;
   title: string;
   wordCount: number;
+  estimatedMinutes?: number;
+  volumeTitle?: string;
+  chapterIndex?: number;
 };
 
 export type NovelVolumeMeta = {

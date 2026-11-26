@@ -129,7 +129,7 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       active = false;
     };

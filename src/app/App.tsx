@@ -10,7 +10,9 @@ import AppShell from "./AppShell";
 const TodayPage = lazy(() => import("../pages/TodayPage"));
 const ShowsPage = lazy(() => import("../pages/ShowsPage"));
 const CardsPage = lazy(() => import("../pages/CardsPage"));
-const EnglishPage = lazy(() => import("../pages/EnglishPage"));
+const TranslationPage = lazy(() => import("../pages/TranslationPage"));
+const WrongbookPage = lazy(() => import("../pages/WrongbookPage"));
+const ReportsPage = lazy(() => import("../pages/ReportsPage"));
 const ReadingPractice = lazy(() => import("../pages/ReadingPractice"));
 const ListeningPractice = lazy(() => import("../pages/ListeningPractice"));
 const WritingPractice = lazy(() => import("../pages/WritingPractice"));
@@ -120,12 +122,12 @@ export default function App() {
             <Route path="/words" element={<CardsPage mode="word" c={colors} />} />
             <Route path="/phrases" element={<CardsPage mode="phrase" c={colors} />} />
             <Route path="/sentences" element={<CardsPage mode="sentence" c={colors} />} />
-            <Route path="/practice" element={<EnglishPage c={colors} initialView="practice" />} />
+            <Route path="/practice" element={<TranslationPage c={colors} />} />
             <Route path="/reading" element={<ReadingPractice c={colors} />} />
             <Route path="/listening" element={<ListeningPractice c={colors} />} />
             <Route path="/writing" element={<WritingPractice c={colors} />} />
-            <Route path="/wrongbook" element={<EnglishPage c={colors} initialView="wrongbook" />} />
-            <Route path="/reports" element={<EnglishPage c={colors} initialView="reports" />} />
+            <Route path="/wrongbook" element={<WrongbookPage c={colors} />} />
+            <Route path="/reports" element={<ReportsPage c={colors} />} />
             <Route path="/library" element={<ContentLibrary c={colors} />} />
             <Route path="*" element={<Navigate to="/words" replace />} />
           </Route>
