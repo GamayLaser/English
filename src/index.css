@@ -216,6 +216,9 @@ html.light .zen-card {
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
 }
+.container-wide { width: 100%; max-width: 1360px; margin-inline: auto; }
+.container-focus { width: 100%; max-width: 840px; margin-inline: auto; }
+.container-single { width: 100%; max-width: 720px; margin-inline: auto; }
 .zen-paper {
   background: var(--bg-paper) !important;
   border: 1px solid var(--border-subtle);
@@ -874,16 +877,14 @@ html.dark .vocab-pos-tag {
 html.dark .vocab-meaning-text { color: #e2e8f0; }
 
 .vocab-example-box {
-  background-color: #f8fafc;
-  border-radius: 10px;
+  background-color: #F4F7FB;
+  border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.82rem;
-  border-left: 3px solid #2563eb;
   margin-top: auto;
 }
 html.dark .vocab-example-box {
-  background-color: #1e293b;
-  border-left-color: #60a5fa;
+  background-color: var(--bg-subtle);
 }
 .vocab-example-en {
   color: #475569;
@@ -967,15 +968,14 @@ html.dark .sentence-definition { color: #94a3b8; }
 .dialogue-box {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background-color: #f8fafc;
+  border-radius: 10px;
+  background-color: #F4F7FB;
 }
-html.dark .dialogue-box { background-color: #1e293b; }
+html.dark .dialogue-box { background-color: var(--bg-subtle); }
 .dialogue-line { display: flex; align-items: flex-start; gap: 8px; }
-.dialogue-text { font-size: 0.9rem; line-height: 1.45; color: #1e293b; }
-html.dark .dialogue-text { color: #e2e8f0; }
+.dialogue-text { font-size: 0.9rem; line-height: 1.5; color: var(--text-primary); }
 .dialogue-speaker {
   width: 22px;
   height: 22px;

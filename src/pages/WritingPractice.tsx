@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
+import { Modal } from "../components/ui";
 import { loadUserChunks } from "../features/chunks/chunksStore";
 import { loadAiSettings } from "../features/english/aiSettings";
 import type { WritingTopic } from "../features/english/types";
@@ -21,6 +22,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
   const [progress, setProgress] = useState<WritingProgress>(() => topic ? loadWritingProgress(topic.id) : { draft: "", lastOpenedAt: 0 });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [topicModalOpen, setTopicModalOpen] = useState(false);
   const lastWorkspaceRevision = useRef(0);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
     if (nextTopicId) setTopicId(nextTopicId);
   }
 
-  return <div className="flex w-full flex-col gap-5 pb-8 zen-page-enter">
+  return <div className="container-focus flex flex-col gap-5 pb-8 zen-page-enter">
     <EnglishPageHeader
       c={c}
       eyebrow="WRITING PRACTICE"
@@ -81,28 +83,18 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
       aside={
         <>
           {topics.length > 1 && (
-            <select
-              value={topic.id}
-              onChange={(e) => setTopicId(e.target.value)}
-              className="min-h-9 rounded-xl border px-3 py-1.5 text-[13px] font-medium outline-none max-w-[220px]"
-              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-              aria-label="选择写作题目"
-            >
-              {topics.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.prompt.slice(0, 32)}{item.prompt.length > 32 ? "…" : ""}
-                </option>
-              ))}
-            </select>
+            <EnglishButton variant="secondary" c={c} onClick={() => setTopicModalOpen(true)}>
+              切换题目 ({topics.findIndex((t) => t.id === topic.id) + 1}/{topics.length})
+            </EnglishButton>
           )}
           <span className="shrink-0 rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: wordCount >= topic.minWords ? c.successDim : c.inputBg, color: wordCount >= topic.minWords ? c.success : c.fgMuted }}>{wordCount} / {topic.minWords} 词</span>
         </>
       }
     />
     <Card c={c}>
-      <div className="p-5 md:p-8">
+      <div className="p-5 md:p-6">
         <div><p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>TOPIC PROMPT</p><h3 className="mt-1.5 text-lg font-semibold leading-snug" style={{ color: c.fg }}>{topic.prompt}</h3></div>
-        <div className="mt-5 grid gap-4 md:grid-cols-2"><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>需要写到</p><ol className="mt-3 space-y-2 text-sm leading-relaxed" style={{ color: c.fgSub }}>{topic.requiredPoints.map((point, index) => <li key={point}><span className="mr-2 font-semibold" style={{ color: c.accent }}>{index + 1}.</span>{point}</li>)}</ol></section><section className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-sm font-semibold" style={{ color: c.fg }}>可以参考的词</p><div className="mt-3 flex flex-wrap gap-2">{topic.vocabularyHints.map((word) => <span key={word} className="rounded-lg px-3 py-1.5 text-sm font-medium" style={{ background: c.card, color: c.accent, border: `1px solid ${c.borderSub}` }}>{word}</span>)}</div></section></div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2"><section className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-xs font-semibold" style={{ color: c.fg }}>需要写到</p><ol className="mt-2 space-y-1.5 text-[13px] leading-relaxed" style={{ color: c.fgSub }}>{topic.requiredPoints.map((point, index) => <li key={point}><span className="mr-1.5 font-semibold" style={{ color: c.accent }}>{index + 1}.</span>{point}</li>)}</ol></section><section className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><p className="text-xs font-semibold" style={{ color: c.fg }}>可以参考的词</p><div className="mt-2 flex flex-wrap gap-1.5">{topic.vocabularyHints.map((word) => <span key={word} className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: c.card, color: c.accent, border: `1px solid ${c.borderSub}` }}>{word}</span>)}</div></section></div>
       </div>
     </Card>
     <Card c={c}>
@@ -141,6 +133,45 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
         {progress.evaluation && <WritingEvaluationCard c={c} evaluation={progress.evaluation} onComplete={completeGroup} />}
       </div>
     </Card>
+
+    <Modal c={c} open={topicModalOpen} onClose={() => setTopicModalOpen(false)} label="选择写作题目" maxWidthClassName="max-w-xl">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>WRITING TOPICS</p>
+            <h3 className="type-title mt-0.5" style={{ color: c.fg }}>选择写作题目</h3>
+          </div>
+          <EnglishButton variant="ghost" c={c} onClick={() => setTopicModalOpen(false)}>关闭</EnglishButton>
+        </div>
+        <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-1">
+          {topics.map((item, idx) => {
+            const isCurrent = item.id === topic.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setTopicId(item.id);
+                  setTopicModalOpen(false);
+                }}
+                className="w-full rounded-xl px-4 py-3 text-left transition-colors cursor-pointer"
+                style={{
+                  background: isCurrent ? c.accentDim : c.inputBg,
+                  border: `1px solid ${isCurrent ? c.accent : c.borderSub}`,
+                }}
+              >
+                <p className="text-xs font-semibold" style={{ color: isCurrent ? c.accent : c.fgMuted }}>
+                  题目 {idx + 1} · 建议 {item.minWords}–{item.recommendedWords} 词
+                </p>
+                <p className="mt-1 text-sm font-medium leading-snug" style={{ color: c.fg }}>
+                  {item.prompt}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </Modal>
   </div>;
 }
 

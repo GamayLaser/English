@@ -95,6 +95,7 @@ function HighlightedSentence({ sentence, word }: { sentence: string; word: strin
 const VocabCardItem = memo(function VocabCardItem({
   item,
   catName,
+  showCategoryTag,
   cdnBaseUrl,
   speed,
   isBookmarked,
@@ -104,6 +105,7 @@ const VocabCardItem = memo(function VocabCardItem({
 }: {
   item: VocabEntry;
   catName: string;
+  showCategoryTag: boolean;
   cdnBaseUrl: string;
   speed: number;
   isBookmarked: boolean;
@@ -114,9 +116,13 @@ const VocabCardItem = memo(function VocabCardItem({
   return (
     <article className="vocab-card">
       <div className="vocab-card-header">
-        <span className="vocab-category-tag" title={catName}>
-          {catName}
-        </span>
+        {showCategoryTag ? (
+          <span className="vocab-category-tag opacity-75" title={catName}>
+            {catName}
+          </span>
+        ) : (
+          <span />
+        )}
         <div className="vocab-card-actions">
           <button
             type="button"
@@ -710,6 +716,7 @@ export default function CardsPage({ mode, c }: { mode: VocabMode; c: ThemeColors
                 key={item.id}
                 item={item}
                 catName={item.topic || categoryNameById.get(item.category) || ""}
+                showCategoryTag={currentCategory === "all"}
                 cdnBaseUrl={cdnBaseUrl}
                 speed={speed}
                 isBookmarked={bookmarked.has(item.id)}

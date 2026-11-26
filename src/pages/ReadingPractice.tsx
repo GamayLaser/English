@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { EnglishButton, EnglishEmptyState } from "../components/english/EnglishUi";
+import { EnglishButton, EnglishEmptyState, EnglishFilterTabs } from "../components/english/EnglishUi";
+import { Modal } from "../components/ui";
 import Card from "../components/ui/Card";
 import { addUserChunk } from "../features/chunks/chunksStore";
 import { loadAiSettings } from "../features/english/aiSettings";
@@ -35,9 +36,9 @@ interface PendingSelection {
 }
 
 const FONT_SIZES = [
-  { label: "小", size: 17, lineHeight: 1.85 },
-  { label: "中", size: 19, lineHeight: 1.95 },
-  { label: "大", size: 22, lineHeight: 2.0 },
+  { label: "小", size: 16, lineHeight: 1.72 },
+  { label: "中", size: 18, lineHeight: 1.75 },
+  { label: "大", size: 20, lineHeight: 1.82 },
 ] as const;
 
 export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate?: unknown }) {
@@ -48,6 +49,8 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
   const [fontIdx, setFontIdx] = useState(1);
   const [spreadMode, setSpreadMode] = useState<"spread" | "single">("spread");
+  const [tocOpen, setTocOpen] = useState(false);
+  const [tocVolumeId, setTocVolumeId] = useState("vol-1");
   const [showStudyGuide, setShowStudyGuide] = useState(false);
   const [showRetell, setShowRetell] = useState(false);
 
@@ -389,43 +392,23 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
     <div className={`space-y-5 pb-12 zen-page-enter ${isSpread ? "w-full" : "mx-auto max-w-3xl"}`}>
       {/* Slim Reader Top Bar */}
       <div
-        className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl px-4 py-3 zen-card"
+        className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl px-4 py-2.5 zen-card"
         style={{ borderColor: c.borderSub }}
       >
         <div className="flex flex-wrap items-center gap-2 min-w-0">
-          {novelIndex && (
-            <select
-              value={activeVolume?.id ?? ""}
-              onChange={(e) => {
-                const vol = novelIndex.volumes.find((v) => v.id === e.target.value);
-                if (vol?.chapters[0]) setNovelChapterId(vol.chapters[0].id);
-              }}
-              className="min-h-8 rounded-lg border px-2.5 py-1 text-xs font-medium outline-none"
-              style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-              aria-label="选择卷"
-            >
-              {novelIndex.volumes.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={activeMeta.id}
-            onChange={(e) => setNovelChapterId(e.target.value)}
-            className="min-h-8 rounded-lg border px-2.5 py-1 text-xs font-medium outline-none max-w-[200px]"
-            style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg }}
-            aria-label="选择章节"
+          <EnglishButton
+            type="button"
+            variant="secondary"
+            c={c}
+            onClick={() => {
+              setTocVolumeId(activeVolume?.id ?? "vol-1");
+              setTocOpen(true);
+            }}
           >
-            {(activeVolume?.chapters ?? []).map((ch) => (
-              <option key={ch.id} value={ch.id}>
-                {ch.title}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs zen-tnum px-1.5" style={{ color: c.fgMuted }}>
-            {currentIdx + 1} / {allChapters.length}
+            目录 · {activeVolume?.name.split(" · ")[0]} ({currentIdx + 1}/{allChapters.length})
+          </EnglishButton>
+          <span className="hidden sm:inline text-xs truncate max-w-[320px]" style={{ color: c.fgMuted }}>
+            {chapter.title}
           </span>
         </div>
 
@@ -462,47 +445,43 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
 
       {/* Immersive Book Page */}
       <Card c={c} className="overflow-hidden zen-paper">
-        <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-12 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-12"}>
-          <header className="text-center pb-6 mb-7 border-b" style={{ borderColor: c.borderSub }}>
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>
-              RIVER STREET · {activeVolume?.name}
-            </p>
-            <h1
-              className="mt-2 text-2xl sm:text-[26px] font-bold tracking-tight"
-              style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
-            >
-              {chapter.title}
-            </h1>
-            <p className="mt-1.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
-              约 {chapter.wordCount} 词 · 划词可查释义并收藏进语块本
-            </p>
-          </header>
-
+        <article className={isSpread ? "px-6 py-7 sm:px-10 sm:py-9 lg:px-14 lg:py-10" : "px-6 py-8 sm:px-12 sm:py-10"}>
           {isSpread ? (
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 relative">
-              {/* Book Spine Gutter Shadow & Crease */}
+              {/* Warm Book Spine Gutter Shadow & Crease */}
               <div
                 aria-hidden="true"
-                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-10 -translate-x-1/2"
+                className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-12 -translate-x-1/2"
                 style={{
-                  background: `linear-gradient(to right, transparent, ${c.borderSub}, transparent)`,
+                  background: "linear-gradient(to right, transparent, rgba(120, 100, 75, 0.08), transparent)",
                 }}
               />
               <div
                 aria-hidden="true"
                 className="hidden lg:block pointer-events-none absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
-                style={{ background: c.border }}
+                style={{ background: "rgba(120, 100, 75, 0.16)" }}
               />
 
-              {/* Left Page */}
+              {/* Left Page (Opening Chapter Header + First Half) */}
               <div className="flex flex-col justify-between min-w-0">
                 <div>
-                  <p className="hidden lg:block text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                    River Street
-                  </p>
-                  <div className="space-y-5">{renderParagraphList(leftParagraphs)}</div>
+                  <header className="mb-6">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: c.accent }}>
+                      RIVER STREET · {activeVolume?.name}
+                    </p>
+                    <h1
+                      className="mt-1.5 text-2xl font-bold tracking-tight"
+                      style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
+                    >
+                      {chapter.title}
+                    </h1>
+                    <p className="mt-1 text-xs zen-tnum" style={{ color: c.fgMuted }}>
+                      约 {chapter.wordCount} 词 · 划词查译并收藏进语块本
+                    </p>
+                  </header>
+                  <div className="space-y-3.5">{renderParagraphList(leftParagraphs)}</div>
                 </div>
-                <p className="hidden lg:block text-center text-xs zen-tnum pt-8" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                <p className="hidden lg:block text-center text-xs zen-tnum pt-7" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
                   — {currentIdx * 2 + 1} —
                 </p>
               </div>
@@ -510,18 +489,34 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
               {/* Right Page */}
               <div className="flex flex-col justify-between min-w-0">
                 <div>
-                  <p className="hidden lg:block text-right text-[11px] tracking-[0.12em] mb-5 truncate" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                  <p className="hidden lg:block text-right text-[11px] tracking-[0.12em] mb-6 truncate" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
                     {chapter.title}
                   </p>
-                  <div className="space-y-5">{renderParagraphList(rightParagraphs)}</div>
+                  <div className="space-y-3.5">{renderParagraphList(rightParagraphs)}</div>
                 </div>
-                <p className="hidden lg:block text-center text-xs zen-tnum pt-8" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                <p className="hidden lg:block text-center text-xs zen-tnum pt-7" style={{ color: c.fgDim, fontFamily: 'Georgia, "Times New Roman", serif' }}>
                   — {currentIdx * 2 + 2} —
                 </p>
               </div>
             </div>
           ) : (
-            <div className="space-y-5">{renderParagraphList(paragraphs)}</div>
+            <div>
+              <header className="text-center pb-6 mb-7 border-b" style={{ borderColor: c.borderSub }}>
+                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: c.accent }}>
+                  RIVER STREET · {activeVolume?.name}
+                </p>
+                <h1
+                  className="mt-2 text-2xl font-bold tracking-tight"
+                  style={{ color: c.fg, fontFamily: 'Georgia, "Times New Roman", serif' }}
+                >
+                  {chapter.title}
+                </h1>
+                <p className="mt-1.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
+                  约 {chapter.wordCount} 词 · 划词可查释义并收藏进语块本
+                </p>
+              </header>
+              <div className="space-y-3.5">{renderParagraphList(paragraphs)}</div>
+            </div>
           )}
 
           {audioMessage && <p className="mt-6 text-sm" style={{ color: c.danger }}>{audioMessage}</p>}
@@ -644,6 +639,57 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
           </div>
         </div>
       )}
+      {/* Chapter Directory Modal */}
+      <Modal c={c} open={tocOpen} onClose={() => setTocOpen(false)} label="小说章节目录" maxWidthClassName="max-w-2xl">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+                RIVER STREET · 497 CHAPTERS
+              </p>
+              <h3 className="type-title mt-0.5" style={{ color: c.fg }}>章节目录</h3>
+            </div>
+            <EnglishButton variant="ghost" c={c} onClick={() => setTocOpen(false)}>关闭</EnglishButton>
+          </div>
+          {novelIndex && (
+            <>
+              <EnglishFilterTabs
+                tabs={novelIndex.volumes.map((v) => ({ id: v.id, label: `${v.name.split(" · ")[0]} (${v.chapters.length})` }))}
+                value={tocVolumeId}
+                onChange={setTocVolumeId}
+                ariaLabel="选择小说卷"
+                c={c}
+              />
+              <div className="max-h-[55vh] overflow-y-auto space-y-1.5 pr-1">
+                {(novelIndex.volumes.find((v) => v.id === tocVolumeId)?.chapters ?? []).map((ch) => {
+                  const isCurrent = ch.id === activeMeta.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        setNovelChapterId(ch.id);
+                        setTocOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors cursor-pointer"
+                      style={{
+                        background: isCurrent ? c.accentDim : c.inputBg,
+                        color: isCurrent ? c.accent : c.fg,
+                        border: `1px solid ${isCurrent ? c.accent : c.borderSub}`,
+                      }}
+                    >
+                      <span className="font-medium truncate">{ch.title}</span>
+                      <span className="text-xs shrink-0 zen-tnum" style={{ color: isCurrent ? c.accent : c.fgMuted }}>
+                        {isCurrent ? "正在阅读" : `${ch.wordCount} 词`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

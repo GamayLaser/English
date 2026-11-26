@@ -24,7 +24,7 @@ import ListeningPractice from "./ListeningPractice";
 const VisualVocabulary = lazy(() => import("./CardsPage"));
 
 const labels = { meaning: "词义", grammar: "语法", word_order: "语序", collocation: "搭配", naturalness: "自然度" } as const;
-export const translationPromptClassName = "relative overflow-hidden rounded-2xl px-5 py-8 text-center zen-card zen-card-wash md:px-12 md:py-14";
+export const translationPromptClassName = "relative overflow-hidden rounded-2xl border px-5 py-7 text-center md:px-10 md:py-10";
 type View = "practice" | "reading" | "writing" | "listening" | "vocabulary" | "wrongbook" | "reports";
 const isView = (value: string): value is View => ["practice", "reading", "writing", "listening", "vocabulary", "wrongbook", "reports"].includes(value);
 
@@ -188,7 +188,7 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
     event.preventDefault();
     onSubmit();
   }
-  return <div className="space-y-5 pb-8 zen-page-enter">
+  return <div className="container-focus space-y-5 pb-8 zen-page-enter">
     <EnglishPageHeader
       c={c}
       eyebrow="TRANSLATION PRACTICE"
@@ -204,14 +204,19 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
         </div>
       }
     />
-    <Card c={c}><div className="flex w-full flex-col gap-6 p-5 md:p-8">
-      <div className="flex items-center gap-2"><span className="text-xs font-semibold tracking-[0.16em]" style={{ color: c.accent }}>{current.direction === "en2zh" ? "ENGLISH → CHINESE" : "CHINESE → ENGLISH"}</span>{current.kind === "review" && <span className="rounded-md px-2 py-1 text-xs font-medium" style={{ background: `${c.warning}15`, color: c.warning }}>复习题</span>}</div>
-      {current.kind === "review" && current.previousIssues.length > 0 && <p className="rounded-xl px-4 py-3 text-sm" style={{ background: `${c.warning}10`, color: c.fgMuted }}>上次薄弱点：{current.previousIssues.map((item) => labels[item.category]).join("、")}</p>}
-      <div data-testid="translation-prompt" className={translationPromptClassName} style={cardWashStyle(hueDimOf(c, "teal"))}><div className="absolute left-0 top-0 h-1 w-full" style={{ background: hueOf(c, "teal") }} /><p data-testid="translation-prompt-text" className="mx-auto w-full break-words type-prompt" style={{ color: c.fg }}>{prompt}</p></div>
+    <div className="flex w-full flex-col gap-4">
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: c.accent }}>{current.direction === "en2zh" ? "ENGLISH → CHINESE" : "CHINESE → ENGLISH"}</span>
+        {current.kind === "review" && <span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ background: c.accentDim, color: c.accent }}>复习题</span>}
+      </div>
+      {current.kind === "review" && current.previousIssues.length > 0 && <p className="rounded-xl px-4 py-2.5 text-sm" style={{ background: c.inputBg, color: c.fgMuted, border: `1px solid ${c.borderSub}` }}>上次薄弱点：{current.previousIssues.map((item) => labels[item.category]).join("、")}</p>}
+      <div data-testid="translation-prompt" className={translationPromptClassName} style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+        <p data-testid="translation-prompt-text" className="mx-auto w-full break-words type-prompt" style={{ color: c.fg }}>{prompt}</p>
+      </div>
       {!evaluation ? <>
-        <div className={translationAnswerStageClassName} style={{ background: c.inputBg, borderColor: c.inputBorder }}>
-          <label htmlFor="translation-answer" className="mb-3 block text-sm font-semibold" style={{ color: c.fg }}>你的译文</label>
-          <textarea id="translation-answer" data-testid="translation-answer" aria-label="你的翻译" rows={2} ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={onAnswerKeyDown} placeholder="在这里输入你的译文…" className="w-full resize-y rounded-xl border bg-transparent px-4 py-3 text-base leading-7 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 md:min-h-40" style={{ borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }} />
+        <div className="w-full rounded-2xl border p-4 md:p-6 zen-card" style={{ borderColor: "var(--border-subtle)" }}>
+          <label htmlFor="translation-answer" className="mb-2.5 block text-sm font-semibold" style={{ color: c.fg }}>你的译文</label>
+          <textarea id="translation-answer" data-testid="translation-answer" aria-label="你的翻译" rows={3} ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={onAnswerKeyDown} placeholder="在这里输入你的译文，或点击下方语音口译输入…" className="w-full resize-y rounded-xl border px-4 py-3 text-base leading-7 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 md:min-h-32" style={{ background: c.inputBg, borderColor: c.inputBorder, color: c.fg, caretColor: c.accent }} />
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
             {hasSpeech && (
               <Button type="button" variant={micActive ? "danger" : "secondary"} c={c} onClick={toggleVoiceAnswer}>
@@ -223,7 +228,7 @@ export function TranslationPractice({ c, index, total, current, answer, setAnswe
         </div>
         {message && <p className="text-sm" style={{ color: c.danger }}>{message}</p>}
       </> : <><Feedback c={c} answer={answer} evaluation={evaluation} />{shouldAutoAdvance(evaluation.verdict) ? <AutoAdvance c={c} /> : <Button type="button" variant="primary" c={c} className="self-center" onClick={onNext}>{index === total - 1 ? "完成练习" : "下一题"}</Button>}</>}
-    </div></Card>
+    </div>
   </div>;
 }
 

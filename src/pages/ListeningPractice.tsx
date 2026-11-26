@@ -175,7 +175,7 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
 }
 
   return (
-    <div className="flex flex-col gap-5 pb-8 zen-page-enter">
+    <div className="container-focus flex flex-col gap-5 pb-8 zen-page-enter">
       <EnglishPageHeader
         c={c}
         eyebrow="LISTENING DICTATION"
@@ -234,7 +234,7 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
         </div>
 
         <div
-          className="flex flex-wrap gap-x-5 gap-y-7"
+          className="flex flex-wrap gap-x-6 gap-y-9 py-2"
           style={{ marginTop: "2rem" }}
         >
           {referenceWords.map((reference, index) => {
@@ -271,7 +271,7 @@ function AudioVisualizerBars({ active, color }: { active: boolean; color: string
                       refs.current[index + 1]?.focus();
                     }
                   }}
-            className="bg-transparent px-2 pb-1.5 type-english text-center outline-none"
+            className="bg-transparent px-2 pb-2 text-[21px] leading-relaxed font-serif text-center outline-none"
                   style={{
                     width: `${wordLength}ch`,
                     boxSizing: "content-box",

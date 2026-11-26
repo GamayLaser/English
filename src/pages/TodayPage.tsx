@@ -110,8 +110,8 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
             <h3 className="type-title mt-3" style={{ color: c.fg }}>
               视觉词卡 & 听音辨词
             </h3>
-            <p className="type-secondary mt-1.5" style={{ color: c.fgMuted }}>
-              先用插画和例句熟悉核心词，再用「听音辨词」训练耳朵一听就懂的条件反射。
+            <p className="type-secondary mt-1.5 min-h-[40px]" style={{ color: c.fgMuted }}>
+              插画例句记高频词，配合听音辨词训练条件反射。
             </p>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -140,8 +140,8 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
             <h3 className="type-title mt-3" style={{ color: c.fg }}>
               情景对话 & 听力磨耳朵
             </h3>
-            <p className="type-secondary mt-1.5" style={{ color: c.fgMuted }}>
-              从 A/B 情景短对话过渡到原声听力默写，适应真实语速与日常口语表达。
+            <p className="type-secondary mt-1.5 min-h-[40px]" style={{ color: c.fgMuted }}>
+              从情景短对话过渡到美剧原声精听与跟读对比。
             </p>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -170,8 +170,8 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
             <h3 className="type-title mt-3" style={{ color: c.fg }}>
               AI 表达批改 & 错题复习
             </h3>
-            <p className="type-secondary mt-1.5" style={{ color: c.fgMuted }}>
-              通过句子翻译和阅读理解检验掌握度，错题自动进入 30% 间隔复习队列。
+            <p className="type-secondary mt-1.5 min-h-[40px]" style={{ color: c.fgMuted }}>
+              通过汉译英与小说复述检验输出，错题自动复习。
             </p>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -212,7 +212,7 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
                 style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-[15px] font-semibold leading-snug" style={{ color: c.fg }}>
+                  <p className="text-[15px] font-semibold leading-snug" style={{ color: "var(--text-primary)" }}>
                     {phrase.en}
                   </p>
                   <span
@@ -223,10 +223,10 @@ export default function TodayPage({ c }: { c: ThemeColors }) {
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-[13px] font-medium" style={{ color: c.fgSub }}>
+                  <p className="text-[13.5px] font-medium" style={{ color: "var(--text-secondary)" }}>
                     {phrase.zh}
                   </p>
-                  <p className="mt-1 text-[11.5px]" style={{ color: c.fgMuted }}>
+                  <p className="mt-1 text-[11.5px]" style={{ color: "var(--text-muted)" }}>
                     {phrase.tip}
                   </p>
                 </div>

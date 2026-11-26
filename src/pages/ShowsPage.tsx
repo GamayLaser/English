@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
-import { Button, Card, EmptyState, FilterChip } from "../components/ui";
+import { Button, Card, EmptyState } from "../components/ui";
 import { addUserChunk } from "../features/chunks/chunksStore";
 import { formatTime, parseSubtitles, type SubtitleCue } from "../features/video/srtParser";
 import type { ThemeColors } from "../types";
@@ -362,7 +362,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
             {!cloudAuthRequired && (
               <Button
                 c={c}
-                variant="primary"
+                variant="secondary"
                 disabled={uploading}
                 onClick={() => cloudUploadInputRef.current?.click()}
               >
@@ -386,7 +386,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
       <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
         {/* Left: Video Player & Controls */}
         <Card c={c} className="overflow-hidden">
-          <div className="relative bg-black aspect-video w-full flex items-center justify-center">
+          <div className={`relative aspect-video w-full flex items-center justify-center ${videoSrc ? "bg-black" : "bg-[#0F172A] p-6"}`}>
             {videoSrc ? (
               <>
                 <video
@@ -410,51 +410,86 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 )}
               </>
             ) : (
-              <div className="p-6 text-center text-sm text-slate-400">
-                请从下方「云端片库」选择片段，或点击右上角「本地选视频 + 载入 SRT 字幕」开始精听
+              <div className="w-full h-full rounded-xl border border-dashed border-slate-700/80 flex flex-col items-center justify-center text-center px-6 gap-2">
+                <p className="text-sm font-medium text-slate-200">
+                  尚未选择美剧片段
+                </p>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  点击右上角「扫描本地文件夹」或「本地选视频」，也可从下方 Cloudflare R2 云端片库选片开始精听
+                </p>
               </div>
             )}
           </div>
 
-          <div className="p-4 md:p-5 space-y-3 border-t" style={{ borderColor: c.borderSub }}>
+          <div className="p-4 md:p-5 space-y-3.5 border-t" style={{ borderColor: c.borderSub }}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
                 {activeTitle}
               </p>
-              <div className="flex flex-wrap items-center gap-1.5">
+              {/* Segmented Control for Subtitle Modes */}
+              <div
+                role="tablist"
+                aria-label="字幕显示模式"
+                className="inline-flex items-center rounded-xl p-1 gap-1"
+                style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+              >
                 {(
                   [
                     { id: "bilingual", label: "中英双语" },
                     { id: "en", label: "仅看英文" },
                     { id: "hidden", label: "无字幕盲听" },
                   ] as const
-                ).map((item) => (
-                  <FilterChip
-                    key={item.id}
-                    c={c}
-                    compact
-                    active={subMode === item.id}
-                    onClick={() => setSubMode(item.id)}
-                  >
-                    {item.label}
-                  </FilterChip>
-                ))}
+                ).map((item) => {
+                  const active = subMode === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setSubMode(item.id)}
+                      className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer"
+                      style={
+                        active
+                          ? { background: c.card, color: c.fg, boxShadow: "0 1px 2px rgba(15,23,42,0.06)" }
+                          : { color: c.fgMuted }
+                      }
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+              {/* Navigation Group */}
+              <div className="flex items-center gap-1.5">
                 <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(-1)}>
                   ← 上一句
-                </Button>
-                <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(0)}>
-                  重听本句
                 </Button>
                 <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(1)}>
                   下一句 →
                 </Button>
+                <Button
+                  c={c}
+                  variant="ghost"
+                  onClick={() =>
+                    setSpeed((s) => SPEEDS[(SPEEDS.indexOf(s) + 1) % SPEEDS.length])
+                  }
+                >
+                  {speed}x
+                </Button>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Core Practice Group */}
+              <div
+                className="flex flex-wrap items-center gap-1.5 rounded-xl p-1"
+                style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+              >
+                <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(0)}>
+                  重听本句
+                </Button>
                 <Button
                   c={c}
                   variant={loopSentence ? "primary" : "secondary"}
@@ -469,22 +504,13 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 </Button>
                 <Button
                   c={c}
-                  variant="secondary"
-                  onClick={() =>
-                    setSpeed((s) => SPEEDS[(SPEEDS.indexOf(s) + 1) % SPEEDS.length])
-                  }
-                >
-                  {speed}x
-                </Button>
-                <Button
-                  c={c}
                   variant={recording ? "danger" : "secondary"}
                   onClick={() => void toggleShadowRecord()}
                 >
                   {recording ? "停止录音" : "跟读录音"}
                 </Button>
                 {myRecordingUrl && (
-                  <Button c={c} variant="secondary" onClick={playShadowComparison}>
+                  <Button c={c} variant="primary" onClick={playShadowComparison}>
                     回放我的发音
                   </Button>
                 )}
