@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { EnglishButton, EnglishEmptyState, EnglishPageHeader } from "../components/english/EnglishUi";
 import { Modal } from "../components/ui";
 import { loadUserChunks } from "../features/chunks/chunksStore";
+import { speakVocabText } from "../features/vocab/vocabStore";
 import { loadAiSettings } from "../features/english/aiSettings";
 import type { WritingTopic } from "../features/english/types";
 import { loadWritingTopics } from "../features/writing/writingLibrary";
@@ -130,7 +131,7 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
         <textarea value={progress.draft} onChange={(event) => updateDraft(event.target.value)} placeholder="在这里写下你的英语短文…" className="type-english mt-5 min-h-72 w-full resize-y rounded-2xl px-5 py-4 outline-none transition focus:ring-2 focus:ring-blue-500/40" style={{ background: c.inputBg, border: `1px solid ${c.inputBorder}`, color: c.fg, caretColor: c.accent }} />
         {message && <p className="mt-4 text-sm" style={{ color: c.danger }}>{message}</p>}
         <div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} disabled={busy} onClick={() => void evaluateDraft()}>{busy ? "AI 正在评分…" : "交给 AI 评分与解析"}</EnglishButton></div>
-        {progress.evaluation && <WritingEvaluationCard c={c} evaluation={progress.evaluation} onComplete={completeGroup} />}
+        {progress.evaluation && <WritingEvaluationCard c={c} draft={progress.draft} evaluation={progress.evaluation} onComplete={completeGroup} />}
       </div>
     </Card>
 
@@ -175,8 +176,63 @@ export default function WritingPractice({ c, workspaceUpdate = null }: { c: Them
   </div>;
 }
 
-function WritingEvaluationCard({ c, evaluation, onComplete }: { c: ThemeColors; evaluation: NonNullable<WritingProgress["evaluation"]>; onComplete: () => void }) {
+function WritingEvaluationCard({ c, draft, evaluation, onComplete }: { c: ThemeColors; draft: string; evaluation: NonNullable<WritingProgress["evaluation"]>; onComplete: () => void }) {
   const scores: Array<[string, number]> = [["内容", evaluation.scores.content], ["语法", evaluation.scores.grammar], ["词汇", evaluation.scores.vocabulary], ["结构", evaluation.scores.structure]];
-  return <section className="mt-6 border-t pt-6" style={{ borderColor: c.borderSub }}><div className="rounded-2xl p-5" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><div className="flex items-center justify-between gap-4"><p className="text-base font-semibold" style={{ color: c.fg }}>AI 写作解析</p><span className="type-display" style={{ color: c.accent }}>{evaluation.totalScore} 分</span></div><div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">{scores.map(([label, score]) => <div key={label} className="rounded-xl px-4 py-3" style={{ background: c.card }}><p className="text-xs" style={{ color: c.fgMuted }}>{label}</p><p className="type-page mt-1" style={{ color: c.fg }}>{score}<span className="ml-1 text-xs font-normal" style={{ color: c.fgMuted }}>/25</span></p></div>)}</div><p className="mt-5 text-sm leading-relaxed" style={{ color: c.fgSub }}>{evaluation.feedback}</p>{evaluation.strengths.length > 0 && <div className="mt-5"><p className="text-xs font-semibold tracking-wide" style={{ color: c.fgMuted }}>你已经做到</p><div className="mt-2 flex flex-wrap gap-2">{evaluation.strengths.map((item) => <span key={item} className="rounded-lg px-3 py-1.5 text-xs" style={{ background: `${c.accent}14`, color: c.accent }}>{item}</span>)}</div></div>}{evaluation.improvements.length > 0 && <div className="mt-5"><p className="text-xs font-semibold tracking-wide" style={{ color: c.fgMuted }}>下一步可以修改</p><ul className="mt-2 space-y-1.5 text-sm leading-relaxed" style={{ color: c.fgSub }}>{evaluation.improvements.map((item) => <li key={item}>· {item}</li>)}</ul></div>}<div className="mt-5 rounded-xl p-4" style={{ background: c.card }}><p className="text-xs font-semibold tracking-wide" style={{ color: c.fgMuted }}>参考润色稿</p><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed" style={{ color: c.fg }}>{evaluation.revisedWriting}</p></div></div><div className="mt-5 flex justify-end"><EnglishButton variant="primary" c={c} onClick={onComplete}>完成本组并进入下一组</EnglishButton></div></section>;
+  return (
+    <section className="mt-6 border-t pt-6 space-y-4" style={{ borderColor: "var(--border-subtle)" }}>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>AI 写作解析</p>
+        <span className="type-display" style={{ color: "var(--accent-primary)" }}>{evaluation.totalScore} 分</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {scores.map(([label, score]) => (
+          <div key={label} className="rounded-xl px-4 py-3" style={{ background: "var(--bg-subtle)" }}>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</p>
+            <p className="type-page mt-1" style={{ color: "var(--text-primary)" }}>
+              {score}<span className="ml-1 text-xs font-normal" style={{ color: "var(--text-muted)" }}>/25</span>
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{evaluation.feedback}</p>
+
+      {/* Diff-style comparison: Original vs Revised */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl p-4" style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}>
+          <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>你的原文</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{draft}</p>
+        </div>
+        <div className="rounded-xl p-4" style={{ background: "var(--accent-soft)", border: "1px solid var(--border-subtle)" }}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold" style={{ color: "var(--accent-primary)" }}>母语者自然润色版</p>
+            <button
+              type="button"
+              onClick={() => speakVocabText(evaluation.revisedWriting, 0.9)}
+              className="rounded-lg px-2 py-0.5 text-xs font-medium cursor-pointer"
+              style={{ background: "var(--bg-surface)", color: "var(--accent-primary)" }}
+            >
+              朗读跟读
+            </button>
+          </div>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>{evaluation.revisedWriting}</p>
+        </div>
+      </div>
+
+      {evaluation.improvements.length > 0 && (
+        <div className="rounded-xl p-4 border-l-2" style={{ background: "var(--bg-subtle)", borderLeftColor: c.accent }}>
+          <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>修改建议</p>
+          <ul className="mt-2 space-y-1 text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            {evaluation.improvements.map((item) => <li key={item}>· {item}</li>)}
+          </ul>
+        </div>
+      )}
+
+      <div className="flex justify-end pt-2">
+        <EnglishButton variant="primary" c={c} onClick={onComplete}>完成本组并进入下一组</EnglishButton>
+      </div>
+    </section>
+  );
 }
 

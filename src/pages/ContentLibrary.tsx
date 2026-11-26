@@ -134,7 +134,7 @@ export default function ContentLibrary({
   }
 
   return (
-    <div className="space-y-5 pb-8 zen-page-enter">
+    <div className="container-wide space-y-5 pb-8 zen-page-enter">
       <Card c={c} wash={c.accentDim}>
         <div className="p-5 md:p-6 space-y-4">
           <div>

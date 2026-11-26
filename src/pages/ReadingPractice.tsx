@@ -690,6 +690,21 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
           )}
         </div>
       </Modal>
+      {/* Mobile Floating Chapter Controls */}
+      <div
+        className="md:hidden fixed bottom-4 inset-x-4 z-40 flex items-center justify-between gap-2 rounded-2xl px-3.5 py-2.5 zen-card zen-glass"
+        style={{ borderColor: c.border }}
+      >
+        <EnglishButton variant="ghost" c={c} disabled={currentIdx === 0} onClick={() => stepChapter(-1)}>
+          ← 上一章
+        </EnglishButton>
+        <EnglishButton variant="secondary" c={c} disabled={audioBusy} onClick={() => void playChapter()}>
+          {audioBusy ? "准备中…" : playingAudio ? "停止朗读" : "朗读"}
+        </EnglishButton>
+        <EnglishButton variant="primary" c={c} disabled={currentIdx >= allChapters.length - 1} onClick={() => stepChapter(1)}>
+          下一章 →
+        </EnglishButton>
+      </div>
     </div>
   );
 }

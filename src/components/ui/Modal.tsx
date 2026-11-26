@@ -63,8 +63,8 @@ export default function Modal({
     >
       <button
         type="button"
-        className="absolute inset-0 cursor-default"
-        style={{ background: "rgba(0,0,0,0.45)" }}
+        className="absolute inset-0 cursor-default backdrop-blur-[2px]"
+        style={{ background: "rgba(15, 23, 42, 0.35)" }}
         aria-label="关闭"
         onClick={onClose}
       />

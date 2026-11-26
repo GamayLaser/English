@@ -1,6 +1,7 @@
 import { hueDimOf, hueOf } from "../theme/palette";
 import { Button, Card, SearchField, cardWashStyle } from "../components/ui";
 import { loadUserChunks } from "../features/chunks/chunksStore";
+import { speakVocabText } from "../features/vocab/vocabStore";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { loadAiSettings } from "../features/english/aiSettings";
 import { evaluateTranslation } from "../features/english/deepseekEvaluator";
@@ -13,7 +14,7 @@ import { loadReadingReports } from "../features/reading/readingProgress";
 import { formatWritingReportTitle, loadWritingReports, type WritingReport } from "../features/writing/writingProgress";
 import { formatListeningReportTitle, loadListeningReports } from "../features/listening/listeningProgress";
 import { englishRefreshTargets, type WorkspaceUpdate } from "../features/persistence/workspaceUpdateRouting";
-import { EnglishFilterTabs, EnglishPageHeader, EnglishUnderlineTabs } from "../components/english/EnglishUi";
+import { EnglishFilterTabs, EnglishPageHeader, EnglishSegmentedTabs, EnglishUnderlineTabs } from "../components/english/EnglishUi";
 import type { ErrorTag, Evaluation, PracticeAttempt, PracticeQuestion, Sentence, WrongBookItem } from "../features/english/types";
 import type { ThemeColors } from "../types";
 
@@ -140,7 +141,7 @@ export default function EnglishPage({ c, initialView = "practice", onViewChange,
   }
 
   return <div className="flex min-h-0 flex-col md:h-full">
-    <div className="min-h-0 flex-1"><Suspense fallback={<div className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>正在加载练习…</div>}>{view === "vocabulary" ? <VisualVocabulary mode="word" c={c} /> : view === "reading" ? <ReadingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "writing" ? <WritingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "listening" ? <ListeningPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "wrongbook" ? <WrongBookDetails key={panelRevisions.wrongbook} c={c} /> : view === "reports" ? <ReportHistory key={panelRevisions.reports} c={c} /> : finished ? <Completed c={c} total={questions.length} accepted={accepted} tags={tags} attempts={attempts} onRestart={restart} onWrongBook={() => changeView("wrongbook")} /> : <TranslationPractice c={c} index={index} total={questions.length} current={current} answer={answer} setAnswer={(nextAnswer) => replacePractice({ ...practice, answer: nextAnswer })} evaluation={evaluation} busy={busy} message={message} inputRef={answerInputRef} onSubmit={submit} onNext={next} />}</Suspense></div>
+    <div className="min-h-0 flex-1"><Suspense fallback={<div className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>正在加载练习…</div>}>{view === "vocabulary" ? <VisualVocabulary mode="word" c={c} /> : view === "reading" ? <ReadingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "writing" ? <WritingPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "listening" ? <ListeningPractice c={c} workspaceUpdate={workspaceUpdate} /> : view === "wrongbook" ? <WrongBookDetails key={panelRevisions.wrongbook} c={c} onStartPractice={() => changeView("practice")} /> : view === "reports" ? <ReportHistory key={panelRevisions.reports} c={c} /> : finished ? <Completed c={c} total={questions.length} accepted={accepted} tags={tags} attempts={attempts} onRestart={restart} onWrongBook={() => changeView("wrongbook")} /> : <TranslationPractice c={c} index={index} total={questions.length} current={current} answer={answer} setAnswer={(nextAnswer) => replacePractice({ ...practice, answer: nextAnswer })} evaluation={evaluation} busy={busy} message={message} inputRef={answerInputRef} onSubmit={submit} onNext={next} />}</Suspense></div>
   </div>;
 }
 
@@ -365,8 +366,8 @@ function RadarChart5D({ scores, c, size = 220 }: { scores: Record<ErrorTag, numb
           <polygon
             key={idx}
             points={poly}
-            fill={idx === levels.length - 1 ? `${c.accent}06` : "none"}
-            stroke={c.borderSub}
+            fill={idx === levels.length - 1 ? "var(--accent-soft)" : "none"}
+            stroke="var(--border-subtle)"
             strokeWidth={1}
             strokeDasharray={idx < levels.length - 1 ? "2,2" : undefined}
           />
@@ -379,7 +380,7 @@ function RadarChart5D({ scores, c, size = 220 }: { scores: Record<ErrorTag, numb
             y1={cy}
             x2={cx + r * Math.cos(ang)}
             y2={cy + r * Math.sin(ang)}
-            stroke={c.borderSub}
+            stroke="var(--border-subtle)"
             strokeWidth={1}
           />
         ))}
@@ -388,10 +389,9 @@ function RadarChart5D({ scores, c, size = 220 }: { scores: Record<ErrorTag, numb
           points={dataPolyStr}
           fill="url(#radarFillGrad)"
           stroke={c.accent}
-          strokeWidth={2.2}
+          strokeWidth={2}
           strokeLinejoin="round"
           style={{
-            filter: `drop-shadow(0 0 6px ${c.accent}44)`,
             transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />
@@ -423,8 +423,8 @@ function RadarChart5D({ scores, c, size = 220 }: { scores: Record<ErrorTag, numb
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={12}
-              fontWeight={600}
-              fill={sc < 60 ? c.danger : c.fg}
+              fontWeight={500}
+              fill="var(--text-secondary)"
             >
               {dim.label} {sc}
             </text>
@@ -460,63 +460,125 @@ function Feedback({ c, answer, evaluation }: { c: ThemeColors; answer: string; e
   const dimScores = computeDimensionScores(evaluation);
 
   return (
-    <div className="w-full space-y-3 zen-page-enter">
+    <div className="w-full space-y-4 zen-page-enter">
+      {/* Soft status banner */}
       <div
-        className="rounded-2xl p-5 zen-card zen-card-wash"
-        style={cardWashStyle(good ? c.successDim : c.dangerDim)}
+        className="rounded-2xl p-5 border-l-4 zen-card"
+        style={{
+          borderLeftColor: badgeColor,
+          background: good ? "var(--bg-surface)" : undefined,
+        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: badgeColor }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: badgeColor }} />
             <b className="text-sm font-semibold" style={{ color: badgeColor }}>
               {good ? "表达地道 · 可接受" : "存在偏差 · 需要改进"}
             </b>
           </div>
-          <span className="text-sm font-semibold px-2.5 py-0.5 rounded-lg zen-tnum"
-            style={{ background: `${badgeColor}18`, color: badgeColor }}>
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg zen-tnum"
+            style={{ background: good ? c.successDim : c.dangerDim, color: badgeColor }}
+          >
             {evaluation.score} 分
           </span>
         </div>
-        <p className="mt-3 text-sm leading-relaxed" style={{ color: c.fgSub }}>{evaluation.feedback}</p>
+        <p className="mt-2.5 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+          {evaluation.feedback}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-        <div className="rounded-xl p-4 flex flex-col justify-between" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
-          <div>
-            <p className="text-xs font-semibold" style={{ color: c.fgMuted }}>你的答案：</p>
-            <p className="mt-1 text-sm font-medium" style={{ color: c.fg }}>{answer}</p>
+      {/* Diff-style 2-column Comparison + Radar */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
+        <div className="grid gap-3">
+          {/* Your Answer */}
+          <div
+            className="rounded-xl p-4"
+            style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}
+          >
+            <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+              你的表达
+            </p>
+            <p
+              className={`mt-1.5 text-[15px] font-medium leading-relaxed ${
+                !good ? "underline decoration-red-400/70 decoration-wavy underline-offset-4" : ""
+              }`}
+              style={{ color: "var(--text-primary)" }}
+            >
+              {answer}
+            </p>
           </div>
-          <div className="mt-4 pt-3 border-t" style={{ borderColor: c.borderSub }}>
-            <p className="text-xs font-semibold mb-2" style={{ color: c.fgMuted }}>参考释义 / 可接受表达：</p>
-            <div className="flex flex-wrap gap-2">
+
+          {/* Native Reference Expressions */}
+          <div
+            className="rounded-xl p-4"
+            style={{ background: "var(--accent-soft)", border: "1px solid var(--border-subtle)" }}
+          >
+            <p className="text-xs font-semibold mb-2.5" style={{ color: "var(--accent-primary)" }}>
+              地道参考表达（点击朗读跟读）
+            </p>
+            <div className="space-y-2">
               {evaluation.acceptedTranslations.map((item) => (
-                <span key={item} className="rounded-lg px-2.5 py-1 text-xs font-medium"
-                  style={{ background: `${c.accent}18`, color: c.accent, border: `1px solid ${c.accent}30` }}>
-                  {item}
-                </span>
+                <div key={item} className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                    {item}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => speakVocabText(item, 0.9)}
+                    className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium cursor-pointer"
+                    style={{ background: "var(--bg-surface)", color: "var(--accent-primary)" }}
+                  >
+                    朗读
+                  </button>
+                </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* 5-Dimension Radar on single sentence */}
-        <div className="rounded-xl p-4 flex flex-col items-center justify-center shrink-0" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}>
-          <span className="text-xs font-semibold mb-1" style={{ color: c.fgMuted }}>5维维度评分</span>
+        {/* 5-Dimension Radar */}
+        <div
+          className="rounded-xl p-4 flex flex-col items-center justify-center shrink-0"
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+        >
+          <span className="text-xs font-semibold mb-1" style={{ color: "var(--text-muted)" }}>
+            5维维度评分
+          </span>
           <RadarChart5D scores={dimScores} c={c} size={180} />
         </div>
       </div>
 
-      {evaluation.issues.map((issue, issueIndex) => (
-        <div key={issueIndex} className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.dangerDim}` }}>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-xs px-2 py-0.5 rounded-md font-semibold" style={{ background: `${c.danger}20`, color: c.danger }}>
-              {labels[issue.category]}
-            </span>
-          </div>
-          <p className="text-xs leading-relaxed" style={{ color: c.fgSub }}>{issue.explanation}</p>
-          <p className="mt-1.5 text-xs font-medium" style={{ color: c.accent }}>💡 建议：{issue.suggestion}</p>
+      {/* Subtle issue notes */}
+      {evaluation.issues.length > 0 && (
+        <div className="space-y-2">
+          {evaluation.issues.map((issue, issueIndex) => (
+            <div
+              key={issueIndex}
+              className="rounded-xl p-3.5 border-l-2"
+              style={{
+                background: "var(--bg-subtle)",
+                borderLeftColor: c.danger,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded-md font-medium"
+                  style={{ background: c.dangerDim, color: c.danger }}
+                >
+                  {labels[issue.category]}
+                </span>
+                <span className="text-xs font-medium" style={{ color: "var(--accent-primary)" }}>
+                  建议：{issue.suggestion}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                {issue.explanation}
+              </p>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -593,18 +655,126 @@ function Completed({ c, total, accepted, tags, attempts, onRestart, onWrongBook 
   );
 }
 
-function WrongBookDetails({ c }: { c: ThemeColors }) {
+function WrongBookDetails({ c, onStartPractice }: { c: ThemeColors; onStartPractice: () => void }) {
   const items: WrongBookItem[] = loadWrongBook().sort((a, b) => b.wrongCount - a.wrongCount || a.lastReviewedAt - b.lastReviewedAt);
-  return <div className="space-y-5 pb-8 zen-page-enter">
-    <EnglishPageHeader
-      c={c}
-      eyebrow="REVIEW QUEUE"
-      title="错题本"
-      description="下一组会按累计目标约 30% 抽取这些题目；错得更多、复习更久以前的题优先。"
-      aside={<span className="rounded-xl px-3.5 py-2 text-[13px] font-semibold tabular-nums" style={{ background: c.inputBg, color: c.fgMuted }}>共 {items.length} 题</span>}
-    />
-    <Card c={c}><div className="p-5 md:p-6">{items.length === 0 ? <p className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>还没有需要复习的题目。</p> : <div className="space-y-3">{items.map((item) => <div key={item.sentence.id} className="rounded-xl p-4" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold" style={{ color: c.fg }}>{item.sentence.en}</p><span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ background: item.lastVerdict === "acceptable" ? c.successDim : c.dangerDim, color: item.lastVerdict === "acceptable" ? c.success : c.danger }}>{item.lastVerdict === "acceptable" ? "最近已通过" : "待加强"}</span></div><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>{item.sentence.zh}</p><p className="mt-3 text-xs zen-tnum" style={{ color: c.fgMuted }}>错误 {item.wrongCount} 次 · 已复习 {item.reviewCount} 次</p>{item.latestAttempt && <><p className="mt-3 text-xs" style={{ color: c.fgSub }}>最近作答：{item.latestAttempt.answer}</p><p className="mt-1 text-xs" style={{ color: c.fgSub }}>反馈：{item.latestAttempt.evaluation.feedback}</p><div className="mt-2 flex flex-wrap gap-2">{item.latestAttempt.evaluation.issues.map((issue, issueIndex) => <span key={issueIndex} className="rounded-md px-2 py-1 text-xs" style={{ background: c.dangerDim, color: c.danger }}>{labels[issue.category]}：{issue.suggestion}</span>)}</div></>}</div>)}</div>}</div></Card>
-  </div>;
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  return (
+    <div className="container-focus space-y-5 pb-8 zen-page-enter">
+      <EnglishPageHeader
+        c={c}
+        eyebrow="REVIEW QUEUE"
+        title="错题本"
+        description="下一组练习按 30% 比例自动抽取这些题目；错得更多、越久未复习的优先。"
+        aside={
+          <div className="flex items-center gap-2">
+            <span className="rounded-xl px-3 py-2 text-xs font-semibold zen-tnum" style={{ background: c.inputBg, color: c.fgMuted }}>
+              共 {items.length} 题
+            </span>
+            <Button type="button" variant="primary" c={c} onClick={onStartPractice}>
+              开始错题强化
+            </Button>
+          </div>
+        }
+      />
+
+      {items.length === 0 ? (
+        <Card c={c}>
+          <p className="py-14 text-center text-sm" style={{ color: c.fgMuted }}>还没有需要复习的题目。</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => {
+            const isOpen = expandedId === item.sentence.id;
+            return (
+              <Card key={item.sentence.id} c={c} className="p-5 space-y-3">
+                {/* Top Header */}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      <p className="text-base font-bold leading-snug" style={{ color: "var(--text-primary)" }} lang="en">
+                        {item.sentence.en}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => speakVocabText(item.sentence.en, 0.9)}
+                        className="shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium cursor-pointer"
+                        style={{ background: c.accentDim, color: c.accent }}
+                      >
+                        朗读
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
+                      {item.sentence.zh}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className="rounded-full px-2.5 py-1 text-[11px] font-medium zen-tnum"
+                      style={{ background: "var(--bg-subtle)", color: "var(--text-muted)" }}
+                    >
+                      错 {item.wrongCount} 次 · 复习 {item.reviewCount} 次
+                    </span>
+                    <Button type="button" variant="secondary" c={c} onClick={onStartPractice}>
+                      强化
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Middle Diff Bar */}
+                {item.latestAttempt && (
+                  <div
+                    className="rounded-xl px-3.5 py-2.5 text-xs flex flex-wrap items-center gap-2"
+                    style={{ background: "var(--bg-subtle)" }}
+                  >
+                    <span className="line-through opacity-75" style={{ color: "var(--text-muted)" }}>
+                      {item.latestAttempt.answer}
+                    </span>
+                    <span style={{ color: "var(--text-muted)" }}>→</span>
+                    <span className="font-semibold" style={{ color: "var(--accent-primary)" }}>
+                      {item.latestAttempt.evaluation.acceptedTranslations[0] || item.sentence.en}
+                    </span>
+                  </div>
+                )}
+
+                {/* Bottom Tags & Collapsible Feedback */}
+                {item.latestAttempt && (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.latestAttempt.evaluation.issues.map((issue, idx) => (
+                          <span
+                            key={idx}
+                            className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                            style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+                          >
+                            {labels[issue.category]}
+                          </span>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isOpen ? null : item.sentence.id)}
+                        className="text-xs font-medium cursor-pointer"
+                        style={{ color: c.accent }}
+                      >
+                        {isOpen ? "收起解析" : "展开解析"}
+                      </button>
+                    </div>
+                    {isOpen && (
+                      <p className="text-xs leading-relaxed pt-1" style={{ color: "var(--text-secondary)" }}>
+                        {item.latestAttempt.evaluation.feedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const HISTORY_PAGE_SIZE = 5;
@@ -627,7 +797,7 @@ function TranslationReportHistory({ c }: { c: ThemeColors }) {
   const selected = reports.find((report) => report.createdAt === selectedAt);
   if (selected) return <TranslationReportDetail report={selected} onBack={() => setSelectedAt(null)} c={c} />;
   const visibleReports = reports.slice(page * HISTORY_PAGE_SIZE, (page + 1) * HISTORY_PAGE_SIZE);
-  return <Card c={c}><div className="p-6 md:p-8"><h2 className="text-base font-semibold" style={{ color: c.fg }}>历史报告</h2><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>每页展示 5 组练习；点击进入独立详情，回看大量报告时更清晰。</p>{reports.length === 0 ? <p className="py-10 text-center text-sm" style={{ color: c.fgMuted }}>完成一组练习后，这里会生成详细报告。</p> : <><div className="mt-5 space-y-3">{visibleReports.map((report) => { const correct = report.attempts.filter((item) => item.evaluation.verdict === "acceptable").length; return <button type="button" key={report.createdAt} onClick={() => setSelectedAt(report.createdAt)} className="flex w-full items-center justify-between gap-4 rounded-xl p-4 text-left transition-colors hover:brightness-95" style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}><div><p className="text-sm font-semibold" style={{ color: c.fg }}>{report.date} · 第 {new Date(report.createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })} 组</p><p className="mt-1 text-xs" style={{ color: c.fgMuted }}>{correct} / {report.attempts.length} 可接受 · {report.attempts.length - correct} 道需要巩固</p></div><div className="flex items-center gap-3"><span className="type-title" style={{ color: c.accent }}>{Math.round((correct / Math.max(report.attempts.length, 1)) * 100)}%</span><span className="text-sm" style={{ color: c.accent }}>查看详情</span></div></button>; })}</div><div className="mt-5"><HistoryPager page={page} total={reports.length} onChange={setPage} c={c} /></div></>}</div></Card>;
+  return <Card c={c}><div className="p-5 md:p-6"><h2 className="text-base font-semibold" style={{ color: c.fg }}>翻译报告</h2><p className="mt-1 text-sm" style={{ color: c.fgMuted }}>每页展示 5 组练习；点击进入独立详情，回看大量报告时更清晰。</p>{reports.length === 0 ? <p className="py-10 text-center text-sm" style={{ color: c.fgMuted }}>完成一组练习后，这里会生成详细报告。</p> : <><div className="mt-5 space-y-3">{visibleReports.map((report) => { const correct = report.attempts.filter((item) => item.evaluation.verdict === "acceptable").length; const rate = Math.round((correct / Math.max(report.attempts.length, 1)) * 100); return <button type="button" key={report.createdAt} onClick={() => setSelectedAt(report.createdAt)} className="grid w-full grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] items-center gap-4 rounded-xl p-4 text-left transition-colors hover:brightness-95 cursor-pointer" style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}><div><p className="text-sm font-semibold" style={{ color: c.fg }}>{report.date} · {new Date(report.createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</p><p className="mt-1 text-xs" style={{ color: c.fgMuted }}>{correct} / {report.attempts.length} 可接受</p></div><div className="flex items-center gap-2.5"><div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: c.card }}><div className="h-full rounded-full" style={{ width: `${rate}%`, background: c.accent }} /></div><span className="text-xs font-semibold zen-tnum" style={{ color: c.accent }}>{rate}%</span></div><span className="text-xs font-medium justify-self-end" style={{ color: c.accent }}>查看详情 →</span></button>; })}</div><div className="mt-5"><HistoryPager page={page} total={reports.length} onChange={setPage} c={c} /></div></>}</div></Card>;
 }
 
 function TranslationReportDetail({ report, onBack, c }: { report: ReturnType<typeof loadReports>[number]; onBack: () => void; c: ThemeColors }) {
@@ -638,15 +808,41 @@ function TranslationReportDetail({ report, onBack, c }: { report: ReturnType<typ
 function ReportHistory({ c }: { c: ThemeColors }) {
   const [historyTab, setHistoryTab] = useState<"translation" | "reading" | "writing" | "listening">("translation");
   const tabs = [{ id: "translation", label: "翻译报告" }, { id: "reading", label: "阅读记录" }, { id: "writing", label: "写作记录" }, { id: "listening", label: "听力记录" }] as const;
-  return <div className="space-y-5 pb-8 zen-page-enter">
+  const translationReports = loadReports();
+  const totalGroups = translationReports.length + loadReadingReports().length + loadWritingReports().length + loadListeningReports().length;
+  const recent7Days = translationReports.filter((r) => Date.now() - r.createdAt <= 7 * 86400_000);
+  const recentAttempts = recent7Days.flatMap((r) => r.attempts);
+  const avgRate = recentAttempts.length > 0
+    ? Math.round((recentAttempts.filter((a) => a.evaluation.verdict === "acceptable").length / recentAttempts.length) * 100)
+    : 0;
+  const chunksCount = loadUserChunks().length;
+
+  return <div className="container-focus space-y-5 pb-8 zen-page-enter">
     <EnglishPageHeader
       c={c}
       eyebrow="LEARNING REPORTS"
       title="历史报告"
       description="按模块归档每次练习的得分、AI 解析与详细记录。"
     >
-      <EnglishFilterTabs tabs={tabs} value={historyTab} onChange={(value) => setHistoryTab(value as typeof historyTab)} ariaLabel="历史报告类型" c={c} />
+      <EnglishSegmentedTabs tabs={[...tabs]} value={historyTab} onChange={(value) => setHistoryTab(value as typeof historyTab)} ariaLabel="历史报告类型" c={c} />
     </EnglishPageHeader>
+
+    {/* Minimal 3-metric Summary Bar */}
+    <div className="grid grid-cols-3 gap-3">
+      <Card c={c} className="px-4 py-3">
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>累计练习组数</p>
+        <p className="type-title zen-tnum mt-0.5" style={{ color: "var(--text-primary)" }}>{totalGroups} 组</p>
+      </Card>
+      <Card c={c} className="px-4 py-3">
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>近 7 天正确率</p>
+        <p className="type-title zen-tnum mt-0.5" style={{ color: "var(--accent-primary)" }}>{avgRate}%</p>
+      </Card>
+      <Card c={c} className="px-4 py-3">
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>个人语块库</p>
+        <p className="type-title zen-tnum mt-0.5" style={{ color: "var(--text-primary)" }}>{chunksCount} 条</p>
+      </Card>
+    </div>
+
     {historyTab === "translation" ? <TranslationReportHistory c={c} /> : historyTab === "reading" ? <ReadingReportHistory c={c} /> : historyTab === "writing" ? <WritingReportHistory c={c} /> : <ListeningReportHistory c={c} />}
   </div>;
 }

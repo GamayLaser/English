@@ -1,0 +1,16 @@
+{
+  "name": "English Studio",
+  "short_name": "English Studio",
+  "description": "成人沉浸式英语学习工作台：连载小说精读、美剧精听、视觉词卡与 AI 翻译训练",
+  "start_url": "/today",
+  "display": "standalone",
+  "background_color": "#F6F7F9",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

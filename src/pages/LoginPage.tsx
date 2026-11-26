@@ -43,22 +43,30 @@ export default function LoginPage({
       className="min-h-screen grid place-items-center p-6 zen-page-enter"
       style={{ background: c.bg, color: c.fg }}
     >
-      <Card c={c} wash={c.accentDim} className="w-full max-w-sm">
+      <Card c={c} wash={c.accentDim} className="w-full max-w-[400px]">
         <form onSubmit={handleSubmit} className="p-6 md:p-7 space-y-5">
-          <div>
-            <p
-              className="type-caption font-semibold tracking-[0.14em] uppercase"
-              style={{ color: c.accent }}
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl grid place-items-center font-bold text-sm shrink-0"
+              style={{ background: c.accentDim, color: c.accent }}
             >
-              ENGLISH STUDIO
-            </p>
-            <h2 className="type-page mt-1" style={{ color: c.fg }}>
-              {mode === "login" ? "登录账号" : "注册账号"}
-            </h2>
-            <p className="type-secondary mt-1" style={{ color: c.fgMuted }}>
-              登录后可跨设备同步词卡进度、错题本与 AI 练习记录。
-            </p>
+              E
+            </div>
+            <div>
+              <p
+                className="type-caption font-semibold tracking-[0.14em] uppercase"
+                style={{ color: c.accent }}
+              >
+                ENGLISH STUDIO
+              </p>
+              <h2 className="type-page leading-tight" style={{ color: c.fg }}>
+                {mode === "login" ? "登录账号" : "注册账号"}
+              </h2>
+            </div>
           </div>
+          <p className="type-secondary" style={{ color: c.fgMuted }}>
+            登录后可跨设备同步词卡进度、语块本与练习记录。
+          </p>
 
           {error && (
             <p
