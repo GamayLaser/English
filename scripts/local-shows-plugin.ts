@@ -69,14 +69,18 @@ export function localShowsPlugin(projectRoot: string): Plugin {
           res.setHeader("Content-Range", `bytes ${start}-${end}/${total}`);
           res.setHeader("Content-Length", String(end - start + 1));
           if (req.method === "HEAD") return res.end();
-          fs.createReadStream(filePath, { start, end }).pipe(res);
+          const stream = fs.createReadStream(filePath, { start, end });
+          res.on("close", () => stream.destroy());
+          stream.pipe(res);
           return;
         }
 
         res.statusCode = 200;
         res.setHeader("Content-Length", String(total));
         if (req.method === "HEAD") return res.end();
-        fs.createReadStream(filePath).pipe(res);
+        const stream = fs.createReadStream(filePath);
+        res.on("close", () => stream.destroy());
+        stream.pipe(res);
       });
 
       server.middlewares.use("/api/shows", (req, res, next) => {

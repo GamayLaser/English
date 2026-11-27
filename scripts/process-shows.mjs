@@ -87,6 +87,7 @@ for (const file of entries) {
       "-map", "0:v:0", "-map", "0:a:0",
       "-vf", "scale=-2:720",
       "-c:v", encoder,
+      "-g", "24", "-keyint_min", "24",
       "-b:v", "1500k", "-maxrate", "2000k", "-bufsize", "3000k",
       "-c:a", "aac", "-ac", "2", "-b:a", "128k",
       "-movflags", "+faststart", "-sn",

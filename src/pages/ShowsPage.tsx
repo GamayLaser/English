@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
 import type { VocabEntry } from "@shared/schemas";
 import { EnglishPageHeader } from "../components/english/EnglishUi";
 import { placeVocabCard, VocabCardPopover, VocabLinkedText, type VocabCardAnchor } from "../components/english/VocabCardPopover";
@@ -29,6 +29,97 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+type TranscriptRowProps = {
+  cue: SubtitleCue;
+  isActive: boolean;
+  isSaved: boolean;
+  subMode: SubtitleMode;
+  c: ThemeColors;
+  activeLineRef: RefObject<HTMLButtonElement | null>;
+  vocabMatcher: VocabMatcher | null;
+  vocabMastered: Set<string>;
+  onJump: (cue: SubtitleCue) => void;
+  onSave: (cue: SubtitleCue) => void;
+  onOpenVocab: (entry: VocabEntry, event: MouseEvent<HTMLElement>, sentence: string) => void;
+};
+
+const TranscriptRow = memo(function TranscriptRow({
+  cue,
+  isActive,
+  isSaved,
+  subMode,
+  c,
+  activeLineRef,
+  vocabMatcher,
+  vocabMastered,
+  onJump,
+  onSave,
+  onOpenVocab,
+}: TranscriptRowProps) {
+  return (
+    <div
+      className="flex items-start gap-1.5 rounded-xl px-2.5 py-2 transition-colors"
+      style={{
+        background: isActive ? c.accentDim : "transparent",
+        border: `1px solid ${isActive ? `${c.accent}44` : "transparent"}`,
+      }}
+    >
+      <button
+        ref={isActive ? activeLineRef : null}
+        type="button"
+        onClick={() => onJump(cue)}
+        className="flex-1 text-left cursor-pointer min-w-0"
+      >
+        <div className="flex items-start gap-2.5">
+          <span
+            className="text-[11px] font-medium zen-tnum mt-0.5 shrink-0"
+            style={{ color: isActive ? c.accent : c.fgDim }}
+          >
+            {formatTime(cue.startSec)}
+          </span>
+          <div className="min-w-0 space-y-0.5">
+            {subMode !== "hidden" ? (
+              <p
+                className="text-[13.5px] leading-snug font-medium"
+                style={{ color: isActive ? c.accent : c.fg }}
+                lang="en"
+              >
+                <VocabLinkedText
+                  text={cue.en}
+                  matcher={vocabMatcher}
+                  excludedIds={vocabMastered}
+                  onOpen={onOpenVocab}
+                />
+              </p>
+            ) : (
+              <p className="text-[13px] italic" style={{ color: c.fgMuted }}>
+                （盲听隐藏 · 点击可跳播）
+              </p>
+            )}
+            {subMode === "bilingual" && cue.zh && (
+              <p className="text-xs leading-snug" style={{ color: c.fgMuted }}>
+                {cue.zh}
+              </p>
+            )}
+          </div>
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={() => onSave(cue)}
+        className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium cursor-pointer"
+        style={{
+          background: isSaved ? c.successDim : c.inputBg,
+          color: isSaved ? c.success : c.fgMuted,
+        }}
+        title="收藏到个人语块本"
+      >
+        {isSaved ? "已存" : "收藏"}
+      </button>
+    </div>
+  );
+});
+
 export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [statusMessage, setStatusMessage] = useState("");
   const [shows, setShows] = useState<ShowItem[]>([]);
@@ -39,7 +130,8 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [cropBottom, setCropBottom] = useState(0);
   const [videoAspect, setVideoAspect] = useState("16 / 9");
   const [cues, setCues] = useState<SubtitleCue[]>([]);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [activeCueIndex, setActiveCueIndex] = useState(-1);
+  const activeCueIndexRef = useRef(-1);
   const [subMode, setSubMode] = useState<SubtitleMode>("bilingual");
   const [speed, setSpeed] = useState(1.0);
   const [loopSentence, setLoopSentence] = useState(false);
@@ -84,10 +176,6 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     };
   }, []);
 
-  const activeCueIndex = useMemo(() => {
-    return cues.findIndex((cue) => currentTime >= cue.startSec && currentTime <= cue.endSec);
-  }, [cues, currentTime]);
-
   const activeCue = activeCueIndex >= 0 ? cues[activeCueIndex] : null;
 
   useEffect(() => {
@@ -106,20 +194,45 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     const el = videoRef.current;
     if (!el) return;
     const t = el.currentTime;
-    setCurrentTime(t);
+    const idx = cues.findIndex((cue) => t >= cue.startSec && t <= cue.endSec);
+    if (idx !== activeCueIndexRef.current) {
+      activeCueIndexRef.current = idx;
+      setActiveCueIndex(idx);
+    }
     if (loopSentence && lockedCue && t >= lockedCue.endSec) {
       el.currentTime = lockedCue.startSec;
       void el.play().catch(() => {});
     }
   }
 
-  function jumpToCue(cue: SubtitleCue) {
-    const el = videoRef.current;
-    if (!el) return;
-    setLockedCue(cue);
-    el.currentTime = cue.startSec + 0.01;
-    void el.play().catch(() => {});
-  }
+  const jumpToCue = useCallback(
+    (cue: SubtitleCue) => {
+      const el = videoRef.current;
+      if (!el) return;
+      setLockedCue(cue);
+      const idx = cues.findIndex((cItem) => cItem.id === cue.id);
+      if (idx >= 0) {
+        activeCueIndexRef.current = idx;
+        setActiveCueIndex(idx);
+      }
+      el.currentTime = cue.startSec + 0.01;
+      void el.play().catch(() => {});
+    },
+    [cues],
+  );
+
+  const saveCue = useCallback(
+    (cue: SubtitleCue) => {
+      addUserChunk({ en: cue.en, zh: cue.zh, context: activeTitle, source: "shows" });
+      setSavedCueIds((prev) => {
+        if (prev.has(cue.id)) return prev;
+        const next = new Set(prev);
+        next.add(cue.id);
+        return next;
+      });
+    },
+    [activeTitle],
+  );
 
   async function toggleShadowRecord() {
     if (recording && recorderRef.current) {
@@ -179,12 +292,12 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     jumpToCue(cues[targetIdx]);
   }
 
-  function openVocabCard(entry: VocabEntry, event: MouseEvent<HTMLElement>, sentence: string) {
+  const openVocabCard = useCallback((entry: VocabEntry, event: MouseEvent<HTMLElement>, sentence: string) => {
     const card = placeVocabCard(entry, event, sentence);
     if (!card) return;
     setActiveVocabCard(card);
     speakVocabText(entry.audioText || entry.word, 0.95);
-  }
+  }, []);
 
   function toggleVocabCardBookmark(entry: VocabEntry, contextSentence: string) {
     const next = new Set(vocabBookmarks);
@@ -218,7 +331,8 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setVideoAspect("16 / 9");
     setActiveTitle(item.title);
     setLockedCue(null);
-    setCurrentTime(0);
+    activeCueIndexRef.current = -1;
+    setActiveCueIndex(-1);
     setCues([]);
     if (!item.subtitleUrl) return;
     try {
@@ -244,7 +358,8 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setVideoAspect("16 / 9");
     setCues([]);
     setLockedCue(null);
-    setCurrentTime(0);
+    activeCueIndexRef.current = -1;
+    setActiveCueIndex(-1);
     setActiveVocabCard(null);
     setClozeInputs({});
     setClozeChecked(false);
@@ -372,11 +487,11 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
               />
               {activeCue && subMode !== "hidden" && (
                 <div className="pointer-events-none absolute inset-x-4 bottom-12 flex flex-col items-center text-center gap-1">
-                  <span className="rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
+                  <span className="rounded-lg bg-black/80 px-3 py-1 text-sm md:text-base font-semibold text-white">
                     {activeCue.en}
                   </span>
                   {subMode === "bilingual" && activeCue.zh && (
-                    <span className="rounded-md bg-black/70 px-2.5 py-0.5 text-xs text-slate-200 backdrop-blur-sm">
+                    <span className="rounded-md bg-black/75 px-2.5 py-0.5 text-xs text-slate-200">
                       {activeCue.zh}
                     </span>
                   )}
@@ -604,76 +719,22 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 </p>
               </div>
             ) : (
-              cues.map((cue, idx) => {
-                const isActive = idx === activeCueIndex;
-                const isSaved = savedCueIds.has(cue.id);
-                return (
-                  <div
-                    key={cue.id}
-                    className="flex items-start gap-1.5 rounded-xl px-2.5 py-2 transition-colors"
-                    style={{
-                      background: isActive ? c.accentDim : "transparent",
-                      border: `1px solid ${isActive ? `${c.accent}44` : "transparent"}`,
-                    }}
-                  >
-                    <button
-                      ref={isActive ? activeLineRef : null}
-                      type="button"
-                      onClick={() => jumpToCue(cue)}
-                      className="flex-1 text-left cursor-pointer min-w-0"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <span
-                          className="text-[11px] font-medium zen-tnum mt-0.5 shrink-0"
-                          style={{ color: isActive ? c.accent : c.fgDim }}
-                        >
-                          {formatTime(cue.startSec)}
-                        </span>
-                        <div className="min-w-0 space-y-0.5">
-                          {subMode !== "hidden" ? (
-                            <p
-                              className="text-[13.5px] leading-snug font-medium"
-                              style={{ color: isActive ? c.accent : c.fg }}
-                              lang="en"
-                            >
-                              <VocabLinkedText
-                                text={cue.en}
-                                matcher={vocabMatcher}
-                                excludedIds={vocabMastered}
-                                onOpen={openVocabCard}
-                              />
-                            </p>
-                          ) : (
-                            <p className="text-[13px] italic" style={{ color: c.fgMuted }}>
-                              （盲听隐藏 · 点击可跳播）
-                            </p>
-                          )}
-                          {subMode === "bilingual" && cue.zh && (
-                            <p className="text-xs leading-snug" style={{ color: c.fgMuted }}>
-                              {cue.zh}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addUserChunk({ en: cue.en, zh: cue.zh, context: activeTitle, source: "shows" });
-                        setSavedCueIds((prev) => new Set(prev).add(cue.id));
-                      }}
-                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium cursor-pointer"
-                      style={{
-                        background: isSaved ? c.successDim : c.inputBg,
-                        color: isSaved ? c.success : c.fgMuted,
-                      }}
-                      title="收藏到个人语块本"
-                    >
-                      {isSaved ? "已存" : "收藏"}
-                    </button>
-                  </div>
-                );
-              })
+              cues.map((cue, idx) => (
+                <TranscriptRow
+                  key={cue.id}
+                  cue={cue}
+                  isActive={idx === activeCueIndex}
+                  isSaved={savedCueIds.has(cue.id)}
+                  subMode={subMode}
+                  c={c}
+                  activeLineRef={activeLineRef}
+                  vocabMatcher={vocabMatcher}
+                  vocabMastered={vocabMastered}
+                  onJump={jumpToCue}
+                  onSave={saveCue}
+                  onOpenVocab={openVocabCard}
+                />
+              ))
             )}
           </div>
           )}
