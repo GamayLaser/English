@@ -3,5 +3,8 @@ dist
 .wrangler
 .dev.vars
 *.local
-public/shows/*
-!public/shows/.gitkeep
+public/shows/*.mp4
+public/shows/*.webm
+public/shows/*.m4v
+public/shows/*.mov
+public/shows/*.mkv
