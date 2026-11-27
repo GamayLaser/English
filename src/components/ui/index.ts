@@ -1,18 +1,6 @@
 export { default as Button } from "./Button";
 export { default as FilterChip } from "./FilterChip";
 export { default as SearchField } from "./SearchField";
-export { Input, Textarea } from "./Input";
-export { default as Label, FieldError } from "./Label";
 export { default as Card, cardWashStyle } from "./Card";
-export { default as PageHeader } from "./PageHeader";
-export { default as SegmentTabs } from "./SegmentTabs";
-export type { UiTab } from "./SegmentTabs";
 export { default as Modal } from "./Modal";
-export { default as ConfirmDialog } from "./ConfirmDialog";
-export { default as StatusNotice } from "./StatusNotice";
-export type { StatusNoticeTone } from "./StatusNotice";
-export { default as Skeleton } from "./Skeleton";
 export { default as EmptyState } from "./EmptyState";
-export { default as MobileMoreSheet } from "./MobileMoreSheet";
-export type { MoreNavItem } from "./MobileMoreSheet";
-export { IconEdit, IconTrash } from "./icons";
