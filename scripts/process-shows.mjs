@@ -94,4 +94,14 @@ for (const file of entries) {
   );
   const mb = (fs.statSync(outVideo).size / (1024 * 1024)).toFixed(2);
   console.log(`[Video] Done ${stem}.mp4 (${mb} MB)`);
+
+  const outPoster = path.join(SHOWS_OUT_DIR, `${stem}.jpg`);
+  spawnSync(
+    "ffmpeg",
+    ["-y", "-v", "error", "-ss", "00:02:15", "-i", outVideo, "-frames:v", "1", "-vf", "scale=640:-2", "-q:v", "3", outPoster],
+    { stdio: "ignore" },
+  );
+  if (fs.existsSync(outPoster)) {
+    console.log(`[Poster] Extracted ${stem}.jpg`);
+  }
 }

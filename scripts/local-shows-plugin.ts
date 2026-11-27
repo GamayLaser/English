@@ -4,8 +4,9 @@ import type { Plugin } from "vite";
 
 const VIDEO_EXT = new Set([".mp4", ".webm", ".m4v", ".mov"]);
 const SUB_EXT = new Set([".srt", ".vtt"]);
+const POSTER_EXT = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
-/** Lists public/shows and pairs each video with a same-name subtitle. */
+/** Lists public/shows and pairs each video with a same-name subtitle and poster. */
 export function localShowsPlugin(projectRoot: string): Plugin {
   const showsDir = path.resolve(projectRoot, "public/shows");
   return {
@@ -17,6 +18,7 @@ export function localShowsPlugin(projectRoot: string): Plugin {
         fs.mkdirSync(showsDir, { recursive: true });
         const videos = new Map<string, { file: string; size: number }>();
         const subs = new Map<string, string>();
+        const posters = new Map<string, string>();
         const crops = new Map<string, number>();
         for (const name of fs.readdirSync(showsDir)) {
           if (name.startsWith(".") || name.includes("/") || name.includes("\\") || name.includes("..")) continue;
@@ -26,6 +28,7 @@ export function localShowsPlugin(projectRoot: string): Plugin {
           if (!fs.statSync(fullPath).isFile()) continue;
           if (VIDEO_EXT.has(ext)) videos.set(stem, { file: name, size: fs.statSync(fullPath).size });
           else if (SUB_EXT.has(ext)) subs.set(stem, name);
+          else if (POSTER_EXT.has(ext)) posters.set(stem, name);
           else if (ext === ".json") {
             try {
               const meta = JSON.parse(fs.readFileSync(fullPath, "utf8")) as { cropBottom?: number };
@@ -41,6 +44,7 @@ export function localShowsPlugin(projectRoot: string): Plugin {
             title: stem.replace(/[_-]+/g, " "),
             videoUrl: `/shows/${encodeURIComponent(video.file)}`,
             subtitleUrl: subs.has(stem) ? `/shows/${encodeURIComponent(subs.get(stem)!)}` : null,
+            posterUrl: posters.has(stem) ? `/shows/${encodeURIComponent(posters.get(stem)!)}` : null,
             size: video.size,
             cropBottom: crops.get(stem) ?? 0,
           }))

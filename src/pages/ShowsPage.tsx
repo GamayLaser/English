@@ -15,6 +15,7 @@ type ShowItem = {
   title: string;
   videoUrl: string;
   subtitleUrl: string | null;
+  posterUrl?: string | null;
   size: number;
   cropBottom: number;
 };
@@ -669,57 +670,126 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
         </Card>
       </div>
       ) : (
-        /* Local Folder Scanned Library */
-        <Card c={c}>
-          <div className="p-5 md:p-6 space-y-4">
-            <div>
-              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
-                SHOW LIBRARY
-              </p>
-              <h3 className="type-title mt-1" style={{ color: c.fg }}>
-                美剧片库 ({shows.length})
-              </h3>
-            </div>
-            {showsLoading ? (
-              <p className="text-sm" style={{ color: c.fgMuted }}>正在读取片库…</p>
-            ) : shows.length === 0 ? (
+        /* Cinema Poster Show Library (2-layer: Canvas -> Poster Cards) */
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+              SHOW LIBRARY · {shows.length} 集
+            </p>
+          </div>
+
+          {showsLoading ? (
+            <p className="py-12 text-center text-sm" style={{ color: c.fgMuted }}>正在读取片库…</p>
+          ) : shows.length === 0 ? (
+            <Card c={c} className="p-8 text-center">
               <p className="text-sm" style={{ color: c.fgMuted }}>
                 public/shows 里还没有视频。把 .mp4 和同名 .srt 放进这个文件夹后刷新页面。
               </p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {shows.map((item) => (
+            </Card>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {shows.map((item, idx) => (
+                <Card
+                  key={item.id}
+                  c={c}
+                  hover
+                  className="group overflow-hidden cursor-pointer flex flex-col"
+                >
                   <div
-                    key={item.id}
-                    onClick={() => void selectShow(item)}
                     role="button"
                     tabIndex={0}
+                    onClick={() => void selectShow(item)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         void selectShow(item);
                       }
                     }}
-                    className="rounded-xl p-4 flex flex-col justify-between gap-3 cursor-pointer transition-colors hover:border-[var(--accent-primary)]"
-                    style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+                    className="flex flex-col h-full text-left outline-none"
                   >
-                    <div>
-                      <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
-                        {item.title}
-                      </p>
-                      <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
-                        {formatBytes(item.size)} · {item.subtitleUrl ? "已配对字幕" : "无同名字幕"}
-                      </p>
+                    {/* 16:9 Video Cover */}
+                    <div className="relative aspect-video w-full overflow-hidden bg-[#0F172A]">
+                      {item.posterUrl ? (
+                        <img
+                          src={item.posterUrl}
+                          alt={item.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        />
+                      ) : (
+                        <div
+                          className="h-full w-full flex items-center justify-center"
+                          style={{
+                            background: "linear-gradient(135deg, rgba(28,69,50,0.85), rgba(15,23,42,0.95))",
+                          }}
+                        >
+                          <span className="font-mono text-lg font-bold tracking-wider text-white/75">
+                            {item.id}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Subtle Bottom Gradient */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-0"
+                        style={{
+                          background: "linear-gradient(to top, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.08) 45%, transparent 100%)",
+                        }}
+                      />
+
+                      {/* Top Badges */}
+                      <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2">
+                        <span className="rounded-md bg-black/55 px-2 py-0.5 font-mono text-[11px] font-semibold text-white backdrop-blur-sm">
+                          EP {String(idx + 1).padStart(2, "0")}
+                        </span>
+                        <span
+                          className="rounded-md px-2 py-0.5 text-[10.5px] font-medium backdrop-blur-sm"
+                          style={{
+                            background: item.subtitleUrl ? "rgba(28, 69, 50, 0.82)" : "rgba(0, 0, 0, 0.55)",
+                            color: "#fff",
+                          }}
+                        >
+                          {item.subtitleUrl ? "英文字幕" : "纯视频"}
+                        </span>
+                      </div>
+
+                      {/* Center Hover Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <span className="grid size-11 place-items-center rounded-full bg-white/90 text-[#14171F] shadow-lg backdrop-blur-sm">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="ml-0.5">
+                            <polygon points="6 4 20 12 6 20 6 4" />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
-                    <Button c={c} variant="primary" onClick={(e) => { e.stopPropagation(); void selectShow(item); }}>
-                      进入精听
-                    </Button>
+
+                    {/* Clean Card Footer */}
+                    <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold truncate" style={{ color: c.fg }}>
+                          {item.title}
+                        </p>
+                        <p className="mt-0.5 text-xs zen-tnum" style={{ color: c.fgMuted }}>
+                          {formatBytes(item.size)} · {item.subtitleUrl ? "点击进入精听" : "无外挂字幕"}
+                        </p>
+                      </div>
+                      <span
+                        className="grid size-8 shrink-0 place-items-center rounded-full transition-colors"
+                        style={{ background: c.accentDim, color: c.accent }}
+                        aria-hidden="true"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14M13 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
       )}
       <VocabCardPopover
         c={c}
