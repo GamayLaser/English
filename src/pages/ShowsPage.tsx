@@ -227,13 +227,43 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     }
   }
 
+  function backToLibrary() {
+    videoRef.current?.pause();
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      try {
+        recorderRef.current.stop();
+      } catch {}
+    }
+    setRecording(false);
+    setVideoSrc("");
+    setActiveTitle("未选择视频");
+    setCropBottom(0);
+    setCues([]);
+    setLockedCue(null);
+    setCurrentTime(0);
+    setActiveVocabCard(null);
+    setClozeInputs({});
+    setClozeChecked(false);
+  }
+
   return (
     <div className="space-y-5 pb-8 zen-page-enter">
       <EnglishPageHeader
         c={c}
         eyebrow="TV SHOW STUDIO"
-        title="美剧精听"
-        description="片库来自 public/shows。同名字幕会自动配对；点击任意台词跳播、单句循环、切换无字幕盲听。"
+        title={videoSrc ? activeTitle : "美剧精听"}
+        description={
+          videoSrc
+            ? "点击任意台词跳播、单句循环、切换无字幕盲听，或点击台词内淡波浪线词汇弹出词卡。"
+            : "片库来自 public/shows。点击任意剧集进入精听详情页。"
+        }
+        aside={
+          videoSrc ? (
+            <Button c={c} variant="secondary" onClick={backToLibrary}>
+              ← 返回片库
+            </Button>
+          ) : undefined
+        }
       />
 
       {statusMessage && (
@@ -245,8 +275,9 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
         </p>
       )}
 
-      {/* Main Player + Transcript Grid */}
-      <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
+      {videoSrc ? (
+        /* Main Player + Transcript Grid */
+        <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
         {/* Left: Video Player & Controls */}
         <Card c={c} className="overflow-hidden">
           <div
@@ -579,49 +610,59 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
           )}
         </Card>
       </div>
-
-      {/* Local Folder Scanned Library */}
-      <Card c={c}>
-        <div className="p-5 md:p-6 space-y-4">
-          <div>
-            <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
-              SHOW LIBRARY
-            </p>
-            <h3 className="type-title mt-1" style={{ color: c.fg }}>
-              美剧片库 ({shows.length})
-            </h3>
-          </div>
-          {showsLoading ? (
-            <p className="text-sm" style={{ color: c.fgMuted }}>正在读取片库…</p>
-          ) : shows.length === 0 ? (
-            <p className="text-sm" style={{ color: c.fgMuted }}>
-              public/shows 里还没有视频。把 .mp4 和同名 .srt 放进这个文件夹后刷新页面。
-            </p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {shows.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl p-4 flex flex-col justify-between gap-3"
-                  style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
-                >
-                  <div>
-                    <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
-                      {item.title}
-                    </p>
-                    <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
-                      {formatBytes(item.size)} · {item.subtitleUrl ? "已配对字幕" : "无同名字幕"}
-                    </p>
-                  </div>
-                  <Button c={c} variant="primary" onClick={() => void selectShow(item)}>
-                    播放精听
-                  </Button>
-                </div>
-              ))}
+      ) : (
+        /* Local Folder Scanned Library */
+        <Card c={c}>
+          <div className="p-5 md:p-6 space-y-4">
+            <div>
+              <p className="type-caption font-semibold tracking-[0.14em] uppercase" style={{ color: c.accent }}>
+                SHOW LIBRARY
+              </p>
+              <h3 className="type-title mt-1" style={{ color: c.fg }}>
+                美剧片库 ({shows.length})
+              </h3>
             </div>
-          )}
-        </div>
-      </Card>
+            {showsLoading ? (
+              <p className="text-sm" style={{ color: c.fgMuted }}>正在读取片库…</p>
+            ) : shows.length === 0 ? (
+              <p className="text-sm" style={{ color: c.fgMuted }}>
+                public/shows 里还没有视频。把 .mp4 和同名 .srt 放进这个文件夹后刷新页面。
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {shows.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => void selectShow(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        void selectShow(item);
+                      }
+                    }}
+                    className="rounded-xl p-4 flex flex-col justify-between gap-3 cursor-pointer transition-colors hover:border-[var(--accent-primary)]"
+                    style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-xs" style={{ color: c.fgMuted }}>
+                        {formatBytes(item.size)} · {item.subtitleUrl ? "已配对字幕" : "无同名字幕"}
+                      </p>
+                    </div>
+                    <Button c={c} variant="primary" onClick={(e) => { e.stopPropagation(); void selectShow(item); }}>
+                      进入精听
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
       <VocabCardPopover
         c={c}
         card={activeVocabCard}
