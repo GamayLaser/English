@@ -39,6 +39,41 @@ function stripTags(line: string): string {
 
 const CJK_RE = /[\u4e00-\u9fff]/;
 
+const TERMINAL_PUNCT_RE = /[.!?…]["”'’)\]]*$/;
+
+function mergeSentenceCues(cues: SubtitleCue[]): SubtitleCue[] {
+  if (cues.length <= 1) return cues;
+  const merged: SubtitleCue[] = [];
+
+  for (const curr of cues) {
+    const prev = merged[merged.length - 1];
+    const gap = prev ? curr.startSec - prev.endSec : Infinity;
+    const isMusic = prev ? prev.en.startsWith("♪") || curr.en.startsWith("♪") : false;
+    const shouldMerge =
+      Boolean(prev) &&
+      !isMusic &&
+      gap <= 1.2 &&
+      !TERMINAL_PUNCT_RE.test(prev.en.trim()) &&
+      prev.en.length + curr.en.length <= 220;
+
+    if (prev && shouldMerge) {
+      prev.endSec = Math.max(prev.endSec, curr.endSec);
+      prev.en = `${prev.en.trim()} ${curr.en.trim()}`;
+      if (prev.zh && curr.zh) prev.zh = `${prev.zh.trim()} ${curr.zh.trim()}`;
+      else if (curr.zh) prev.zh = curr.zh;
+      prev.raw = `${prev.raw}\n${curr.raw}`;
+    } else {
+      merged.push({ ...curr });
+    }
+  }
+
+  return merged.map((cue, idx) => ({
+    ...cue,
+    index: idx + 1,
+    id: `${idx + 1}-${cue.startSec.toFixed(2)}`,
+  }));
+}
+
 export function parseSubtitles(content: string): SubtitleCue[] {
   const normalized = content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").trim();
   if (!normalized) return [];
@@ -91,7 +126,7 @@ export function parseSubtitles(content: string): SubtitleCue[] {
     });
   }
 
-  return cues;
+  return mergeSentenceCues(cues);
 }
 
 export function formatTime(sec: number): string {
