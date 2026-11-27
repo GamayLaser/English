@@ -20,6 +20,7 @@ export function localShowsPlugin(projectRoot: string): Plugin {
         const subs = new Map<string, string>();
         const posters = new Map<string, string>();
         const crops = new Map<string, number>();
+        const titles = new Map<string, string>();
         for (const name of fs.readdirSync(showsDir)) {
           if (name.startsWith(".") || name.includes("/") || name.includes("\\") || name.includes("..")) continue;
           const ext = path.extname(name).toLowerCase();
@@ -31,8 +32,12 @@ export function localShowsPlugin(projectRoot: string): Plugin {
           else if (POSTER_EXT.has(ext)) posters.set(stem, name);
           else if (ext === ".json") {
             try {
-              const meta = JSON.parse(fs.readFileSync(fullPath, "utf8")) as { cropBottom?: number };
+              const meta = JSON.parse(fs.readFileSync(fullPath, "utf8").replace(/^\uFEFF/, "")) as {
+                cropBottom?: number;
+                title?: string;
+              };
               if (typeof meta.cropBottom === "number") crops.set(stem, meta.cropBottom);
+              if (typeof meta.title === "string" && meta.title.trim()) titles.set(stem, meta.title.trim());
             } catch {
               /* ignore a bad sidecar */
             }
@@ -41,7 +46,7 @@ export function localShowsPlugin(projectRoot: string): Plugin {
         const items = [...videos.entries()]
           .map(([stem, video]) => ({
             id: stem,
-            title: stem.replace(/[_-]+/g, " "),
+            title: titles.get(stem) ?? stem.replace(/[_-]+/g, " "),
             videoUrl: `/shows/${encodeURIComponent(video.file)}`,
             subtitleUrl: subs.has(stem) ? `/shows/${encodeURIComponent(subs.get(stem)!)}` : null,
             posterUrl: posters.has(stem) ? `/shows/${encodeURIComponent(posters.get(stem)!)}` : null,
