@@ -28,6 +28,8 @@ function stripTags(line: string): string {
   cleaned = cleaned
     .replace(/^(?:[A-Z][A-Za-z.'-]*)(?:\s+[A-Z0-9][A-Za-z0-9.'-]*){0,2}:\s*/, "")
     .trim();
+  // Drop pure OCR music-note cues without lyrics (e.g. "J'j'", "Jj", "J'j'j'j'")
+  if (/^[Jj'’"“”\s♪♫]+$/.test(cleaned)) return "";
   // BluRay/DVD OCR often misreads music note ♪ as standalone leading/trailing J or j
   const hasLeadingMusicJ = /^J["“”']?\s+/.test(cleaned);
   const hasTrailingMusicJ = /\s+[Jj]["“”']?$/.test(cleaned);
