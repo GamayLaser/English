@@ -57,14 +57,20 @@ function cleanLine(line) {
     .trim();
   if (!cleaned || /^[Jj'’"“”\s♪♫]+$/.test(cleaned)) return "";
 
-  const hasLeadingMusicJ = /^J["“”']?\s+/.test(cleaned);
-  const hasTrailingMusicJ = /\s+[Jj]["“”']?$/.test(cleaned);
-  if (hasLeadingMusicJ || hasTrailingMusicJ) {
-    cleaned = cleaned
-      .replace(/^J["“”']?\s+/, "")
-      .replace(/\s+[Jj]["“”']?$/, "")
-      .trim();
-    if (cleaned) cleaned = `♪ ${cleaned}`;
+  const hadMusic =
+    /^[Jj]["“”'’]?\s+/.test(cleaned) ||
+    /\s+[Jj]["“”'’]?$/.test(cleaned) ||
+    /[♪♫]/.test(cleaned);
+  cleaned = cleaned
+    .replace(/[♪♫]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:[Jj]["“”'’]?\s+)+/, "")
+    .replace(/(?:\s+[Jj]["“”'’]?)+$/, "")
+    .trim();
+  if (hadMusic && cleaned) {
+    cleaned = cleaned.replace(/\s+[Jj]["“”'’]?(?=\s)/g, "");
+    cleaned = `♪ ${cleaned}`;
   }
   return cleaned;
 }

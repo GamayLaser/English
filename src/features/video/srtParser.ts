@@ -29,16 +29,22 @@ function stripTags(line: string): string {
     .replace(/^(?:[A-Z][A-Za-z.'-]*)(?:\s+[A-Z0-9][A-Za-z0-9.'-]*){0,2}:\s*/, "")
     .trim();
   // Drop pure OCR music-note cues without lyrics (e.g. "J'j'", "Jj", "J'j'j'j'")
-  if (/^[Jj'’"“”\s♪♫]+$/.test(cleaned)) return "";
-  // BluRay/DVD OCR often misreads music note ♪ as standalone leading/trailing J or j
-  const hasLeadingMusicJ = /^J["“”']?\s+/.test(cleaned);
-  const hasTrailingMusicJ = /\s+[Jj]["“”']?$/.test(cleaned);
-  if (hasLeadingMusicJ || hasTrailingMusicJ) {
-    cleaned = cleaned
-      .replace(/^J["“”']?\s+/, "")
-      .replace(/\s+[Jj]["“”']?$/, "")
-      .trim();
-    if (cleaned) cleaned = `♪ ${cleaned}`;
+  if (!cleaned || /^[Jj'’"“”\s♪♫]+$/.test(cleaned)) return "";
+  // BluRay/DVD OCR often misreads music note ♪ as standalone leading/trailing J/j (e.g. "j\"", "j'", "J")
+  const hadMusic =
+    /^[Jj]["“”'’]?\s+/.test(cleaned) ||
+    /\s+[Jj]["“”'’]?$/.test(cleaned) ||
+    /[♪♫]/.test(cleaned);
+  cleaned = cleaned
+    .replace(/[♪♫]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:[Jj]["“”'’]?\s+)+/, "")
+    .replace(/(?:\s+[Jj]["“”'’]?)+$/, "")
+    .trim();
+  if (hadMusic && cleaned) {
+    cleaned = cleaned.replace(/\s+[Jj]["“”'’]?(?=\s)/g, "");
+    cleaned = `♪ ${cleaned}`;
   }
   return cleaned;
 }

@@ -180,7 +180,7 @@ Yeah, that's right. Beam me up, potty!
 
 46
 00:02:42,413 --> 00:02:45,207
-♪ nobody else ♪ is stronger than I am
+♪ nobody else is stronger than I am
 
 47
 00:02:45,416 --> 00:02:48,002
@@ -920,7 +920,7 @@ Hi there.
 
 231
 00:12:17,154 --> 00:12:19,406
-♪ I'm on my way, ♪ I'm making it...
+♪ I'm on my way, I'm making it...
 
 232
 00:12:19,615 --> 00:12:29,666
@@ -928,7 +928,7 @@ adult Sheldon: With my research complete and my ulcer on the mend, all that was 
 
 233
 00:12:29,875 --> 00:12:32,127
-♪ and I will walk ♪ through the front door
+♪ and I will walk through the front door
 
 234
 00:12:32,336 --> 00:12:33,336
