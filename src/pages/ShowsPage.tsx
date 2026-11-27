@@ -37,6 +37,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   const [activeTitle, setActiveTitle] = useState("未选择视频");
   const [videoSrc, setVideoSrc] = useState("");
   const [cropBottom, setCropBottom] = useState(0);
+  const [videoAspect, setVideoAspect] = useState("16 / 9");
   const [cues, setCues] = useState<SubtitleCue[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [subMode, setSubMode] = useState<SubtitleMode>("bilingual");
@@ -214,6 +215,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
   async function selectShow(item: ShowItem) {
     setVideoSrc(item.videoUrl);
     setCropBottom(item.cropBottom || 0);
+    setVideoAspect("16 / 9");
     setActiveTitle(item.title);
     setLockedCue(null);
     setCurrentTime(0);
@@ -239,6 +241,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setVideoSrc("");
     setActiveTitle("未选择视频");
     setCropBottom(0);
+    setVideoAspect("16 / 9");
     setCues([]);
     setLockedCue(null);
     setCurrentTime(0);
@@ -350,12 +353,19 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
           <Card c={c} className="overflow-hidden">
             <div
               className="relative w-full overflow-hidden flex items-center justify-center bg-black"
-              style={{ aspectRatio: cropBottom > 0 ? `16 / ${9 * (1 - cropBottom)}` : "16 / 9" }}
+              style={{ aspectRatio: videoAspect }}
             >
               <video
                 ref={videoRef}
                 src={videoSrc}
                 controls
+                onLoadedMetadata={(e) => {
+                  const { videoWidth, videoHeight } = e.currentTarget;
+                  if (videoWidth > 0 && videoHeight > 0) {
+                    const h = cropBottom > 0 ? videoHeight * (1 - cropBottom) : videoHeight;
+                    setVideoAspect(`${videoWidth} / ${h}`);
+                  }
+                }}
                 onTimeUpdate={handleTimeUpdate}
                 className="h-full w-full bg-black"
                 style={{ objectFit: cropBottom > 0 ? "cover" : "contain", objectPosition: "center top" }}
