@@ -1,2048 +1,1507 @@
 1
 00:00:09,969 --> 00:00:12,138
-Adult Sheldon:
 I've always loved trains.
 
 2
-00:00:14,056 --> 00:00:16,017
-In fact, if my career
+00:00:14,056 --> 00:00:22,106
+In fact, if my career in theoretical physics hadn't worked out, my backup plan was to become a professional ticket taker.
 
 3
-00:00:16,225 --> 00:00:19,479
-in theoretical physics hadn't
-worked out, my backup plan
-
-4
-00:00:19,687 --> 00:00:22,106
-was to become
-a professional ticket taker.
-
-5
 00:00:22,315 --> 00:00:23,441
 Or hobo.
 
+4
+00:00:30,740 --> 00:00:35,620
+and when I figured out that trains allowed me to prove Newton's first law...
+
+5
+00:00:35,828 --> 00:00:43,294
+An object in motion stays in motion with the same speed and in the same direction unless acted upon by an unbalanced force...
+
 6
-00:00:26,527 --> 00:00:29,530
-J'j'
+00:00:43,503 --> 00:00:48,549
+I felt like Neil Armstrong on the moon, alone and happy.
 
 7
-00:00:30,740 --> 00:00:33,493
-and when I figured out
-that trains allowed me
+00:00:48,758 --> 00:00:50,259
+Shelly, dinner's ready!
 
 8
-00:00:33,701 --> 00:00:35,620
-to prove Newton's first law...
+00:00:50,468 --> 00:00:55,306
+Ibe-bop-a-iula, baby, what I say I I don't care how dimwitted you are.
 
 9
-00:00:35,828 --> 00:00:37,955
-An object in motion stays
-in motion
+00:00:55,515 --> 00:00:58,684
+Scientific principles have to make you smile.
 
 10
-00:00:38,164 --> 00:00:40,458
-with the same speed
-and in the same direction
+00:00:58,893 --> 00:01:04,815
+Of course, nobody I knew in east Texas in 1989 cared about newtonian physics.
 
 11
-00:00:40,666 --> 00:00:43,294
-unless acted upon
-by an unbalanced force...
+00:01:05,525 --> 00:01:08,903
+The only Newtons they cared about were Wayne and fig.
 
 12
-00:00:43,503 --> 00:00:46,589
-I felt like Neil Armstrong
-on the moon,
+00:01:09,111 --> 00:01:13,032
+Sheldon, if you don't get in here, I'm gonna lick your toothbrush! Coming!
 
 13
-00:00:46,797 --> 00:00:48,549
-alone and happy.
-
-14
-00:00:48,758 --> 00:00:50,259
-Mary: Shelly, dinner's ready!
-
-15
-00:00:50,468 --> 00:00:52,386
-Ibe-bop-a-iula,
-baby, what I say I
-
-16
-00:00:52,595 --> 00:00:55,306
-I don't care
-how dimwitted you are.
-
-17
-00:00:55,515 --> 00:00:58,684
-Scientific principles
-have to make you smile.
-
-18
-00:00:58,893 --> 00:01:01,103
-Of course,
-nobody I knew in east Texas
-
-19
-00:01:01,312 --> 00:01:04,815
-in 1989 cared
-about newtonian physics.
-
-20
-00:01:05,525 --> 00:01:07,068
-The only Newtons
-they cared about
-
-21
-00:01:07,276 --> 00:01:08,903
-were Wayne and fig.
-
-22
-00:01:09,111 --> 00:01:10,506
-Missy: Sheldon, if
-you don't get in here,
-
-23
-00:01:10,530 --> 00:01:13,032
-- I'm gonna lick your toothbrush!
-- Coming!
-
-24
 00:01:13,282 --> 00:01:14,408
 That's my sister.
 
-25
+14
 00:01:14,617 --> 00:01:16,327
 And she's done it before.
 
-26
+15
 00:01:16,994 --> 00:01:18,621
-J'do the walk of life j“
+♪ J'do the walk of life
 
-27
+16
 00:01:19,205 --> 00:01:20,706
-j'yeah, he do
-the walk of life. J”
+j'yeah, he do ♪ the walk of life.
 
-28
-00:01:21,207 --> 00:01:21,832
-the hell were you doing
+17
+00:01:21,207 --> 00:01:23,834
+the hell were you doing out there? George, language.
 
-29
-00:01:22,041 --> 00:01:23,041
-- out there?
-- George,
-
-30
-00:01:23,167 --> 00:01:23,834
-language.
-
-31
+18
 00:01:24,043 --> 00:01:25,461
 What language? So?
 
-32
+19
 00:01:25,670 --> 00:01:27,630
-I was exploring
-dimensional kinematics.
+I was exploring dimensional kinematics.
 
-33
+20
 00:01:28,005 --> 00:01:29,382
 Admit it... he's adopted.
 
-34
-00:01:29,590 --> 00:01:30,750
-Sheldon: How can I be adopted
+21
+00:01:29,590 --> 00:01:32,385
+How can I be adopted when I have a twin sister?
 
-35
-00:01:30,925 --> 00:01:32,385
-when I have a twin sister?
-
-36
+22
 00:01:32,593 --> 00:01:34,053
 Think, monkey, think.
 
-37
+23
 00:01:34,262 --> 00:01:35,012
-Mary: That's enough.
+That's enough.
 
-38
+24
 00:01:35,221 --> 00:01:35,888
 No one's adopted.
 
-39
+25
 00:01:36,097 --> 00:01:37,097
 I wish I was.
 
-40
+26
 00:01:37,223 --> 00:01:38,808
 That can still be arranged.
 
-41
+27
 00:01:39,016 --> 00:01:39,767
 Now, let's pray.
 
-42
+28
 00:01:39,976 --> 00:01:41,602
 A moment, please.
 
-43
-00:01:44,313 --> 00:01:45,815
-- Leave him be.
-- He can hold hands
+29
+00:01:44,313 --> 00:01:47,383
+Leave him be. He can hold hands with his family. It won't kill him.
 
-44
-00:01:46,023 --> 00:01:47,383
-with his family.
-It won't kill him.
-
-45
+30
 00:01:47,441 --> 00:01:48,568
 We don't know that.
 
-46
+31
 00:01:48,901 --> 00:01:51,028
-Georgie, did you wash
-your hands before dinner?
+Georgie, did you wash your hands before dinner?
 
-47
+32
 00:01:51,237 --> 00:01:52,363
 Or even this week?
 
-48
+33
 00:01:52,572 --> 00:01:53,739
 None of your business.
 
-49
+34
 00:01:53,948 --> 00:01:55,116
 Hence the mittens.
 
-50
-00:01:57,410 --> 00:01:58,720
-Mary: Thank you, god,
-for this food
+35
+00:01:57,410 --> 00:02:02,832
+Thank you, god, for this food we're about to receive and for the nourishment of our bodies, and bless the hands that prepared it.
 
-51
-00:01:58,744 --> 00:02:01,098
-we're about to receive and for
-the nourishment of our bodies,
-
-52
-00:02:01,122 --> 00:02:02,832
-and bless the hands
-that prepared it.
-
-53
+36
 00:02:03,124 --> 00:02:04,124
-All: Amen.
+Amen.
 
-54
+37
 00:02:06,502 --> 00:02:07,962
-How come we ain't got
-no tater tots?
+How come we ain't got no tater tots?
 
-55
+38
 00:02:08,170 --> 00:02:09,330
 I made tater tots last night.
 
-56
-00:02:10,089 --> 00:02:10,881
-George: I'd take tater tots
+39
+00:02:10,089 --> 00:02:12,466
+I'd take tater tots over mashed potaters any day.
 
-57
-00:02:11,090 --> 00:02:12,466
-over mashed potaters any day.
+40
+00:02:12,675 --> 00:02:15,677
+Just eat what I made you. Can we at least have tater tots tomorrow?
 
-58
-00:02:12,675 --> 00:02:14,468
-- Just eat what I made you.
-- Can we at least
+41
+00:02:15,803 --> 00:02:20,766
+It was family dinners like this that led me to adopt a mid-Atlantic accent.
 
-59
-00:02:14,677 --> 00:02:15,677
-have tater tots tomorrow?
-
-60
-00:02:15,803 --> 00:02:17,638
-Adult Sheldon:
-It was family dinners like this
-
-61
-00:02:17,847 --> 00:02:20,766
-that led me to adopt
-a mid-Atlantic accent.
-
-62
+42
 00:02:20,975 --> 00:02:22,393
 Nobel prize winners...
 
-63
+43
 00:02:22,602 --> 00:02:24,454
-Ought
-not be orderin' tater tots.
+Ought not be orderin' tater tots.
 
-64
+44
 00:02:24,478 --> 00:02:26,564
-Everybody excited
-to start school Monday?
+Everybody excited to start school Monday?
 
-65
+45
 00:02:26,772 --> 00:02:27,398
 I am.
 
-66
+46
 00:02:27,607 --> 00:02:28,607
 I guess so.
 
-67
+47
 00:02:29,317 --> 00:02:30,568
-Mary: Georgie?
+Georgie?
 
-68
+48
 00:02:30,776 --> 00:02:32,069
-Freshman year,
-that's a big deal.
+Freshman year, that's a big deal.
 
-69
-00:02:32,278 --> 00:02:33,798
-How can I be excited
-when he's gonna be
+49
+00:02:32,278 --> 00:02:35,114
+How can I be excited when he's gonna be in the same grade as me?
 
-70
-00:02:33,904 --> 00:02:35,114
-in the same grade as me?
+50
+00:02:35,573 --> 00:02:39,118
+Don't worry, Georgie, I'm not planning on being in the ninth grade for very long.
 
-71
-00:02:35,573 --> 00:02:37,050
-Sheldon: Don't worry,
-Georgie, I'm not planning
+51
+00:02:39,327 --> 00:02:42,746
+All I know is he's not in the same grade as me anymore, and I'm thrilled.
 
-72
-00:02:37,074 --> 00:02:39,118
-on being in the ninth
-grade for very long.
-
-73
-00:02:39,327 --> 00:02:41,537
-All I know is he's not in
-the same grade as me anymore,
-
-74
-00:02:41,746 --> 00:02:42,746
-and I'm thrilled.
-
-75
+52
 00:02:42,913 --> 00:02:44,624
-Good luck
-with your finger painting.
+Good luck with your finger painting.
 
-76
+53
 00:02:44,874 --> 00:02:46,754
-You're gonna get your ass kicked
-in high school.
+You're gonna get your ass kicked in high school.
 
-77
+54
 00:02:46,834 --> 00:02:48,085
-Mary: Hey, language.
+Hey, language.
 
-78
+55
 00:02:48,377 --> 00:02:49,670
 I'm not going to be assaulted.
 
-79
+56
 00:02:49,879 --> 00:02:51,714
-High school is a haven
-for higher learning.
+High school is a haven for higher learning.
 
-80
+57
 00:02:51,922 --> 00:02:52,922
 Oh, dear god.
 
-81
-00:02:53,299 --> 00:02:54,842
-Speaking of god,
-who's going to church
+58
+00:02:53,299 --> 00:02:56,651
+Speaking of god, who's going to church with me tomorrow? George sr.: Ican't.
 
-82
-00:02:55,051 --> 00:02:56,651
-- with me tomorrow?
-- George sr.: Ican't.
-
-83
+59
 00:02:56,886 --> 00:02:58,304
-I'm meeting
-with the other coaches.
+I'm meeting with the other coaches.
 
-84
+60
 00:02:58,512 --> 00:02:59,632
 You can't meet after church?
 
-85
+61
 00:02:59,805 --> 00:03:01,682
-No, Mary,
-I can't meet after church.
+No, Mary, I can't meet after church.
 
-86
+62
 00:03:03,476 --> 00:03:04,143
 Georgie?
 
-87
+63
 00:03:04,477 --> 00:03:05,853
 I got to study my playbook.
 
-88
+64
 00:03:09,940 --> 00:03:10,983
 I'll go with you, mom.
 
-89
+65
 00:03:11,692 --> 00:03:12,443
-Missy: Why are you going?
+Why are you going?
 
-90
-00:03:12,652 --> 00:03:14,278
-- You don't believe in god.
-- No,
+66
+00:03:12,652 --> 00:03:15,780
+You don't believe in god. No, but I believe in mom.
 
-91
-00:03:14,487 --> 00:03:15,780
-but I believe in mom.
-
-92
+67
 00:03:15,988 --> 00:03:17,531
 I'll take it. Missy?
 
-93
+68
 00:03:17,740 --> 00:03:18,884
 Can't, Heather asked me to...
 
-94
+69
 00:03:18,908 --> 00:03:20,660
-- You're goin'.
-- Son of a bitch.
+You're goin'. Son of a bitch.
 
-95
+70
 00:03:21,702 --> 00:03:22,702
-- Hey.
-- Ow!
+Hey. Ow!
 
-96
-00:03:24,955 --> 00:03:26,290
-Mary: Missy... Don't you
+71
+00:03:24,955 --> 00:03:28,918
+Missy... Don't you throw something at the dinner table. George Jr.
 
-97
-00:03:26,499 --> 00:03:28,918
-throw something at the
-dinner table. George Jr.
-
-98
+72
 00:03:29,126 --> 00:03:32,213
-Adult Sheldon: Jane goodall
-had to go to Africa to study apes.
+Jane goodall had to go to Africa to study apes.
 
-99
+73
 00:03:32,505 --> 00:03:33,130
-Missy: Hey!
+Hey!
 
-100
+74
 00:03:33,422 --> 00:03:35,299
 [Just had to go to dinner.
 
-101
+75
 00:03:36,133 --> 00:03:37,551
 Never at the dinner table!
 
-102
+76
 00:03:37,760 --> 00:03:39,178
 You knock that off, George!
 
-103
+77
 00:03:39,387 --> 00:03:41,222
 D-Do not retaliate!
 
-104
+78
 00:03:41,430 --> 00:03:45,267
-All:
-J'onward, Christian soldiers j”
+♪ J'onward, Christian soldiers
 
-105
+79
 00:03:45,476 --> 00:03:49,897
-j”marching as to war j”
+♪ j”marching as to war
 
-106
+80
 00:03:50,106 --> 00:03:54,735
-j”with the cross of Jesus j”
+♪ j”with the cross of Jesus
 
-107
+81
 00:03:54,944 --> 00:04:00,533
-j”going on before. J”
+♪ j”going on before.
 
-108
-00:04:00,950 --> 00:04:04,120
-in Matthew nine, verse four,
-Jesus said,
+82
+00:04:00,950 --> 00:04:08,416
+in Matthew nine, verse four, Jesus said, "why would you entertain evil thoughts in your hearts?"
 
-109
-00:04:04,453 --> 00:04:08,416
-"why would you entertain
-evil thoughts in your hearts?"
-
-110
+83
 00:04:09,041 --> 00:04:10,960
-- Do you have evil thoughts?
-- Shh.
+Do you have evil thoughts? Shh.
 
-111
+84
 00:04:11,168 --> 00:04:12,962
-I just don't think
-this part applies to me.
+I just don't think this part applies to me.
 
-112
+85
 00:04:13,170 --> 00:04:15,131
-That's fine.
-Be quiet and listen.
+That's fine. Be quiet and listen.
 
-113
+86
 00:04:16,257 --> 00:04:17,257
 I'm only nine years old.
 
-114
+87
 00:04:17,425 --> 00:04:19,260
-Most evil doesn't start
-till puberty.
+Most evil doesn't start till puberty.
 
-115
+88
 00:04:21,220 --> 00:04:21,929
 Hello.
 
-116
-00:04:22,138 --> 00:04:23,723
-Philippians 4:8,
+89
+00:04:22,138 --> 00:04:26,267
+8, "finally, brothers, whatever is..."
 
-117
-00:04:24,390 --> 00:04:26,267
-"finally, brothers,
-whatever is..."
-
-118
+90
 00:04:26,475 --> 00:04:27,893
 Do you have evil thoughts?
 
-119
+91
 00:04:28,102 --> 00:04:29,102
 I'm having one right now.
 
-120
+92
 00:04:29,437 --> 00:04:30,479
 Really? What is it?
 
-121
+93
 00:04:30,688 --> 00:04:33,315
-When we get home, I'm gonna
-kick your little balls.
+When we get home, I'm gonna kick your little balls.
 
-122
+94
 00:04:33,524 --> 00:04:35,609
-You can't.
-They haven't descended yet.
+You can't. They haven't descended yet.
 
-123
+95
 00:04:38,070 --> 00:04:39,070
-- Mom?
-- What?
+Mom? What?
 
-124
+96
 00:04:39,238 --> 00:04:41,323
-When should I be expecting
-my testicles?
+When should I be expecting my testicles?
 
-125
+97
 00:04:41,532 --> 00:04:42,700
 "Whatever is admirable..."
 
-126
+98
 00:04:43,033 --> 00:04:44,744
 What is wrong with him?
 
-127
+99
 00:04:44,952 --> 00:04:46,829
 Nothin' is wrong with him.
 
-128
+100
 00:04:47,037 --> 00:04:49,331
-Now, turn around before
-I knock your lights out.
+Now, turn around before I knock your lights out.
 
-129
+101
 00:04:49,540 --> 00:04:52,042
-Pastor: Think continually
-on these things.
+Think continually on these things.
 
-130
-00:04:52,251 --> 00:04:53,294
-A good thought leads
+102
+00:04:52,251 --> 00:04:54,837
+A good thought leads to a good thing.
 
-131
-00:04:53,502 --> 00:04:54,837
-to a good thing.
-
-132
+103
 00:04:55,045 --> 00:04:56,925
-You feel it in your body.
-You feel it in your...
+You feel it in your body. You feel it in your...
 
-133
+104
 00:04:57,006 --> 00:04:59,300
-Adult Sheldon: My mom was
-my Christian soldier.
+My mom was my Christian soldier.
 
-134
+105
 00:04:59,508 --> 00:05:01,719
-Leads to evil things
-and sits there and...
+Leads to evil things and sits there and...
 
-135
+106
 00:05:01,927 --> 00:05:05,014
-And for the record,
-they descended when I was 15.
+And for the record, they descended when I was 15.
 
-136
-00:05:12,605 --> 00:05:15,065
-J'j'
-
-137
+107
 00:05:15,816 --> 00:05:18,486
-Shelly, it's your last day
-of summer. Go out and enjoy it.
+Shelly, it's your last day of summer. Go out and enjoy it.
 
-138
+108
 00:05:18,694 --> 00:05:20,780
-But I have to learn
-the student handbook.
+But I have to learn the student handbook.
 
-139
-00:05:21,113 --> 00:05:22,865
-Ooh, did you know
-extreme hairstyles,
+109
+00:05:21,113 --> 00:05:25,493
+Ooh, did you know extreme hairstyles, goatees and mustaches are not allowed?
 
-140
-00:05:23,073 --> 00:05:25,493
-goatees and mustaches
-are not allowed?
-
-141
+110
 00:05:25,701 --> 00:05:28,162
-- I didn't.
-- I personally find that very reassuring.
+I didn't. I personally find that very reassuring.
 
-142
+111
 00:05:28,370 --> 00:05:30,790
 Look what a beautiful day it is.
 
-143
+112
 00:05:43,594 --> 00:05:44,887
 Go play.
 
-144
+113
 00:05:45,095 --> 00:05:47,681
-"Go play“... if only
-life were that simple.
+"Go play“... if only life were that simple.
 
-145
+114
 00:05:54,814 --> 00:05:56,106
 There, I played.
 
-146
+115
 00:05:56,357 --> 00:05:57,441
 Hey, Sheldon!
 
-147
+116
 00:05:58,067 --> 00:05:59,485
 Hello, Billy sparks.
 
-148
-00:05:59,693 --> 00:06:01,695
-- Hello, Matilda sparks.
-- I heard
+117
+00:05:59,693 --> 00:06:04,281
+Hello, Matilda sparks. I heard you're going to high school tomorrow. I am.
 
-149
-00:06:01,904 --> 00:06:04,281
-- you're going to high school tomorrow.
-- I am.
+118
+00:06:04,490 --> 00:06:07,827
+You're going to have to find someone else to torment on the playground.
 
-150
-00:06:04,490 --> 00:06:06,116
-You're going to have
-to find someone else
-
-151
-00:06:06,325 --> 00:06:07,827
-to torment on the playground.
-
-152
+119
 00:06:08,702 --> 00:06:09,870
 "Torment"?
 
-153
+120
 00:06:10,079 --> 00:06:12,122
 It means to maliciously harass.
 
-154
+121
 00:06:12,331 --> 00:06:13,666
 "Her ass“?
 
-155
+122
 00:06:14,083 --> 00:06:15,083
 That's funny.
 
-156
+123
 00:06:15,209 --> 00:06:16,877
 Well, this was nice.
 
-157
+124
 00:06:17,086 --> 00:06:18,087
 Hey, doofus!
 
-158
+125
 00:06:20,130 --> 00:06:21,298
 Mom!
 
-159
+126
 00:06:21,757 --> 00:06:23,551
-- Good girl.
-- Mom!
+Good girl. Mom!
 
-160
+127
 00:06:25,386 --> 00:06:27,426
-Mary: What am [supposed to do?
-His feet are growing.
+What am [supposed to do? His feet are growing.
 
-161
+128
 00:06:27,596 --> 00:06:29,366
-George sr.: Why can't
-he wear Georgie's old shoes?
+George sr.: Why can't he wear Georgie's old shoes?
 
-162
+129
 00:06:29,390 --> 00:06:30,590
-Mary: He won't hold your hand.
+He won't hold your hand.
 
-163
-00:06:30,724 --> 00:06:31,868
-You think he's gonna
-put his feet
+130
+00:06:30,724 --> 00:06:33,092
+You think he's gonna put his feet in his brother's smelly shoes?
 
-164
-00:06:31,892 --> 00:06:33,092
-in his brother's smelly shoes?
-
-165
+131
 00:06:33,185 --> 00:06:34,955
-George sr.: Well, we damn well
-better cut back somewhere.
+George sr.: Well, we damn well better cut back somewhere.
 
-166
+132
 00:06:34,979 --> 00:06:36,659
-Mary: Will you please keep
-your voice down?
+Will you please keep your voice down?
 
-167
+133
 00:06:38,107 --> 00:06:39,775
-They're fighting
-about you again.
+They're fighting about you again.
 
-168
+134
 00:06:39,984 --> 00:06:41,777
 They're fighting about money.
 
-169
+135
 00:06:41,986 --> 00:06:44,113
-It's a common argument
-in marriages.
+It's a common argument in marriages.
 
-170
+136
 00:06:47,324 --> 00:06:48,117
 Lights out.
 
-171
+137
 00:06:48,325 --> 00:06:49,535
 Big day tomorrow.
 
-172
+138
 00:06:51,245 --> 00:06:51,871
 Mom?
 
-173
+139
 00:06:52,079 --> 00:06:53,079
 Hmm?
 
-174
+140
 00:06:53,205 --> 00:06:55,332
 Do we have financial problems?
 
-175
+141
 00:06:56,542 --> 00:06:58,085
 Don't you worry about that.
 
-176
+142
 00:06:58,294 --> 00:06:59,295
 We are fine.
 
-177
+143
 00:06:59,795 --> 00:07:01,130
 Now, go to sleep.
 
-178
+144
 00:07:03,465 --> 00:07:06,260
-She's lying. She just said that
-to make you feel better.
+She's lying. She just said that to make you feel better.
 
-179
+145
 00:07:07,469 --> 00:07:08,596
 Mom doesn't lie.
 
-180
-00:07:09,597 --> 00:07:10,222
-Sure, she thinks
+146
+00:07:09,597 --> 00:07:14,602
+Sure, she thinks the earth was made in six days, but that's 'cause she's gullible, not a liar.
 
-181
-00:07:10,431 --> 00:07:11,807
-the earth was made in six days,
+147
+00:07:19,148 --> 00:07:22,151
+Mom, Sheldon can't find his bowtie.
 
-182
-00:07:12,016 --> 00:07:14,602
-but that's 'cause
-she's gullible, not a liar.
-
-183
-00:07:19,148 --> 00:07:20,148
-Missy: Mom,
-
-184
-00:07:20,441 --> 00:07:22,151
-Sheldon can't find his bowtie.
-
-185
+148
 00:07:22,860 --> 00:07:24,612
 Really? I laid it out for him.
 
-186
+149
 00:07:24,820 --> 00:07:26,822
-Leave it alone, Mary.
-He doesn't need a bowtie.
+Leave it alone, Mary. He doesn't need a bowtie.
 
-187
+150
 00:07:27,031 --> 00:07:29,950
-It's his first day of school.
-Let him wear what he wants.
+It's his first day of school. Let him wear what he wants.
 
-188
+151
 00:07:30,159 --> 00:07:32,161
-Sheldon: Mom, I
-can't find my bowtie!
+Mom, I can't find my bowtie!
 
-189
+152
 00:07:32,369 --> 00:07:34,455
-Dear lord, why's he
-got to wear a bowtie?
+Dear lord, why's he got to wear a bowtie?
 
-190
+153
 00:07:35,873 --> 00:07:37,333
 Can I drive in with you?
 
-191
+154
 00:07:37,917 --> 00:07:38,542
 Sure.
 
-192
+155
 00:07:38,751 --> 00:07:40,586
-Everybody's gonna know
-he's your brother.
+Everybody's gonna know he's your brother.
 
-193
+156
 00:07:40,794 --> 00:07:42,171
 It's gonna be awful for you.
 
-194
+157
 00:07:42,379 --> 00:07:43,422
 Tell her to shut up.
 
-195
+158
 00:07:44,340 --> 00:07:45,340
 She's not wrong.
 
-196
+159
 00:07:47,134 --> 00:07:48,814
-- It's got to be here.
-- Sheldon: It's not.
+It's got to be here. It's not.
 
-197
+160
 00:07:48,844 --> 00:07:51,513
-- It's not!
-- Shelly, stay calm. We'll find it.
+It's not! Shelly, stay calm. We'll find it.
 
-198
-00:07:51,722 --> 00:07:53,933
-- My tie is gone! My tie is gone!
-- Shelly,
+161
+00:07:51,722 --> 00:07:55,261
+My tie is gone! My tie is gone! Shelly, you don't really need a tie.
 
-199
-00:07:54,141 --> 00:07:55,261
-you don't really need a tie.
-
-200
+162
 00:07:55,434 --> 00:07:58,604
-I have to find my tie.
-I have to find my tie.
+I have to find my tie. I have to find my tie.
 
-201
+163
 00:07:58,896 --> 00:07:59,897
 Be right back.
 
-202
+164
 00:08:00,105 --> 00:08:03,150
 Professor proton wears a bowtie!
 
-203
-00:08:03,567 --> 00:08:04,568
-George junior,
+165
+00:08:03,567 --> 00:08:07,780
+George junior, give me back that bowtie right now! I didn't take it!
 
-204
-00:08:05,527 --> 00:08:07,780
-- give me back that bowtie right now!
-- I didn't take it!
-
-205
+166
 00:08:07,988 --> 00:08:10,699
-- Don't you lie to me!
-- I'm not lying!
+Don't you lie to me! I'm not lying!
 
-206
+167
 00:08:11,200 --> 00:08:14,328
-- We'll see about that.
-- Stay out of my room!
+We'll see about that. Stay out of my room!
 
-207
+168
 00:08:14,536 --> 00:08:16,330
-She's gonna find
-your dirty magazines.
+She's gonna find your dirty magazines.
 
-208
+169
 00:08:16,538 --> 00:08:17,538
 Shut up!
 
-209
+170
 00:08:17,790 --> 00:08:19,541
 You are not having a good day.
 
-210
+171
 00:08:28,133 --> 00:08:29,133
 Ugh!
 
-211
+172
 00:08:31,261 --> 00:08:33,597
 Hey. Hey, he didn't take it.
 
-212
+173
 00:08:33,806 --> 00:08:35,700
-- Then what happened to it?!
-- Sheldon: I can't find my bowtie!
+Then what happened to it?! I can't find my bowtie!
 
-213
+174
 00:08:35,724 --> 00:08:37,685
 I'll check in the bathroom!
 
-214
+175
 00:08:38,268 --> 00:08:39,269
 I took it.
 
-215
-00:08:40,020 --> 00:08:41,522
-- Why would you do that?
-- Mary,
+176
+00:08:40,020 --> 00:08:43,857
+Why would you do that? Mary, the boy is nine years old and going into high school.
 
-216
-00:08:41,730 --> 00:08:43,857
-the boy is nine years old
-and going into high school.
-
-217
+177
 00:08:44,274 --> 00:08:45,567
 Isn't that weird enough?
 
-218
+178
 00:08:45,776 --> 00:08:47,152
-- Give it to me.
-- Come on.
+Give it to me. Come on.
 
-219
+179
 00:08:47,361 --> 00:08:48,779
 It's not just Sheldon.
 
-220
+180
 00:08:49,196 --> 00:08:50,548
-Georgie's gonna be
-in class with him.
+Georgie's gonna be in class with him.
 
-221
+181
 00:08:50,572 --> 00:08:52,282
 Not in the bathroom!
 
-222
+182
 00:08:52,908 --> 00:08:54,076
 Give it.
 
-223
+183
 00:08:55,786 --> 00:08:57,454
-J” think about it j”
+♪ think about it
 
-224
+184
 00:08:58,122 --> 00:09:00,582
-j” there must be higher love j”
+♪ j” there must be higher love
 
-225
-00:09:01,125 --> 00:09:05,546
-j” down in the heart
-or hidden in the stars above j”
+185
+00:09:01,125 --> 00:09:08,257
+j” down in the heart ♪ or hidden in the stars above -j” without it... j” -would you like to play a driving game?
 
-226
-00:09:05,879 --> 00:09:08,257
--j” without it... j” -would
-you like to play a driving game?
-
-227
+186
 00:09:08,465 --> 00:09:10,175
 Not really. I always lose.
 
-228
+187
 00:09:10,384 --> 00:09:11,984
 I know. That's why it's fun.
 
-229
-00:09:12,094 --> 00:09:14,930
-How about license plates
-with prime numbers
+188
+00:09:12,094 --> 00:09:17,141
+How about license plates with prime numbers followed by a cons...? Why don't we just talk?
 
-230
-00:09:15,139 --> 00:09:17,141
-- followed by a cons...?
-- Why don't we just talk?
-
-231
+189
 00:09:17,349 --> 00:09:18,349
 Very well.
 
-232
-00:09:20,269 --> 00:09:20,894
-You understand
+190
+00:09:20,269 --> 00:09:24,559
+You understand that some people are gonna be intimidated by you 'cause of how smart you are?
 
-233
-00:09:21,103 --> 00:09:23,230
-that some people are gonna be
-intimidated by you
+191
+00:09:25,065 --> 00:09:28,861
+Or maybe they'll recognize my intellect and make me their leader.
 
-234
-00:09:23,439 --> 00:09:24,559
-'cause of how smart you are?
-
-235
-00:09:25,065 --> 00:09:26,859
-Or maybe
-they'll recognize my intellect
-
-236
-00:09:27,067 --> 00:09:28,861
-and make me their leader.
-
-237
+192
 00:09:29,945 --> 00:09:31,321
 Lord, look after my son.
 
-238
+193
 00:09:31,530 --> 00:09:33,991
-Don't let him get
-stuffed in a gym bag.
+Don't let him get stuffed in a gym bag.
 
-239
+194
 00:09:35,409 --> 00:09:39,038
-J” bring me a higher love,
-oh, oh j”
+♪ bring me a higher love, ♪ oh, oh
 
-240
+195
 00:09:40,122 --> 00:09:42,082
-j” bring me a higher love... j”
+♪ j” bring me a higher love...
 
-241
+196
 00:09:47,629 --> 00:09:48,629
 Oh, dear.
 
-242
+197
 00:09:48,714 --> 00:09:49,715
 Yeah.
 
-243
+198
 00:09:50,632 --> 00:09:52,593
 That boy has an exposed tattoo.
 
-244
+199
 00:09:52,801 --> 00:09:53,594
 He does.
 
-245
-00:09:53,802 --> 00:09:54,470
-I wonder if he knows
+200
+00:09:53,802 --> 00:09:56,764
+I wonder if he knows that's in violation of the dress code.
 
-246
-00:09:54,678 --> 00:09:56,764
-that's in violation
-of the dress code.
-
-247
+201
 00:09:57,681 --> 00:10:01,393
-Speaking of which, how
-about we lose the bowtie?
+Speaking of which, how about we lose the bowtie?
 
-248
+202
 00:10:01,935 --> 00:10:02,978
 Why?
 
-249
+203
 00:10:03,395 --> 00:10:05,731
-Look around, honey. None of the
-other kids are wearing one.
+Look around, honey. None of the other kids are wearing one.
 
-250
+204
 00:10:06,065 --> 00:10:07,483
 Well, perhaps I'll start a fad.
 
-251
+205
 00:10:07,691 --> 00:10:09,818
-No, you won't.
-Please trust mommy.
+No, you won't. Please trust mommy.
 
-252
+206
 00:10:11,403 --> 00:10:12,404
 All right, tell you what.
 
-253
-00:10:12,863 --> 00:10:15,074
-You take it off,
-and this weekend,
+207
+00:10:12,863 --> 00:10:17,326
+You take it off, and this weekend, I'll take you to radioshack.
 
-254
-00:10:15,282 --> 00:10:17,326
-I'll take you to radioshack.
-
-255
+208
 00:10:18,243 --> 00:10:19,243
 Hmm?
 
-256
+209
 00:10:27,294 --> 00:10:28,462
 You doing okay?
 
-257
+210
 00:10:28,879 --> 00:10:30,506
 I guess.
 
-258
+211
 00:10:31,840 --> 00:10:33,258
 I smell ammonia.
 
-259
+212
 00:10:33,509 --> 00:10:35,928
-They must've done
-a thorough cleaning recently.
+They must've done a thorough cleaning recently.
 
-260
+213
 00:10:36,428 --> 00:10:37,513
 I like that.
 
-261
+214
 00:10:38,430 --> 00:10:41,058
-Mary: And remember, if anybody
-bothers you, what do you say?
+And remember, if anybody bothers you, what do you say?
 
-262
+215
 00:10:41,266 --> 00:10:42,893
 My dad's a football coach.
 
-263
+216
 00:10:43,102 --> 00:10:45,229
-- And?
-- My brother's a football player.
+And? My brother's a football player.
 
-264
+217
 00:10:45,437 --> 00:10:46,437
 Good.
 
-265
+218
 00:10:46,814 --> 00:10:47,815
 Hey, mom, look.
 
-266
+219
 00:10:48,023 --> 00:10:49,525
 That girl's pregnant.
 
-267
+220
 00:10:50,651 --> 00:10:51,693
 Congratulations.
 
-268
+221
 00:10:56,990 --> 00:10:58,951
 Well, that was revolting.
 
-269
+222
 00:10:59,993 --> 00:11:01,954
-All right.
-This is your homeroom.
+All right. This is your homeroom.
 
-270
+223
 00:11:02,162 --> 00:11:03,664
-Do you want me
-to go in with you?
+Do you want me to go in with you?
 
-271
+224
 00:11:03,872 --> 00:11:06,583
-No. Although I could've used you
-in the restroom.
+No. Although I could've used you in the restroom.
 
-272
+225
 00:11:07,042 --> 00:11:08,377
 Okay, well...
 
-273
+226
 00:11:09,294 --> 00:11:10,294
 You have a good day.
 
-274
-00:11:10,462 --> 00:11:11,648
-And I'll pick you up
-after school,
+227
+00:11:10,462 --> 00:11:13,298
+And I'll pick you up after school, same door we came in.
 
-275
-00:11:11,672 --> 00:11:13,298
-same door we came in.
-
-276
+228
 00:11:13,590 --> 00:11:15,884
-Are you crying or having
-an allergy attack?
+Are you crying or having an allergy attack?
 
-277
+229
 00:11:17,219 --> 00:11:18,219
 Allergies.
 
-278
+230
 00:11:18,345 --> 00:11:19,721
 It's probably the ammonia.
 
-279
+231
 00:11:19,930 --> 00:11:21,640
 Probably.
 
-280
+232
 00:11:22,391 --> 00:11:24,685
 Okay. Let the learning begin.
 
-281
+233
 00:11:34,736 --> 00:11:38,240
-All right, everybody,
-my name is Ms. Macelroy.
+All right, everybody, my name is Ms. Macelroy.
 
-282
-00:11:38,949 --> 00:11:40,701
-In addition to being
-your homeroom teacher,
+234
+00:11:38,949 --> 00:11:45,622
+In addition to being your homeroom teacher, I'll be seeing some of you in my English class, and some of you on the volleyball court.
 
-283
-00:11:40,909 --> 00:11:43,412
-I'll be seeing some of you
-in my English class,
+235
+00:11:45,831 --> 00:11:49,626
+Just to give you a little history, I've been here at medford for 29 years...
 
-284
-00:11:43,620 --> 00:11:45,622
-and some of you
-on the volleyball court.
+236
+00:11:50,752 --> 00:11:54,590
+I taught some of your older brothers and sisters, and sadly, some of your parents.
 
-285
-00:11:45,831 --> 00:11:47,151
-Just to give you
-a little history,
-
-286
-00:11:47,499 --> 00:11:49,626
-I've been here at medford
-for 29 years...
-
-287
-00:11:50,752 --> 00:11:52,147
-I taught some of your
-older brothers and sisters,
-
-288
-00:11:52,171 --> 00:11:54,590
-and sadly, some of your parents.
-
-289
+237
 00:11:56,592 --> 00:11:57,676
 Not much I haven't seen.
 
-290
+238
 00:11:57,885 --> 00:11:59,219
 Until today.
 
-291
-00:11:59,720 --> 00:12:02,723
-I'm sure you're well aware
-we have a student with us,
+239
+00:11:59,720 --> 00:12:07,060
+I'm sure you're well aware we have a student with us, who, despite his young age, is remarkably gifted.
 
-292
-00:12:03,015 --> 00:12:04,975
-who, despite his young age,
-
-293
-00:12:05,267 --> 00:12:07,060
-is remarkably gifted.
-
-294
+240
 00:12:07,269 --> 00:12:10,522
-And I expect y'all
-to make him feel welcome.
+And I expect y'all to make him feel welcome.
 
-295
+241
 00:12:11,940 --> 00:12:12,940
 Yes, Sheldon?
 
-296
-00:12:13,150 --> 00:12:15,360
-Per the student dress
-and grooming code,
+242
+00:12:13,150 --> 00:12:25,621
+Per the student dress and grooming code, this boy's hair is too long, this boy is wearing sports attire outside of a designated area and this girl's blouse is diaphanous, which means I can see her brassiere.
 
-297
-00:12:15,903 --> 00:12:17,362
-this boy's hair is too long,
-
-298
-00:12:17,571 --> 00:12:18,947
-this boy is wearing
-sports attire
-
-299
-00:12:19,156 --> 00:12:21,325
-outside of a designated area
-
-300
-00:12:21,533 --> 00:12:23,535
-and this girl's blouse
-is diaphanous,
-
-301
-00:12:23,744 --> 00:12:25,621
-which means
-I can see her brassiere.
-
-302
+243
 00:12:25,829 --> 00:12:28,207
 Thank you.
 
-303
+244
 00:12:28,624 --> 00:12:30,042
 I will take that into account.
 
-304
+245
 00:12:30,792 --> 00:12:31,460
 All right.
 
-305
+246
 00:12:31,668 --> 00:12:33,670
-We have a few minutes
-before first period.
+We have a few minutes before first period.
 
-306
+247
 00:12:33,879 --> 00:12:36,089
-I need y'all
-to fill out these forms.
+I need y'all to fill out these forms.
 
-307
+248
 00:12:36,298 --> 00:12:36,965
 What?
 
-308
-00:12:37,174 --> 00:12:38,300
-Also in violation
+249
+00:12:37,174 --> 00:12:44,223
+Also in violation of the grooming code on page 48, article five, subsection b, you have a bit of a mustache.
 
-309
-00:12:38,508 --> 00:12:39,927
-of the grooming code on page 48,
+250
+00:12:46,808 --> 00:12:50,269
+This is a stupid idea. This boy does not belong in our school.
 
-310
-00:12:40,135 --> 00:12:42,179
-article five, subsection b,
-
-311
-00:12:42,512 --> 00:12:44,223
-you have a bit of a mustache.
-
-312
-00:12:46,808 --> 00:12:49,061
-This is a stupid idea.
-This boy does not
-
-313
-00:12:49,269 --> 00:12:50,269
-belong in our school.
-
-314
+251
 00:12:50,520 --> 00:12:52,165
-Petersen: Come on Vicky,
-it's just the first day.
+Come on Vicky, it's just the first day.
 
-315
+252
 00:12:52,189 --> 00:12:53,989
-Why don't we all just take
-a deep breath here?
+Why don't we all just take a deep breath here?
 
-316
-00:12:54,107 --> 00:12:56,610
-The hell with that. Five
-minutes into my math class,
+253
+00:12:54,107 --> 00:12:58,070
+The hell with that. Five minutes into my math class, he questioned my credentials.
 
-317
-00:12:56,818 --> 00:12:58,070
-he questioned my credentials.
+254
+00:12:58,278 --> 00:13:01,759
+How am I supposed to control a classroom when a kid accuses me of being in breach of the hygiene code?
 
-318
-00:12:58,278 --> 00:13:00,215
-How am I supposed to control a
-classroom when a kid accuses me
+255
+00:13:01,949 --> 00:13:06,036
+Well, Hubert, it wouldn't kill you to shower a little more often. George, you want to weigh in here?
 
-319
-00:13:00,239 --> 00:13:01,759
-of being in breach
-of the hygiene code?
+256
+00:13:06,245 --> 00:13:09,373
+Well... Oral Roberts university is a wonderful school.
 
-320
-00:13:01,949 --> 00:13:03,593
-Well, Hubert, it wouldn't
-kill you to shower
+257
+00:13:09,581 --> 00:13:14,878
+He said I was intimidated by his intelligence, and then, he offered to be my "leader."
 
-321
-00:13:03,617 --> 00:13:06,036
-a little more often. George,
-you want to weigh in here?
-
-322
-00:13:06,245 --> 00:13:08,372
-- Well...
-- Ingram: Oral Roberts university
-
-323
-00:13:08,580 --> 00:13:09,373
-is a wonderful school.
-
-324
-00:13:09,581 --> 00:13:11,381
-He said I was intimidated
-by his intelligence,
-
-325
-00:13:11,416 --> 00:13:12,416
-and then,
-
-326
-00:13:12,751 --> 00:13:14,878
-he offered to be my "leader."
-
-327
+258
 00:14:00,716 --> 00:14:02,009
 Do you know this sonata?
 
-328
+259
 00:14:02,259 --> 00:14:03,259
 No.
 
-329
+260
 00:14:03,719 --> 00:14:05,178
-How long have you
-played the piano?
+How long have you played the piano?
 
-330
+261
 00:14:06,471 --> 00:14:07,931
 I don't play piano.
 
-331
-00:14:09,766 --> 00:14:10,392
-Petersen: George,
+262
+00:14:09,766 --> 00:14:11,724
+George, you got any thoughts here?
 
-332
-00:14:10,684 --> 00:14:11,724
-you got any thoughts here?
-
-333
+263
 00:14:12,352 --> 00:14:13,352
 I certainly do.
 
-334
+264
 00:14:15,397 --> 00:14:16,397
 Mary, tell him.
 
-335
+265
 00:14:17,149 --> 00:14:19,192
-It's simple.
-We don't have a choice.
+It's simple. We don't have a choice.
 
-336
+266
 00:14:19,401 --> 00:14:20,944
 Well, you gave it a shot.
 
-337
+267
 00:14:21,194 --> 00:14:22,834
-We wish you luck
-with Sheldon elsewhere...
+We wish you luck with Sheldon elsewhere...
 
-338
+268
 00:14:22,863 --> 00:14:24,781
-Mary: No, no, no.
+No, no, no.
 
-339
+269
 00:14:24,990 --> 00:14:25,990
 We don't have a choice.
 
-340
+270
 00:14:26,116 --> 00:14:27,116
 He's got to stay here.
 
-341
-00:14:27,617 --> 00:14:28,243
-We can't afford
+271
+00:14:27,617 --> 00:14:29,077
+We can't afford private school.
 
-342
-00:14:28,452 --> 00:14:29,077
-private school.
-
-343
+272
 00:14:29,286 --> 00:14:30,454
 I sure can't homeschool him.
 
-344
+273
 00:14:30,662 --> 00:14:32,873
-He's doing calculus and
-euclidean something or other.
+He's doing calculus and euclidean something or other.
 
-345
+274
 00:14:33,081 --> 00:14:34,291
 Euclidean geometry.
 
-346
+275
 00:14:34,499 --> 00:14:35,876
 Guess where I learned that.
 
-347
+276
 00:14:36,084 --> 00:14:37,419
 Yeah, yeah, we know.
 
-348
-00:14:38,670 --> 00:14:40,088
-All I care about is that
+277
+00:14:38,670 --> 00:14:44,319
+All I care about is that my son gets the education he deserves, so you all are gonna have to figure this out.
 
-349
-00:14:40,297 --> 00:14:42,924
-my son gets the education
-he deserves, so you all
-
-350
-00:14:43,133 --> 00:14:44,319
-are gonna have to
-figure this out.
-
-351
+278
 00:14:44,343 --> 00:14:46,219
-Coach, can you help me out here,
-please?
+Coach, can you help me out here, please?
 
-352
+279
 00:14:46,428 --> 00:14:47,428
 'Cause I'm dyin'.
 
-353
+280
 00:14:51,350 --> 00:14:52,768
 I'd rather not.
 
-354
+281
 00:14:57,314 --> 00:14:58,565
 G minor.
 
-355
+282
 00:15:02,736 --> 00:15:03,736
 E flat.
 
-356
+283
 00:15:05,864 --> 00:15:06,864
 C minor.
 
-357
+284
 00:15:09,993 --> 00:15:11,411
 You have perfect pitch.
 
-358
+285
 00:15:11,787 --> 00:15:12,787
 Okay.
 
-359
+286
 00:15:13,497 --> 00:15:16,375
-Sweetheart, you should
-really pursue music.
+Sweetheart, you should really pursue music.
 
-360
+287
 00:15:16,792 --> 00:15:19,169
-No, thank you.
-Musicians take drugs.
+No, thank you. Musicians take drugs.
 
-361
+288
 00:15:20,462 --> 00:15:22,839
-Is there a faculty
-restroom I could use?
+Is there a faculty restroom I could use?
 
-362
+289
 00:15:27,552 --> 00:15:28,552
-J” ooh... j”
+♪ ooh...
 
-363
+290
 00:15:29,930 --> 00:15:31,515
-J” ooh... j”
+♪ ooh...
 
-364
+291
 00:15:37,687 --> 00:15:38,855
 Cooper, Stinson, you're up.
 
-365
+292
 00:15:39,314 --> 00:15:42,150
-Hey, look,
-it's the dumb brother.
+Hey, look, it's the dumb brother.
 
-366
+293
 00:15:44,736 --> 00:15:46,822
 Okay.
 
-367
+294
 00:15:52,494 --> 00:15:54,079
-Bergdoff: That's enough. Hey.
+That's enough. Hey.
 
-368
+295
 00:15:56,456 --> 00:15:57,616
-Bergdoff: Hey, that's enough!
+Hey, that's enough!
 
-369
+296
 00:15:57,666 --> 00:15:58,851
-- George sr.: Hey, hey!
-- That's enough!
+George sr.: Hey, hey! That's enough!
 
-370
+297
 00:15:58,875 --> 00:15:59,875
 Georgie.
 
-371
+298
 00:16:00,377 --> 00:16:01,586
 Georgie! Georgie!
 
-372
+299
 00:16:01,795 --> 00:16:03,255
 Stop! Stop!
 
-373
+300
 00:16:06,174 --> 00:16:07,454
 What the hell is wrong with you?
 
-374
+301
 00:16:12,013 --> 00:16:13,013
 You okay?
 
-375
+302
 00:16:13,181 --> 00:16:15,142
 No, I'm not okay.
 
-376
+303
 00:16:24,151 --> 00:16:25,360
 Where you think you're going?
 
-377
+304
 00:16:25,569 --> 00:16:27,362
-I quit. I don't want
-to play anymore!
+I quit. I don't want to play anymore!
 
-378
+305
 00:16:27,571 --> 00:16:29,739
-- Since when?
-- Since right now!
+Since when? Since right now!
 
-379
+306
 00:16:30,907 --> 00:16:32,033
 All right, what is going on?
 
-380
+307
 00:16:32,242 --> 00:16:34,202
 What do you think's going on?!
 
-381
+308
 00:16:35,495 --> 00:16:36,580
 You mean Sheldon?
 
-382
+309
 00:16:39,541 --> 00:16:40,792
 You can't let that bother you.
 
-383
+310
 00:16:41,001 --> 00:16:42,127
 It doesn't bother you?
 
-384
+311
 00:16:42,335 --> 00:16:43,935
-You got called
-to the principal's office.
+You got called to the principal's office.
 
-385
+312
 00:16:44,546 --> 00:16:46,381
 Yeah, that wasn't so great.
 
-386
+313
 00:16:46,590 --> 00:16:48,030
-I can't be in the same school
-as him!
+I can't be in the same school as him!
 
-387
+314
 00:16:48,175 --> 00:16:49,695
-Well, I don't see
-what choice you have.
+Well, I don't see what choice you have.
 
-388
+315
 00:16:49,801 --> 00:16:53,555
-Right. Ever since he could talk,
-I quit having any choices.
+Right. Ever since he could talk, I quit having any choices.
 
-389
+316
 00:17:00,729 --> 00:17:02,314
 I know it's hard.
 
-390
-00:17:03,648 --> 00:17:06,443
-I'm telling you, as your coach,
-quit your whining,
+317
+00:17:03,648 --> 00:17:08,851
+I'm telling you, as your coach, quit your whining, get your uniform on and you get your ass back out there.
 
-391
-00:17:06,651 --> 00:17:08,851
-get your uniform on and you
-get your ass back out there.
-
-392
+318
 00:17:10,071 --> 00:17:11,573
 But what about as my dad?
 
-393
+319
 00:17:12,657 --> 00:17:14,367
 Your dad is having a bad day.
 
-394
+320
 00:17:14,576 --> 00:17:16,161
 Listen to your coach.
 
-395
+321
 00:17:22,042 --> 00:17:26,087
-Can a clock be powered
-by an ordinary potato?
+Can a clock be powered by an ordinary potato?
 
-396
-00:17:26,630 --> 00:17:28,131
-I hope so, boys and girls,
+322
+00:17:26,630 --> 00:17:31,843
+I hope so, boys and girls, or this is going to be a really boring episode.
 
-397
-00:17:28,340 --> 00:17:31,843
-or this is going to be
-a really boring episode.
-
-398
+323
 00:17:32,302 --> 00:17:33,386
 The supplies you'll need...
 
-399
+324
 00:17:33,595 --> 00:17:35,305
 Why can't we watch ducktales?
 
-400
+325
 00:17:35,514 --> 00:17:38,558
-'Cause we don't learn anything
-watching ducktales.
+'Cause we don't learn anything watching ducktales.
 
-401
+326
 00:17:38,934 --> 00:17:41,686
-It's TV; We aren't
-supposed to learn.
+It's TV; We aren't supposed to learn.
 
-402
+327
 00:17:41,895 --> 00:17:44,814
-Two alligator grips
-and, let's see...
+Two alligator grips and, let's see...
 
-403
+328
 00:17:45,273 --> 00:17:47,108
 Of course, a clock.
 
-404
+329
 00:17:47,317 --> 00:17:49,557
-Missy, go somewhere else.
-I need to talk to your brother.
+Missy, go somewhere else. I need to talk to your brother.
 
-405
+330
 00:17:49,903 --> 00:17:52,280
-Why don't you go somewhere else
-and I can watch duck...
+Why don't you go somewhere else and I can watch duck...
 
-406
+331
 00:17:52,489 --> 00:17:53,489
 Go!
 
-407
+332
 00:17:54,199 --> 00:17:55,367
 I hate everybody.
 
-408
+333
 00:17:55,825 --> 00:17:58,328
 It's time for science.
 
-409
+334
 00:18:01,331 --> 00:18:04,334
-Hey, he was about to power
-a clock with a potato.
+Hey, he was about to power a clock with a potato.
 
-410
+335
 00:18:04,543 --> 00:18:05,293
 Not possible.
 
-411
+336
 00:18:05,502 --> 00:18:07,379
-- Now, listen...
-- Am I in trouble?
+Now, listen... Am I in trouble?
 
-412
+337
 00:18:07,921 --> 00:18:08,921
 No.
 
-413
+338
 00:18:09,798 --> 00:18:11,258
 Maybe. Just listen.
 
-414
-00:18:13,635 --> 00:18:15,262
-You're not gonna
-make it in this school
+339
+00:18:13,635 --> 00:18:16,972
+You're not gonna make it in this school if you keep ratting people out.
 
-415
-00:18:15,470 --> 00:18:16,972
-if you keep ratting people out.
+340
+00:18:17,180 --> 00:18:20,100
+But they were breaking the grooming codes and the dress codes.
 
-416
-00:18:17,180 --> 00:18:18,780
-But they were breaking
-the grooming codes
-
-417
-00:18:18,890 --> 00:18:20,100
-and the dress codes.
-
-418
+341
 00:18:20,308 --> 00:18:23,270
-I saw one boy with a t-shirt
-that said...
+I saw one boy with a t-shirt that said...
 
-419
+342
 00:18:23,770 --> 00:18:24,896
 "Bite me."
 
-420
+343
 00:18:25,105 --> 00:18:27,315
 Yeah. That-that's terrible.
 
-421
+344
 00:18:28,149 --> 00:18:29,734
-Sheldon, let me tell
-you a little story.
+Sheldon, let me tell you a little story.
 
-422
+345
 00:18:29,943 --> 00:18:32,263
-Did you ever wonder why we moved
-from galveston to medford?
+Did you ever wonder why we moved from galveston to medford?
 
-423
+346
 00:18:32,696 --> 00:18:35,782
-No. I tend to wonder
-about the bigger questions.
+No. I tend to wonder about the bigger questions.
 
-424
+347
 00:18:35,991 --> 00:18:37,784
 Okay, well, here's why.
 
-425
-00:18:38,451 --> 00:18:40,870
-Your dad had a real good
-coaching job
+348
+00:18:38,451 --> 00:18:43,415
+Your dad had a real good coaching job and I saw some grown-ups breaking rules.
 
-426
-00:18:41,371 --> 00:18:43,415
-and I saw some grown-ups
-breaking rules.
-
-427
+349
 00:18:43,790 --> 00:18:44,499
 What'd they do?
 
-428
+350
 00:18:44,708 --> 00:18:46,376
-I-It's kind of complicated,
-but...
+I-It's kind of complicated, but...
 
-429
-00:18:47,252 --> 00:18:49,092
-Football coaches aren't allowed
-to recruit kids
+351
+00:18:47,252 --> 00:18:51,214
+Football coaches aren't allowed to recruit kids from other high schools to play on their teams.
 
-430
-00:18:49,129 --> 00:18:51,214
-from other high schools
-to play on their teams.
-
-431
+352
 00:18:51,423 --> 00:18:52,549
 And you told on them?
 
-432
+353
 00:18:52,757 --> 00:18:54,759
 Yeah. You know what happened?
 
-433
+354
 00:18:54,968 --> 00:18:57,596
-Justice descended
-upon the rule breakers?
+Justice descended upon the rule breakers?
 
-434
+355
 00:18:59,055 --> 00:19:00,473
 I got fired, Sheldon.
 
-435
+356
 00:19:01,266 --> 00:19:02,976
 And I got a bad reputation.
 
-436
+357
 00:19:03,476 --> 00:19:06,813
-Oh. That's why you
-drink so much beer.
+Oh. That's why you drink so much beer.
 
-437
+358
 00:19:10,191 --> 00:19:11,401
 Just do yourself a favor.
 
-438
-00:19:11,610 --> 00:19:13,486
-Okay? Go to school tomorrow,
+359
+00:19:11,610 --> 00:19:15,905
+Okay? Go to school tomorrow, and mind your own business.
 
-439
-00:19:13,737 --> 00:19:15,905
-and mind your own business.
-
-440
+360
 00:19:16,781 --> 00:19:17,781
 All right?
 
-441
+361
 00:19:19,618 --> 00:19:20,618
 Dad.
 
-442
+362
 00:19:22,120 --> 00:19:24,289
 Are you sad that you got fired?
 
-443
+363
 00:19:27,250 --> 00:19:28,460
 Mostly angry.
 
-444
+364
 00:19:30,670 --> 00:19:31,838
 But yeah.
 
-445
+365
 00:19:33,757 --> 00:19:35,216
 Maybe a little sad.
 
-446
+366
 00:19:43,141 --> 00:19:44,684
 All right, let's say grace.
 
-447
-00:19:50,023 --> 00:19:50,732
-Thank you, god,
+367
+00:19:50,023 --> 00:19:53,234
+Thank you, god, for this food we are about to receive.
 
-448
-00:19:50,940 --> 00:19:53,234
-for this food we are
-about to receive.
+368
+00:20:02,285 --> 00:20:05,372
+That was the first time I held my father's hand.
 
-449
-00:20:02,285 --> 00:20:03,471
-Adult Sheldon:
-That was the first time
-
-450
-00:20:03,495 --> 00:20:05,372
-I held my father's hand.
-
-451
+369
 00:20:05,789 --> 00:20:08,458
-Mary: Our bodies and bless
-the hands that prepared it.
+Our bodies and bless the hands that prepared it.
 
-452
+370
 00:20:09,084 --> 00:20:10,085
 Amen.
 
-453
+371
 00:20:10,293 --> 00:20:11,461
-- Georgie: Amen.
-- Amen.
+Amen. Amen.
 
-454
+372
 00:20:14,255 --> 00:20:17,425
-Mary: Hey, George Jr.,
-wait your turn.
+Hey, George Jr., wait your turn.
 
-455
-00:20:17,634 --> 00:20:19,487
-Adult Sheldon: I wouldn't
-touch my brother's hand
+373
+00:20:17,634 --> 00:20:23,807
+I wouldn't touch my brother's hand until 17 years later, thanks to the invention of purell.
 
-456
-00:20:19,511 --> 00:20:21,179
-until 17 years later,
-
-457
-00:20:21,429 --> 00:20:23,807
-thanks to the invention
-of purell.
-
-458
+374
 00:20:38,613 --> 00:20:40,031
 You know what I find comforting?
 
-459
+375
 00:20:40,240 --> 00:20:41,240
 What's that, baby?
 
-460
-00:20:41,574 --> 00:20:43,451
-In a world filled
-with uncertainty,
+376
+00:20:41,574 --> 00:20:45,286
+In a world filled with uncertainty, this place will be here forever.
 
-461
-00:20:43,660 --> 00:20:45,286
-this place will be here forever.
-
-462
+377
 00:20:47,539 --> 00:20:49,582
-Clerk: Hey, Sheldon,
-how you doing?
-
+Hey, Sheldon, how you doing?

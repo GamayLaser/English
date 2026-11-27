@@ -14,7 +14,9 @@
     "db:migrate:local": "wrangler d1 migrations apply english-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply english-db --remote",
     "upload:cards": "node scripts/upload-cards-to-r2.mjs",
-    "split:vocab": "node scripts/split-vocab-data.mjs"
+    "split:vocab": "node scripts/split-vocab-data.mjs",
+    "shows:clean-srt": "node scripts/clean-srt.mjs",
+    "shows:process": "node scripts/process-shows.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.41.0",
