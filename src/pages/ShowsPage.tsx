@@ -246,25 +246,91 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
     setClozeChecked(false);
   }
 
+  const activeShowIdx = shows.findIndex((s) => s.videoUrl === videoSrc);
+  const prevShow = activeShowIdx > 0 ? shows[activeShowIdx - 1] : null;
+  const nextShow = activeShowIdx >= 0 && activeShowIdx < shows.length - 1 ? shows[activeShowIdx + 1] : null;
+
   return (
-    <div className="space-y-5 pb-8 zen-page-enter">
-      <EnglishPageHeader
-        c={c}
-        eyebrow="TV SHOW STUDIO"
-        title={videoSrc ? activeTitle : "美剧精听"}
-        description={
-          videoSrc
-            ? "点击任意台词跳播、单句循环、切换无字幕盲听，或点击台词内淡波浪线词汇弹出词卡。"
-            : "片库来自 public/shows。点击任意剧集进入精听详情页。"
-        }
-        aside={
-          videoSrc ? (
+    <div className="space-y-4 pb-8 zen-page-enter">
+      {!videoSrc ? (
+        <EnglishPageHeader
+          c={c}
+          eyebrow="TV SHOW STUDIO"
+          title="美剧精听"
+          description="片库来自 public/shows。点击任意剧集进入精听详情页。"
+        />
+      ) : (
+        /* Slim Studio Top Bar */
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-2.5 zen-card"
+          style={{ borderColor: c.borderSub }}
+        >
+          <div className="flex flex-wrap items-center gap-2.5 min-w-0">
             <Button c={c} variant="secondary" onClick={backToLibrary}>
               ← 返回片库
             </Button>
-          ) : undefined
-        }
-      />
+            <h1 className="type-title truncate max-w-[240px] sm:max-w-md" style={{ color: c.fg }}>
+              {activeTitle}
+            </h1>
+            {cues.length > 0 && (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-medium zen-tnum"
+                style={{ background: c.inputBg, color: c.fgMuted }}
+              >
+                {activeCueIndex >= 0 ? `${activeCueIndex + 1} / ${cues.length} 句` : `${cues.length} 句`}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Subtitle Mode Segmented Control */}
+            <div
+              role="tablist"
+              aria-label="字幕显示模式"
+              className="inline-flex items-center rounded-xl p-1 gap-0.5"
+              style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
+            >
+              {(
+                [
+                  { id: "bilingual", label: "中英双语" },
+                  { id: "en", label: "仅看英文" },
+                  { id: "hidden", label: "盲听" },
+                ] as const
+              ).map((item) => {
+                const active = subMode === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setSubMode(item.id)}
+                    className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer"
+                    style={
+                      active
+                        ? { background: c.card, color: c.fg, boxShadow: "0 1px 2px rgba(15,23,42,0.06)" }
+                        : { color: c.fgMuted }
+                    }
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {shows.length > 1 && (
+              <div className="hidden sm:flex items-center gap-1">
+                <Button c={c} variant="ghost" disabled={!prevShow} onClick={() => prevShow && void selectShow(prevShow)}>
+                  上一集
+                </Button>
+                <Button c={c} variant="ghost" disabled={!nextShow} onClick={() => nextShow && void selectShow(nextShow)}>
+                  下一集
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {statusMessage && (
         <p
@@ -276,95 +342,93 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
       )}
 
       {videoSrc ? (
-        /* Main Player + Transcript Grid */
-        <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
-        {/* Left: Video Player & Controls */}
-        <Card c={c} className="overflow-hidden">
-          <div
-            className={`relative w-full overflow-hidden flex items-center justify-center ${videoSrc ? "bg-black" : "aspect-video bg-[#0F172A] p-6"}`}
-            style={videoSrc ? { aspectRatio: cropBottom > 0 ? `16 / ${9 * (1 - cropBottom)}` : "16 / 9" } : undefined}
-          >
-            {videoSrc ? (
-              <>
-                <video
-                  ref={videoRef}
-                  src={videoSrc}
-                  controls
-                  onTimeUpdate={handleTimeUpdate}
-                  className="h-full w-full bg-black"
-                  style={{ objectFit: cropBottom > 0 ? "cover" : "contain", objectPosition: "center top" }}
-                />
-                {activeCue && subMode !== "hidden" && (
-                  <div className="pointer-events-none absolute inset-x-4 bottom-12 flex flex-col items-center text-center gap-1">
-                    <span className="rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
-                      {activeCue.en}
+        /* Main Player + Transcript Studio */
+        <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr] items-stretch">
+        {/* Left: Video Player + Current Sentence Focus + Transport Dock */}
+        <div className="flex flex-col gap-3.5 min-w-0">
+          <Card c={c} className="overflow-hidden">
+            <div
+              className="relative w-full overflow-hidden flex items-center justify-center bg-black"
+              style={{ aspectRatio: cropBottom > 0 ? `16 / ${9 * (1 - cropBottom)}` : "16 / 9" }}
+            >
+              <video
+                ref={videoRef}
+                src={videoSrc}
+                controls
+                onTimeUpdate={handleTimeUpdate}
+                className="h-full w-full bg-black"
+                style={{ objectFit: cropBottom > 0 ? "cover" : "contain", objectPosition: "center top" }}
+              />
+              {activeCue && subMode !== "hidden" && (
+                <div className="pointer-events-none absolute inset-x-4 bottom-12 flex flex-col items-center text-center gap-1">
+                  <span className="rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
+                    {activeCue.en}
+                  </span>
+                  {subMode === "bilingual" && activeCue.zh && (
+                    <span className="rounded-md bg-black/70 px-2.5 py-0.5 text-xs text-slate-200 backdrop-blur-sm">
+                      {activeCue.zh}
                     </span>
-                    {subMode === "bilingual" && activeCue.zh && (
-                      <span className="rounded-md bg-black/70 px-2.5 py-0.5 text-xs text-slate-200 backdrop-blur-sm">
-                        {activeCue.zh}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="w-full h-full rounded-xl border border-dashed border-slate-700/80 flex flex-col items-center justify-center text-center px-6 gap-2">
-                <p className="text-sm font-medium text-slate-200">
-                  尚未选择美剧片段
-                </p>
-                <p className="text-xs text-slate-400 max-w-sm">
-                  从下方片库选择一集开始精听
-                </p>
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
 
-          <div className="p-4 md:p-5 space-y-3.5 border-t" style={{ borderColor: c.borderSub }}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold truncate" style={{ color: c.fg }}>
-                {activeTitle}
-              </p>
-              {/* Segmented Control for Subtitle Modes */}
+          {/* Current Sentence Spotlight + Transport & Shadowing Dock */}
+          <Card c={c} className="p-4 md:p-5 space-y-3.5">
+            {cues.length > 0 && (
               <div
-                role="tablist"
-                aria-label="字幕显示模式"
-                className="inline-flex items-center rounded-xl p-1 gap-1"
+                className="rounded-xl px-4 py-3 flex items-start justify-between gap-3"
                 style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
               >
-                {(
-                  [
-                    { id: "bilingual", label: "中英双语" },
-                    { id: "en", label: "仅看英文" },
-                    { id: "hidden", label: "无字幕盲听" },
-                  ] as const
-                ).map((item) => {
-                  const active = subMode === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setSubMode(item.id)}
-                      className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer"
-                      style={
-                        active
-                          ? { background: c.card, color: c.fg, boxShadow: "0 1px 2px rgba(15,23,42,0.06)" }
-                          : { color: c.fgMuted }
-                      }
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: c.fgMuted }}>
+                    <span className="zen-tnum">{activeCue ? formatTime(activeCue.startSec) : "00:00"}</span>
+                    <span>·</span>
+                    <span>{loopSentence ? "单句循环锁定中" : "当前精听句"}</span>
+                  </div>
+                  {subMode === "hidden" ? (
+                    <p className="mt-1 text-sm italic" style={{ color: c.fgMuted }}>
+                      无字幕盲听中 — 先听再对照右侧台词或切换字幕模式
+                    </p>
+                  ) : activeCue ? (
+                    <p className="mt-1 text-base font-semibold leading-relaxed" style={{ color: c.fg }} lang="en">
+                      {activeCue.en}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm" style={{ color: c.fgMuted }}>
+                      播放视频或点击右侧任意一句开始精听
+                    </p>
+                  )}
+                </div>
+                {activeCue && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addUserChunk({ en: activeCue.en, zh: activeCue.zh, context: activeTitle, source: "shows" });
+                      setSavedCueIds((prev) => new Set(prev).add(activeCue.id));
+                    }}
+                    className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium cursor-pointer"
+                    style={{
+                      background: savedCueIds.has(activeCue.id) ? c.successDim : c.card,
+                      color: savedCueIds.has(activeCue.id) ? c.success : c.accent,
+                      border: `1px solid ${c.borderSub}`,
+                    }}
+                  >
+                    {savedCueIds.has(activeCue.id) ? "已存语块 ✓" : "收藏本句"}
+                  </button>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-              {/* Navigation Group */}
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              {/* Playback Group */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(-1)}>
                   ← 上一句
+                </Button>
+                <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(0)}>
+                  重听本句
                 </Button>
                 <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(1)}>
                   下一句 →
@@ -380,14 +444,8 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 </Button>
               </div>
 
-              {/* Core Practice Group */}
-              <div
-                className="flex flex-wrap items-center gap-1.5 rounded-xl p-1"
-                style={{ background: c.inputBg, border: `1px solid ${c.borderSub}` }}
-              >
-                <Button c={c} variant="secondary" disabled={!cues.length} onClick={() => stepCue(0)}>
-                  重听本句
-                </Button>
+              {/* Shadowing Group */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 <Button
                   c={c}
                   variant={loopSentence ? "primary" : "secondary"}
@@ -398,7 +456,7 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                     if (next && activeCue) setLockedCue(activeCue);
                   }}
                 >
-                  {loopSentence ? "单句循环中" : "单句循环"}
+                  {loopSentence ? "单句循环 ✓" : "单句循环"}
                 </Button>
                 <Button
                   c={c}
@@ -414,11 +472,11 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 )}
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
         {/* Right: Interactive Subtitle Transcript / Cloze Dictation */}
-        <Card c={c} className="flex flex-col h-[460px] lg:h-[520px]">
+        <Card c={c} className="flex flex-col h-[500px] lg:h-[620px]">
           <div
             className="px-4 py-3 border-b flex items-center justify-between gap-2"
             style={{ borderColor: c.borderSub }}
