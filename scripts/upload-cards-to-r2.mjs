@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WEBP_DIR = path.resolve(__dirname, "../../卡片/images/cards-webp");
+const WEBP_DIR = path.resolve(__dirname, "../local-media/cards-webp");
 const CONCURRENCY = Number(process.env.UPLOAD_CONCURRENCY || 12);
 
 const accountId = process.env.R2_ACCOUNT_ID?.trim();

@@ -7,7 +7,7 @@ import { localShowsPlugin } from "./scripts/local-shows-plugin";
 
 /** Vite dev without Miniflare — for macOS < 13.5 where `npm run dev` cannot start. */
 function localCardMediaPlugin(): Plugin {
-  const webpDir = path.resolve(import.meta.dirname, "../卡片/images/cards-webp");
+  const webpDir = path.resolve(import.meta.dirname, "./local-media/cards-webp");
   return {
     name: "local-card-media",
     configureServer(server) {

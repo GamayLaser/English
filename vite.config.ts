@@ -7,7 +7,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { localShowsPlugin } from "./scripts/local-shows-plugin";
 
 function localCardMediaPlugin(): Plugin {
-  const webpDir = path.resolve(import.meta.dirname, "../卡片/images/cards-webp");
+  const webpDir = path.resolve(import.meta.dirname, "./local-media/cards-webp");
   return {
     name: "local-card-media",
     configureServer(server) {
