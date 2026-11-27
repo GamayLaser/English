@@ -695,10 +695,14 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
       )}
 
       <div
-        ref={articleScrollRef}
-        className={`min-h-0 w-full max-w-3xl self-stretch overflow-y-auto px-1 pt-1 ${immersive ? "pb-8" : "pb-28 xl:pb-6"}`}
+        className={`min-h-0 w-full max-w-3xl self-stretch ${immersive ? "pb-2" : "pb-20 xl:pb-2"}`}
       >
-          <Card c={c} className="overflow-hidden zen-paper" style={{ boxShadow: "var(--shadow-book)" }}>
+        <Card
+          c={c}
+          className="h-full flex flex-col overflow-hidden rounded-2xl zen-paper"
+          style={{ boxShadow: "var(--shadow-book)" }}
+        >
+          <div ref={articleScrollRef} className="min-h-0 flex-1 overflow-y-auto">
             <article className="px-6 py-8 sm:px-12 sm:py-10">
               <header className={`text-center ${immersive ? "mb-8" : "border-b pb-5 mb-5 xl:mb-0 xl:border-b-0"}`} style={{ borderColor: c.borderSub }}>
                 {!immersive && (
@@ -749,13 +753,14 @@ export default function ReadingPractice({ c }: { c: ThemeColors; workspaceUpdate
                 </div>
               )}
             </article>
-          </Card>
-          {!immersive && (
-            <div className="mt-4 space-y-4">
-              {renderSidePanels()}
-            </div>
-          )}
-        </div>
+            {!immersive && (
+              <div className="px-6 pb-8 sm:px-12 space-y-4">
+                {renderSidePanels()}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
       </div>
       {immersive && (
         <button
