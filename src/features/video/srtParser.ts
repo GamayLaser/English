@@ -21,7 +21,18 @@ function parseTimestamp(raw: string): number {
 }
 
 function stripTags(line: string): string {
-  return line.replace(/<[^>]+>/g, "").replace(/\{[^}]+\}/g, "").trim();
+  let cleaned = line.replace(/<[^>]+>/g, "").replace(/\{[^}]+\}/g, "").trim();
+  // BluRay/DVD OCR often misreads music note ♪ as standalone leading/trailing J or j
+  const hasLeadingMusicJ = /^J["“”']?\s+/.test(cleaned);
+  const hasTrailingMusicJ = /\s+[Jj]["“”']?$/.test(cleaned);
+  if (hasLeadingMusicJ || hasTrailingMusicJ) {
+    cleaned = cleaned
+      .replace(/^J["“”']?\s+/, "")
+      .replace(/\s+[Jj]["“”']?$/, "")
+      .trim();
+    if (cleaned) cleaned = `♪ ${cleaned}`;
+  }
+  return cleaned;
 }
 
 const CJK_RE = /[\u4e00-\u9fff]/;
