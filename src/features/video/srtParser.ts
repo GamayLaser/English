@@ -24,6 +24,10 @@ function stripTags(line: string): string {
   let cleaned = line.replace(/<[^>]+>/g, "").replace(/\{[^}]+\}/g, "").trim();
   // Remove speaker-turn leading dashes (e.g. "- And raise you a quarter.")
   cleaned = cleaned.replace(/^[-–—]\s+/, "").trim();
+  // Remove SDH speaker labels (e.g. "Adult Sheldon:", "Mary:", "Man 1:")
+  cleaned = cleaned
+    .replace(/^(?:[A-Z][A-Za-z.'-]*)(?:\s+[A-Z0-9][A-Za-z0-9.'-]*){0,2}:\s*/, "")
+    .trim();
   // BluRay/DVD OCR often misreads music note ♪ as standalone leading/trailing J or j
   const hasLeadingMusicJ = /^J["“”']?\s+/.test(cleaned);
   const hasTrailingMusicJ = /\s+[Jj]["“”']?$/.test(cleaned);

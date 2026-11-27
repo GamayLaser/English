@@ -265,14 +265,8 @@ export default function ShowsPage({ c }: { c: ThemeColors }) {
                 />
                 {activeCue && subMode !== "hidden" && (
                   <div className="pointer-events-none absolute inset-x-4 bottom-12 flex flex-col items-center text-center gap-1">
-                    <span className="pointer-events-auto rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
-                      <VocabLinkedText
-                        text={activeCue.en}
-                        matcher={vocabMatcher}
-                        excludedIds={vocabMastered}
-                        hitClassName="novel-vocab-hit novel-vocab-hit-on-dark"
-                        onOpen={openVocabCard}
-                      />
+                    <span className="rounded-lg bg-black/75 px-3 py-1 text-sm md:text-base font-semibold text-white backdrop-blur-sm">
+                      {activeCue.en}
                     </span>
                     {subMode === "bilingual" && activeCue.zh && (
                       <span className="rounded-md bg-black/70 px-2.5 py-0.5 text-xs text-slate-200 backdrop-blur-sm">
