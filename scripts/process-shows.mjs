@@ -15,7 +15,8 @@ import { fileURLToPath } from "node:url";
 import { cleanSrtContent } from "./clean-srt.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SHOWS_OUT_DIR = path.resolve(__dirname, "../public/shows");
+const SHOWS_META_DIR = path.resolve(__dirname, "../public/shows");
+const SHOWS_VIDEO_DIR = path.resolve(__dirname, "../local-media/shows");
 const VIDEO_EXT = new Set([".mkv", ".mp4", ".mov", ".webm", ".m4v"]);
 
 function detectEncoder() {
@@ -42,7 +43,8 @@ if (!fs.existsSync(srcDir)) {
   process.exit(1);
 }
 
-fs.mkdirSync(SHOWS_OUT_DIR, { recursive: true });
+fs.mkdirSync(SHOWS_META_DIR, { recursive: true });
+fs.mkdirSync(SHOWS_VIDEO_DIR, { recursive: true });
 const encoder = detectEncoder();
 console.log(`Using H.264 encoder: ${encoder}`);
 
@@ -54,8 +56,8 @@ const entries = fs
 for (const file of entries) {
   const stem = file.slice(0, -path.extname(file).length);
   const inputPath = path.join(srcDir, file);
-  const outVideo = path.join(SHOWS_OUT_DIR, `${stem}.mp4`);
-  const outSrt = path.join(SHOWS_OUT_DIR, `${stem}.srt`);
+  const outVideo = path.join(SHOWS_VIDEO_DIR, `${stem}.mp4`);
+  const outSrt = path.join(SHOWS_META_DIR, `${stem}.srt`);
   const externalSrt = path.join(srcDir, `${stem}.srt`);
 
   if (fs.existsSync(externalSrt)) {
@@ -95,7 +97,7 @@ for (const file of entries) {
   const mb = (fs.statSync(outVideo).size / (1024 * 1024)).toFixed(2);
   console.log(`[Video] Done ${stem}.mp4 (${mb} MB)`);
 
-  const outPoster = path.join(SHOWS_OUT_DIR, `${stem}.jpg`);
+  const outPoster = path.join(SHOWS_META_DIR, `${stem}.jpg`);
   spawnSync(
     "ffmpeg",
     ["-y", "-v", "error", "-ss", "00:02:15", "-i", outVideo, "-frames:v", "1", "-vf", "scale=640:-2", "-q:v", "3", outPoster],
