@@ -521,11 +521,22 @@ html.light .zen-tooltip-wrap .zen-tooltip {
   -webkit-mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
 }
 
-/* ── 隐藏滚动条但保持可滚动 ─────────────────────────────────────────── */
+/* ── 全局隐藏滚动条但保持可滚动 ─────────────────────────────────────── */
+html,
+body,
+*,
 .zen-no-scrollbar {
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.zen-no-scrollbar::-webkit-scrollbar { display: none; }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar,
+.zen-no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 
 /* ── 徽章（Badge）通用样式 ─────────────────────────────────────────── */
 .zen-badge {
